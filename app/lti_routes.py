@@ -78,34 +78,55 @@ def launch():
     except Exception as e:
         return f"❌ Could not fetch JWKS: {str(e)}", 400
 
-    unverified_header = jwt.get_unverified_header(jwt_token)
-    kid = unverified_header.get("kid")
-
-    public_key = None
-    for key in jwks.get("keys", []):
-        if key.get("kid") == kid:
-            public_key = jwt.algorithms.RSAAlgorithm.from_jwk(json.dumps(key))
-            break
-
-    if not public_key:
-        return "❌ No matching public key found in JWKS", 400
-
     try:
+        unverified_header = jwt.get_unverified_header(jwt_token)
+        kid = unverified_header.get("kid")
+
+        public_key = None
+        for key in jwks.get("keys", []):
+            if key.get("kid") == kid:
+                public_key = jwt.algorithms.RSAAlgorithm.from_jwk(json.dumps(key))
+                break
+
+        if not public_key:
+            return "❌ No matching public key found in JWKS", 400
+
+        # ✅ Step 1: Manually extract and validate audience
+        aud = jwt.decode(
+            jwt_token,
+            key=public_key,
+            algorithms=["RS256"],
+            options={"verify_aud": False},
+            issuer=os.getenv("PLATFORM_ISS")
+        ).get("aud")
+
+        client_ids = os.getenv("CLIENT_IDS", "")
+        valid_client_ids = [id.strip() for id in client_ids.split(",") if id.strip()]
+
+        print("🔐 Valid client IDs:", valid_client_ids)
+        print("🔐 Received aud:", aud)
+
+        if aud not in valid_client_ids:
+            return f"❌ JWT validation error: Audience '{aud}' not allowed.", 403
+
+        # ✅ Step 2: Fully decode after validating audience
         decoded = jwt.decode(
             jwt_token,
             key=public_key,
             algorithms=["RS256"],
-            audience=os.getenv("CLIENT_ID"),
+            audience=aud,
             issuer=os.getenv("PLATFORM_ISS")
         )
+
         print("✅ JWT verified")
         print(json.dumps(decoded, indent=2))
+
     except InvalidTokenError as e:
         return f"❌ Invalid JWT signature: {str(e)}", 400
 
     session["launch_data"] = json.loads(json.dumps(decoded))
 
-    # ✅ This block must be inside the function
+    # ✅ Handle persona toggle from rubric
     requires_persona = False
     assignment_title = decoded.get("https://purl.imsglobal.org/spec/lti/claim/resource_link", {}).get("title", "").strip().lower()
     rubric_index_path = os.path.join("rubrics", "rubric_index.json")
@@ -442,7 +463,7 @@ def dashboard_launch():
             issuer=os.getenv("PLATFORM_ISS")
         )
 
-        # ✅ Manual audience validation with comma-separated values
+                # ✅ Manual audience validation with comma-separated values
         aud = decoded.get("aud")
         client_ids = os.getenv("CLIENT_IDS", "")
         valid_client_ids = [id.strip() for id in client_ids.split(",") if id.strip()]
@@ -452,7 +473,6 @@ def dashboard_launch():
 
         if aud not in valid_client_ids:
             return f"❌ JWT validation error: Audience '{aud}' not allowed.", 403
-
 
         print("✅ Dashboard launch JWT verified")
         session["launch_data"] = json.loads(json.dumps(decoded))
