@@ -415,7 +415,7 @@ def dashboard_launch():
         return "❌ No id_token provided.", 400
 
     # Same verification logic as /launch
-    jwks_url = "http://host.docker.internal:8080/mod/lti/certs.php"
+    jwks_url = f"{os.getenv('PLATFORM_ISS')}/mod/lti/certs.php"
     try:
         jwks_response = requests.get(jwks_url)
         jwks_response.raise_for_status()
