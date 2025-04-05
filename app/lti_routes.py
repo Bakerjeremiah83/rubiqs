@@ -442,14 +442,10 @@ def dashboard_launch():
             issuer=os.getenv("PLATFORM_ISS")
         )
 
-        # ✅ Manual audience validation (now supports multiple IDs)
+        # ✅ Manual audience validation with comma-separated values
         aud = decoded.get("aud")
-
-        # Collect all environment variables that start with CLIENT_ID
-        valid_client_ids = [
-            value for key, value in os.environ.items()
-            if key.startswith("CLIENT_ID")
-        ]
+        client_ids = os.getenv("CLIENT_IDS", "")
+        valid_client_ids = [id.strip() for id in client_ids.split(",") if id.strip()]
 
         print("🔐 Valid client IDs:", valid_client_ids)
         print("🔐 Received aud:", aud)
