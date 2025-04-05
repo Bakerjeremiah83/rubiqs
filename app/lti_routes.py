@@ -70,7 +70,7 @@ def launch():
     if not jwt_token:
         return "❌ Error: No id_token (JWT) received in launch request.", 400
 
-    jwks_url = "http://host.docker.internal:8080/mod/lti/certs.php"
+    jwks_url = f"{os.getenv('PLATFORM_ISS')}/mod/lti/certs.php"
     try:
         jwks_response = requests.get(jwks_url)
         jwks_response.raise_for_status()
