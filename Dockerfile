@@ -4,17 +4,17 @@ FROM python:3.11-slim
 # Set working directory to the project root
 WORKDIR /app
 
-# Copy requirements and install
+# Install dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy everything into /app
+# Copy the full app (including app/, templates/, static/, etc.)
 COPY . .
 
-# Set environment variables for Flask
+# Set environment variables
 ENV FLASK_APP=app/main.py
 ENV FLASK_ENV=production
 ENV PYTHONPATH=/app
 
-# Use Gunicorn to serve the app from app/main.py
+# Run the app using gunicorn from the app.main module
 CMD ["gunicorn", "app.main:app"]
