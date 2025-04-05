@@ -1,0 +1,172 @@
+<!-- File: templates/launch.html (Updated for Rubric Upload with requires_persona logic) -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Rubiqs | AI-Powered Mastery</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: linear-gradient(to right, #f1e2c4, #de5c4b, #5ca198, #1f3a54);
+      color: #333;
+      padding: 2rem;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+    }
+
+    .card {
+      background: white;
+      padding: 2rem;
+      max-width: 720px;
+      width: 100%;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+
+    .brand-header {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      margin-bottom: 2rem;
+    }
+
+    .logo {
+      max-height: 80px;
+      width: auto;
+      margin-right: 1.5rem;
+    }
+
+    .brand-text h1 {
+      margin: 0;
+      font-size: 1.8rem;
+      color: #2c3e50;
+    }
+
+    .brand-text .tagline {
+      font-size: 1rem;
+      color: #7f8c8d;
+    }
+
+    .brand-text .byline {
+      font-size: 0.9rem;
+      color: #aaa;
+    }
+
+    .welcome {
+      font-size: 1.1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    form label {
+      font-weight: bold;
+      display: block;
+      margin-top: 1rem;
+      text-align: left;
+    }
+
+    form input[type="file"] {
+      width: 100%;
+      padding: 0.5rem;
+      margin-top: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      box-sizing: border-box;
+    }
+
+    form input[type="submit"] {
+      margin-top: 1.5rem;
+      width: 100%;
+      background: #2c3e50;
+      color: white;
+      padding: 0.75rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    form input[type="submit"]:hover {
+      background: #1f2a36;
+    }
+
+    .loading {
+      display: none;
+      text-align: center;
+      margin-top: 2rem;
+    }
+
+    .spinner {
+      margin: 0 auto;
+      width: 40px;
+      height: 40px;
+      border: 4px solid #ccc;
+      border-top: 4px solid #2c3e50;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .admin-note {
+      text-align: center;
+      color: gray;
+      font-size: 0.95rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="brand-header">
+      <img src="/static/rubiqs-logo.png" alt="Rubiqs Logo" class="logo">
+      <div class="brand-text">
+        <h1>Rubiqs</h1>
+        <div class="tagline">AI-Powered Mastery</div>
+        <div class="byline">by J. Baker Design</div>
+      </div>
+    </div>
+
+    <div class="welcome">
+      Upload your work and let <strong>Rubiqs</strong> do the rest.
+    </div>
+
+    {% if "Instructor" in user_roles or "Administrator" in user_roles %}
+      <p class="admin-note">
+        This is the instructor view. File upload is disabled.
+      </p>
+    {% else %}
+      <form id="grade-form" action="/grade-docx" method="POST" enctype="multipart/form-data" onsubmit="showLoading()">
+        <label for="file">📄 Assignment file (.docx or .pdf):</label>
+        <input type="file" name="file" accept=".docx,.pdf" required>
+
+        <label for="rubric">🧾 Rubric file (.json, .docx, or .pdf):</label>
+        <input type="file" name="rubric" accept=".json,.docx,.pdf" required>
+
+        {% if requires_persona %}
+          <label for="persona">👤 Persona Questionnaire (.docx or .pdf):</label>
+          <input type="file" name="persona" accept=".docx,.pdf">
+        {% endif %}
+
+        <input id="submit-btn" type="submit" value="Submit for Grading">
+      </form>
+
+      <div id="loading" class="loading">
+        <div class="spinner"></div>
+        <p style="margin-top: 1rem;">Grading in progress… Please wait ⏳</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <script>
+    function showLoading() {
+      document.getElementById('submit-btn').style.display = 'none';
+      document.getElementById('loading').style.display = 'block';
+    }
+  </script>
+</body>
+</html>

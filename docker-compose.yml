@@ -1,0 +1,11 @@
+version: "3.9"
+
+services:
+  lti_tool:
+    build: .
+    ports:
+      - "5050:5050"         # 🔁 Map host 5050 → container 5050
+    env_file:
+      - .env
+    volumes:
+      - .:/app              # ✅ Mount everything in app for live dev

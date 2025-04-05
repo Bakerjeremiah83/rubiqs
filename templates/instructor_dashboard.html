@@ -1,0 +1,113 @@
+<!-- File: templates/instructor_dashboard.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Instructor Dashboard | Rubiqs</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: linear-gradient(to right, #f1e2c4, #de5c4b, #5ca198, #1f3a54);
+      padding: 2rem;
+      color: #333;
+    }
+
+    h1 {
+      color: #1f3a54;
+    }
+
+    form {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+      margin-bottom: 2rem;
+    }
+
+    label {
+      display: block;
+      margin-top: 1rem;
+      font-weight: bold;
+    }
+
+    input[type="text"],
+    input[type="file"] {
+      width: 100%;
+      padding: 0.5rem;
+      margin-top: 0.25rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    input[type="submit"] {
+      margin-top: 1.5rem;
+      padding: 0.6rem 1.2rem;
+      background: #1f3a54;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    }
+
+    th, td {
+      padding: 0.75rem;
+      border: 1px solid #ddd;
+      text-align: left;
+    }
+
+    th {
+      background: #1f3a54;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <div style="display: flex; align-items: center; margin-bottom: 1rem;">
+  <img src="/static/rubiqs-logo.png" alt="Rubiqs Logo" style="max-height: 60px; margin-right: 1rem;">
+  <h1 style="margin: 0; color: #1f3a54;">Rubiqs Instructor Dashboard</h1>
+</div>
+
+  <form action="/instructor-dashboard" method="POST" enctype="multipart/form-data">
+    <label for="assignment_title">Assignment Title</label>
+    <input type="text" name="assignment_title" required>
+
+    <label for="rubric_file">Upload Rubric File (.json, .docx, .pdf)</label>
+    <input type="file" name="rubric_file" accept=".json,.docx,.pdf" required>
+
+    
+
+    <label>
+      <input type="checkbox" name="instructor_approval"> Require instructor approval before posting
+    </label>
+
+    <input type="submit" value="Upload Rubric">
+  </form>
+
+  {% if rubric_list %}
+    <h2>Uploaded Rubrics</h2>
+    <table>
+      <tr>
+        <th>File Name</th>
+        <th>Assignment Title</th>
+        <th>Requires Persona</th>
+      </tr>
+      {% for item in rubric_list %}
+      <tr>
+        <td>{{ item.file_name }}</td>
+        <td>{{ item.assignment_title }}</td>
+        <td>{{ "✅" if item.requires_persona else "—" }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  {% else %}
+    <p>No rubrics uploaded yet.</p>
+  {% endif %}
+</body>
+</html>

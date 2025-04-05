@@ -1,0 +1,62 @@
+[
+  {
+    "file_name": "N-400 Rubric.docx",
+    "assignment_title": "Form N-400 Completion",
+    "requires_persona": true,
+    "instructor_approval": true
+  },
+  {
+    "file_name": "G-28 Rubric.docx",
+    "assignment_title": "Form G-28 Completion",
+    "requires_persona": true,
+    "instructor_approval": true
+  },
+  {
+    "file_name": "N-648 Rubric.docx",
+    "assignment_title": "Form N-648 Completion",
+    "requires_persona": true,
+    "instructor_approval": true
+  },
+  {
+    "file_name": "I-912 Rubric.docx",
+    "assignment_title": "Form I-912 Completion",
+    "requires_persona": true,
+    "instructor_approval": true
+  },
+  {
+    "file_name": "I-485 Rubric.docx",
+    "assignment_title": "Form I-485 Completion",
+    "requires_persona": true,
+    "instructor_approval": true
+  },
+  {
+    "file_name": "G-28 Rubric.docx",
+    "assignment_title": "Form G-28 Submission",
+    "requires_persona": true,
+    "instructor_approval": true
+  },
+  {
+    "file_name": "I-130 Rubric.docx",
+    "assignment_title": "Form I-130 Application",
+    "requires_persona": true,
+    "instructor_approval": true
+  },
+  {
+    "file_name": "I-765 Rubric.docx",
+    "assignment_title": "Form I-765 Practice",
+    "requires_persona": true,
+    "instructor_approval": true
+  },
+  {
+    "file_name": "EOIR-33 Rubric.docx",
+    "assignment_title": "Form EOIR-33 Filing",
+    "requires_persona": true,
+    "instructor_approval": true
+  },
+  {
+    "file_name": "rubric_christ_leader.docx",
+    "assignment_title": "Christlike Leadership Reflection",
+    "requires_persona": false,
+    "instructor_approval": false
+  }
+]
