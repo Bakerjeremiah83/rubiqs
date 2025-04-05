@@ -442,14 +442,21 @@ def dashboard_launch():
             issuer=os.getenv("PLATFORM_ISS")
         )
 
-        # ✅ Manual audience validation
+        # ✅ Manual audience validation (now supports multiple IDs)
         aud = decoded.get("aud")
+
+        # Collect all environment variables that start with CLIENT_ID
         valid_client_ids = [
-            os.getenv("CLIENT_ID"),
-            os.getenv("INSTRUCTOR_CLIENT_ID")
+            value for key, value in os.environ.items()
+            if key.startswith("CLIENT_ID")
         ]
+
+        print("🔐 Valid client IDs:", valid_client_ids)
+        print("🔐 Received aud:", aud)
+
         if aud not in valid_client_ids:
             return f"❌ JWT validation error: Audience '{aud}' not allowed.", 403
+
 
         print("✅ Dashboard launch JWT verified")
         session["launch_data"] = json.loads(json.dumps(decoded))
