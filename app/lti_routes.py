@@ -214,24 +214,26 @@ def grade_docx():
         except Exception as e:
             return f"❌ Failed to extract persona file: {str(e)}", 500
 
-    prompt = f"""
+prompt = f"""
 You are a helpful AI grader for a college-level course.
 Evaluate the student submission below using the following rubric:
 
 Rubric:
 {rubric_text}
 
-Style Guidance: {rubric_style}
+Style Guidance:
+{rubric_style}
 """
 
-    if reference_data:
-        prompt += f"\nReference Scenario:\n{reference_data}\n"
+if reference_data:
+    prompt += f"\nReference Scenario:\n{reference_data}\n"
 
-    prompt = f"""
-
+prompt += f"""
 Grade the following student submission based on the rubric provided.
 
-Rubric: {rubric}
+Rubric: 
+{rubric}
+
 Submission: {submission_text}
 
 Score: <number from 0 to {rubric_total_points}>
