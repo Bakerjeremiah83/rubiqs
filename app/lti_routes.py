@@ -228,7 +228,7 @@ Assignment Submission:
 
 Return your response in this format:
 
-Score: <number from 0 to 100>
+Score: <number from 0 to {rubric_total_points}>
 Feedback: <detailed, helpful feedback>
 """
 
