@@ -390,7 +390,7 @@ Assignment Submission:
 
 Return your response in this format:
 
-Score: <number from 0 to 100>
+Score: <number from 0 to {rubric_total_points}>
 
 Feedback: <detailed, helpful feedback>
 
@@ -732,7 +732,7 @@ def review_feedback():
 
                             "scoreGiven": new_score,
 
-                            "scoreMaximum": 100,
+                            "scoreMaximum": rubric_total_points,
 
                             "activityProgress": "Completed",
 
@@ -822,7 +822,7 @@ def post_grade():
 
                 "scoreGiven": score,
 
-                "scoreMaximum": 100,
+                "scoreMaximum": rubric_total_points,
 
                 "activityProgress": "Completed",
 
