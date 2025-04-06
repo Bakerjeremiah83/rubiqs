@@ -1,11 +1,3 @@
-
-def get_total_points_from_rubric(rubric):
-    return sum(
-        max(level["score"] for level in criterion["levels"])
-        for criterion in rubric["criteria"]
-    )
-
-
 PENDING_FEEDBACK = {}
 
 from flask import request, jsonify, redirect, Blueprint, session, render_template
@@ -214,29 +206,29 @@ def grade_docx():
         except Exception as e:
             return f"❌ Failed to extract persona file: {str(e)}", 500
 
-prompt = f"""
+    prompt = f"""
 You are a helpful AI grader for a college-level course.
 Evaluate the student submission below using the following rubric:
 
 Rubric:
 {rubric_text}
 
-Style Guidance:
-{rubric_style}
+Style Guidance: {rubric_style}
 """
 
-if reference_data:
-    prompt += f"\nReference Scenario:\n{reference_data}\n"
+    if reference_data:
+        prompt += f"\nReference Scenario:\n{reference_data}\n"
 
-prompt += f"""
-Grade the following student submission based on the rubric provided.
+    prompt += f"""
 
-Rubric: 
-{rubric}
+Assignment Submission:
+---
+{full_text}
+---
 
-Submission: {submission_text}
+Return your response in this format:
 
-Score: <number from 0 to {rubric_total_points}>
+Score: <number from 0 to 100>
 Feedback: <detailed, helpful feedback>
 """
 
