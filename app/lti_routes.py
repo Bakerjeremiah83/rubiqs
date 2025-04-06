@@ -227,16 +227,14 @@ Style Guidance: {rubric_style}
     if reference_data:
         prompt += f"\nReference Scenario:\n{reference_data}\n"
 
-    prompt += f"""
+    prompt = f"""
 
-Assignment Submission:
----
-{full_text}
----
+Grade the following student submission based on the rubric provided.
 
-Return your response in this format:
+Rubric: {rubric}
+Submission: {submission_text}
 
-Score: <number from 0 to 100>
+Score: <number from 0 to {rubric_total_points}>
 Feedback: <detailed, helpful feedback>
 """
 
