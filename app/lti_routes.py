@@ -1,3 +1,5 @@
+PENDING_FEEDBACK = {}
+
 from flask import request, jsonify, redirect, Blueprint, session, render_template
 import json
 import os

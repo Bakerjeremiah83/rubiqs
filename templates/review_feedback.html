@@ -57,12 +57,7 @@
   </style>
 </head>
 <body>
-    {% if session["tool_role"] == "instructor" %}
-        <h2 style="color: blue; text-align: center;">👨‍🏫 Instructor Dashboard Active</h2>
-    {% elif session["tool_role"] == "student" %}
-        <h2 style="color: red; text-align: center;">⚠️ Student Access Blocked</h2>
-    {% endif %}
-
+    
   <h1>Review Pending Feedback</h1>
 
   {% if current_review %}
