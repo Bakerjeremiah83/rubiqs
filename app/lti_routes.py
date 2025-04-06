@@ -1,29 +1,16 @@
 from flask import request, jsonify, redirect, Blueprint, session, render_template
-
 import json
-
 import os
-
 import uuid
-
 import jwt
-
 import requests
-
 from jwt.exceptions import InvalidTokenError
-
 from docx import Document
-
 from io import BytesIO
-
 import openai
-
 from datetime import datetime
-
 from requests_oauthlib import OAuth1Session
-
 import re
-
 from pdfminer.high_level import extract_text as extract_pdf_text
 
 def get_total_points_from_rubric(rubric):
@@ -35,311 +22,185 @@ def get_total_points_from_rubric(rubric):
 lti = Blueprint('lti', __name__)
 
 @lti.route("/login", methods=["POST"])
-
 def login():
-
     print("🔐 /login route hit")
-
     issuer = request.form.get("iss")
-
     login_hint = request.form.get("login_hint")
-
     target_link_uri = request.form.get("target_link_uri")
-
     client_id = request.form.get("client_id")
-
     lti_message_hint = request.form.get("lti_message_hint")
-
     if not all([issuer, login_hint, target_link_uri, client_id]):
 
         return "❌ Missing required LTI launch parameters", 400
 
     redirect_url = (
-
         f"{issuer}/mod/lti/auth.php?"
-
         f"scope=openid&response_type=id_token&client_id={client_id}&"
-
         f"redirect_uri={target_link_uri}&login_hint={login_hint}&state=state123&"
-
         f"response_mode=form_post&nonce=nonce123&prompt=none&"
-
         f"lti_message_hint={lti_message_hint}"
 
     )
 
     print(f"➡️ Redirecting to: {redirect_url}")
-
     return redirect(redirect_url)
 
 @lti.before_app_request
-
 def debug_session_state():
-
     print("🧪 SESSION CONTENTS:", dict(session))
-
 def register_lti_routes(app):
-
     app.register_blueprint(lti)
-
     print("✅ LTI routes registered")
 
 @lti.route("/.well-known/jwks.json", methods=["GET"])
-
 def jwks():
-
     print("📡 Serving JWKS route...")
-
     with open("app/keys/jwks.json", "r") as f:
-
         jwks_data = json.load(f)
-
     return jsonify(jwks_data)
 
 @lti.route("/.well-known/openid-configuration", methods=["GET"])
-
 def openid_configuration():
-
     tool_url = os.environ["TOOL_URL"]
-
     return jsonify({
-
         "issuer": tool_url,
-
         "authorization_endpoint": f"{tool_url}/login",
-
         "token_endpoint": f"{tool_url}/token",
-
         "jwks_uri": f"{tool_url}/.well-known/jwks.json"
 
     })
 
 @lti.route("/launch", methods=["POST"])
-
 def launch():
-
     print("🚀 /launch hit")
-
     jwt_token = request.form.get("id_token")
-
     if not jwt_token:
-
         return "❌ Error: No id_token (JWT) received in launch request.", 400
 
     # 🔐 Fetch JWKS and prepare public key
 
     jwks_url = f"{os.getenv('PLATFORM_ISS')}/mod/lti/certs.php"
-
     try:
-
         jwks_response = requests.get(jwks_url)
-
         jwks_response.raise_for_status()
-
         jwks = jwks_response.json()
-
         unverified_header = jwt.get_unverified_header(jwt_token)
-
         kid = unverified_header.get("kid")
-
         public_key = None
-
         for key in jwks.get("keys", []):
-
             if key.get("kid") == kid:
-
                 public_key = jwt.algorithms.RSAAlgorithm.from_jwk(json.dumps(key))
-
                 break
 
         if not public_key:
-
             return "❌ No matching public key found in JWKS", 400
-
     except Exception as e:
-
         return f"❌ Could not fetch JWKS: {str(e)}", 400
 
     # ✅ Decode JWT
 
     try:
-
         aud = jwt.decode(
-
             jwt_token,
-
             key=public_key,
-
             algorithms=["RS256"],
-
             options={"verify_aud": False},
-
             issuer=os.getenv("PLATFORM_ISS")
-
         ).get("aud")
-
         client_ids = os.getenv("CLIENT_IDS", "")
-
         valid_client_ids = [id.strip() for id in client_ids.split(",") if id.strip()]
-
         if aud not in valid_client_ids:
-
             return f"❌ JWT validation error: Audience '{aud}' not allowed.", 403
-
         decoded = jwt.decode(
-
             jwt_token,
-
             key=public_key,
-
             algorithms=["RS256"],
-
             audience=aud,
-
             issuer=os.getenv("PLATFORM_ISS")
 
         )
 
         print("✅ JWT verified")
-
         print(json.dumps(decoded, indent=2))
 
         # ✅ Store launch data in session
-
         session["launch_data"] = json.loads(json.dumps(decoded))
-
         session["tool_role"] = "student"
-
     except InvalidTokenError as e:
-
         return f"❌ Invalid JWT signature: {str(e)}", 400
 
     # ✅ Now continue with render_template and persona toggle logic
-
     # (you already have this below, no need to change it)
-
     # ✅ Handle persona toggle from rubric
 
     requires_persona = False
-
     assignment_title = decoded.get("https://purl.imsglobal.org/spec/lti/claim/resource_link", {}).get("title", "").strip().lower()
-
     rubric_index_path = os.path.join("rubrics", "rubric_index.json")
-
     if os.path.exists(rubric_index_path):
-
         with open(rubric_index_path, "r") as f:
-
             rubric_index = json.load(f)
-
             for item in rubric_index:
-
                 if item["assignment_title"].strip().lower() == assignment_title and item.get("requires_persona"):
-
                     requires_persona = True
-
                     break
-
     return render_template(
-
         "launch.html",
-
         activity_name=decoded.get("https://purl.imsglobal.org/spec/lti/claim/resource_link", {}).get("title", "Assignment"),
-
         user_name=decoded.get("given_name", "Student"),
-
         user_roles=decoded.get("https://purl.imsglobal.org/spec/lti/claim/roles", []),
-
         requires_persona=requires_persona
-
     )
 
 @lti.route("/grade-docx", methods=["POST"])
-
 def grade_docx():
-
     print("📥 /grade-docx hit")
-
     file = request.files.get("file")
-
     rubric_file = request.files.get("rubric")
-
     persona_file = request.files.get("persona")
-
     if not file or not rubric_file:
-
         return "❌ Assignment and rubric files are required.", 400
-
     try:
-
         filename = file.filename.lower()
-
         if filename.endswith(".docx"):
-
             doc = Document(file)
-
             full_text = "\n".join([para.text for para in doc.paragraphs])
-
         elif filename.endswith(".pdf"):
-
             full_text = extract_pdf_text(BytesIO(file.read()))
-
         else:
-
             return "❌ Unsupported assignment file type.", 400
-
         print(f"📄 Assignment text extracted ({len(full_text)} characters)")
-
     except Exception as e:
-
         return f"❌ Failed to extract assignment: {str(e)}", 500
-
     try:
-
         rubric_filename = rubric_file.filename.lower()
-
         if rubric_filename.endswith(".json"):
-
             rubric_json = json.load(rubric_file)
+            def get_total_points_from_rubric(rubric):
+    return sum(
+        max(level["score"] for level in criterion["levels"])
+        for criterion in rubric.get("criteria", [])
+    )
 
+rubric_total_points = get_total_points_from_rubric(rubric_json)
             rubric_text = "\n".join([f"- {c}" for c in rubric_json.get("criteria", [])])
-
             rubric_title = rubric_json.get("assignment_title", "Assignment")
-
             rubric_style = rubric_json.get("style_guidance", "")
-
         elif rubric_filename.endswith(".docx"):
-
             doc = Document(rubric_file)
-
             rubric_text = "\n".join([para.text for para in doc.paragraphs])
-
             rubric_title = "Assignment"
-
             rubric_style = ""
-
         elif rubric_filename.endswith(".pdf"):
-
             rubric_text = extract_pdf_text(BytesIO(rubric_file.read()))
-
             rubric_title = "Assignment"
-
             rubric_style = ""
-
         else:
-
             return "❌ Unsupported rubric file type.", 400
-
         print(f"📋 Rubric extracted ({len(rubric_text)} characters)")
-
     except Exception as e:
-
         return f"❌ Failed to extract rubric: {str(e)}", 500
-
     reference_data = ""
-
     if persona_file:
-
         try:
 
             persona_filename = persona_file.filename.lower()
