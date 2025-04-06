@@ -1,3 +1,11 @@
+
+def get_total_points_from_rubric(rubric):
+    return sum(
+        max(level["score"] for level in criterion["levels"])
+        for criterion in rubric["criteria"]
+    )
+
+
 PENDING_FEEDBACK = {}
 
 from flask import request, jsonify, redirect, Blueprint, session, render_template
@@ -490,7 +498,7 @@ def post_grade():
             score_payload = {
                 "userId": launch_data.get("sub"),
                 "scoreGiven": score,
-                "scoreMaximum": 100,
+                "scoreMaximum": rubric_total_points,  # ✅ Use total points calculated from rubric
                 "activityProgress": "Completed",
                 "gradingProgress": "FullyGraded",
                 "timestamp": datetime.utcnow().isoformat() + "Z"
