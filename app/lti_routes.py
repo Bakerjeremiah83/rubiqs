@@ -437,7 +437,7 @@ def review_feedback():
                         score_payload = {
                             "userId": student_id,
                             "scoreGiven": new_score,
-                            "scoreMaximum": 100,
+                            "scoreMaximum": rubric_total_points,  # ✅ Dynamic max score from rubric
                             "activityProgress": "Completed",
                             "gradingProgress": "FullyGraded",
                             "timestamp": datetime.utcnow().isoformat() + "Z"
