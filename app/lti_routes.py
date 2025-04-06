@@ -366,10 +366,6 @@ def dashboard_launch():
 
     return redirect("/review-feedback")
 
-@lti.route("/grade-docx", methods=["POST"])
-def grade_docx():
-    ...  # same as before, unchanged
-
 @lti.route("/dashboard-launch", methods=["POST"])
 def dashboard_launch():
     ...  # same as before, unchanged
