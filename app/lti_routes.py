@@ -232,6 +232,12 @@ Feedback: <detailed, helpful feedback>
 
     try:
         openai.api_key = os.getenv("OPENAI_API_KEY")
+
+        if not openai.api_key:
+            print("❌ OPENAI_API_KEY is not being read from environment variables.")
+        else:
+            print("✅ OPENAI_API_KEY successfully loaded.")
+
         response = openai.ChatCompletion.create(
             model="gpt-4",
             messages=[{"role": "user", "content": prompt.strip()}],
