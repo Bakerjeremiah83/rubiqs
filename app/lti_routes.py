@@ -293,10 +293,10 @@ Feedback: <detailed, helpful feedback>
                 json.dump(pending, f, indent=2)
 
             print("📥 Grade stored for instructor review.")
-            return render_template("feedback.html", score=score, feedback=feedback)
+            return render_template("feedback.html", score=score, feedback=feedback, rubric_total_points=rubric_total_points)
 
         else:
-            return render_template("feedback.html", score=score, feedback=feedback)
+            return render_template("feedback.html", score=score, feedback=feedback, rubric_total_points=rubric_total_points)
 
     except Exception as e:
         return f"❌ GPT error: {str(e)}", 500
