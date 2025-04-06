@@ -300,10 +300,6 @@ Feedback: <detailed, helpful feedback>
     # Auto-post or display feedback
     return render_template("feedback.html", score=score, feedback=feedback)
 
-@lti.route("/grade-docx", methods=["POST"])
-def grade_docx():
-    ...  # same as before, unchanged
-
 @lti.route("/dashboard-launch", methods=["POST"])
 def dashboard_launch():
     print("🚀 /dashboard-launch hit")
