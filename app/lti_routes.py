@@ -366,10 +366,6 @@ def dashboard_launch():
 
     return redirect("/review-feedback")
 
-@lti.route("/dashboard-launch", methods=["POST"])
-def dashboard_launch():
-    ...  # same as before, unchanged
-
 @lti.route("/review-feedback", methods=["GET", "POST"])
 def review_feedback():
     pending_path = os.path.join("rubrics", "pending_reviews.json")
