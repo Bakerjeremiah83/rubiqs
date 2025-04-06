@@ -295,10 +295,10 @@ Feedback: <detailed, helpful feedback>
         with open(pending_path, "w") as f:
             json.dump(pending, f, indent=2)
 
-        return render_template("feedback.html", score=score, feedback=feedback)
+        return render_template("feedback.html", score=score, feedback=feedback, rubric_total_points=rubric_total_points)
 
     # Auto-post or display feedback
-    return render_template("feedback.html", score=score, feedback=feedback)
+    return render_template("feedback.html", score=score, feedback=feedback, rubric_total_points=rubric_total_points)
 
 @lti.route("/dashboard-launch", methods=["POST"])
 def dashboard_launch():
@@ -500,8 +500,9 @@ def post_grade():
             print("❌ Instructor grade post failed:", str(e))
 
     return render_template(
-        "feedback.html",
-        score=score,
-        feedback=feedback,
-        user_roles=launch_data.get("https://purl.imsglobal.org/spec/lti/claim/roles", [])
-    )
+    "feedback.html",
+    score=score,
+    feedback=feedback,
+    rubric_total_points=rubric_total_points,
+    user_roles=launch_data.get("https://purl.imsglobal.org/spec/lti/claim/roles", [])
+)
