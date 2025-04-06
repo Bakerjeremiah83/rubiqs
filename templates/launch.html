@@ -67,39 +67,52 @@
       font-size: 1.05rem;
       color: #1f3a54;
     }
-    
+
     form input[type="file"] {
       display: block;
       width: 100%;
-      padding: 0.75rem;
+      padding: 0.65rem 0.75rem; /* reduce padding a bit */
       font-size: 1rem;
-      border: 2px solid #ccc;
-      border-radius: 8px;
+      border: 1px solid #ccc; /* match the button */
+      border-radius: 6px; /* slightly smaller */
       background-color: #f9f9f9;
       cursor: pointer;
       transition: border 0.3s ease;
-      margin-top: 0.75rem;
+      margin-top: 0.5rem; /* tighten spacing */
+      box-sizing: border-box;
     }
 
-    form input[type="file"]:hover {
-      border-color: #5ca198;
+    form input[type="submit"]:hover {
+      background: #1f2a36;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
 
     form input[type="submit"] {
       margin-top: 1.5rem;
       width: 100%;
-      background: #2c3e50;
+      background: #1f3a54; /* dark brand blue from your logo */
       color: white;
-      padding: 0.75rem;
-      font-size: 1rem;
+      padding: 0.85rem 1rem;
+      font-size: 1.1rem;
+      font-weight: bold;
       border: none;
-      border-radius: 6px;
+      border-radius: 40px;
       cursor: pointer;
       transition: background 0.3s ease;
+      position: relative;
+      letter-spacing: 1px;
+      text-transform: uppercase;
     }
 
-    form input[type="submit"]:hover {
-      background: #1f2a36;
+    form input[type="submit"]:active {
+      transform: scale(0.98);
+    }
+
+    form input[type="submit"]::after {
+      content: "➔";
+      position: absolute;
+      right: 20px;
+      font-size: 1.2rem;
     }
 
     .loading {
@@ -131,11 +144,6 @@
   </style>
 </head>
 <body>
-  {% if session["tool_role"] == "student" %}
-    <h2 style="color: green; text-align: center;">🧑‍🎓 Student Tool Active</h2>
-  {% elif session["tool_role"] == "instructor" %}
-    <h2 style="color: red; text-align: center;">⚠️ Instructor Launched Student Tool</h2>
-  {% endif %}
 
   <div class="card">
     <div class="brand-header">
