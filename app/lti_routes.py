@@ -70,28 +70,26 @@ def launch():
     if not jwt_token:
         return "❌ Error: No id_token (JWT) received in launch request.", 400
 
+    # 🔐 Fetch JWKS and prepare public key
     jwks_url = f"{os.getenv('PLATFORM_ISS')}/mod/lti/certs.php"
     try:
         jwks_response = requests.get(jwks_url)
         jwks_response.raise_for_status()
         jwks = jwks_response.json()
-    except Exception as e:
-        return f"❌ Could not fetch JWKS: {str(e)}", 400
-
-    try:
         unverified_header = jwt.get_unverified_header(jwt_token)
         kid = unverified_header.get("kid")
-
         public_key = None
         for key in jwks.get("keys", []):
             if key.get("kid") == kid:
                 public_key = jwt.algorithms.RSAAlgorithm.from_jwk(json.dumps(key))
                 break
-
         if not public_key:
             return "❌ No matching public key found in JWKS", 400
+    except Exception as e:
+        return f"❌ Could not fetch JWKS: {str(e)}", 400
 
-        # ✅ Step 1: Manually extract and validate audience
+    # ✅ Decode JWT
+    try:
         aud = jwt.decode(
             jwt_token,
             key=public_key,
@@ -103,13 +101,9 @@ def launch():
         client_ids = os.getenv("CLIENT_IDS", "")
         valid_client_ids = [id.strip() for id in client_ids.split(",") if id.strip()]
 
-        print("🔐 Valid client IDs:", valid_client_ids)
-        print("🔐 Received aud:", aud)
-
         if aud not in valid_client_ids:
             return f"❌ JWT validation error: Audience '{aud}' not allowed.", 403
 
-        # ✅ Step 2: Fully decode after validating audience
         decoded = jwt.decode(
             jwt_token,
             key=public_key,
@@ -121,10 +115,15 @@ def launch():
         print("✅ JWT verified")
         print(json.dumps(decoded, indent=2))
 
+        # ✅ Store launch data in session
+        session["launch_data"] = json.loads(json.dumps(decoded))
+        session["tool_role"] = "student"
+
     except InvalidTokenError as e:
         return f"❌ Invalid JWT signature: {str(e)}", 400
 
-    session["launch_data"] = json.loads(json.dumps(decoded))
+    # ✅ Now continue with render_template and persona toggle logic
+    # (you already have this below, no need to change it)
 
     # ✅ Handle persona toggle from rubric
     requires_persona = False
@@ -294,77 +293,107 @@ Feedback: <detailed, helpful feedback>
     except Exception as e:
         return f"❌ GPT error: {str(e)}", 500
 
-@lti.route("/instructor-dashboard", methods=["GET", "POST"])
-def instructor_dashboard():
-    rubrics_dir = "rubrics"
-    index_file = os.path.join(rubrics_dir, "rubric_index.json")
+@lti.route("/dashboard-launch", methods=["POST"])
+def dashboard_launch():
+    print("🚀 /dashboard-launch hit")
+    jwt_token = request.form.get("id_token")
+    if not jwt_token:
+        return "❌ No id_token provided.", 400
 
-    if request.method == "POST":
-        rubric_file = request.files.get("rubric_file")
-        assignment_title = request.form.get("assignment_title")
-        requires_persona = request.form.get("requires_persona") == "on"
+    # 🔐 Step 1: Fetch the JWKS (public keys) from your LMS
+    jwks_url = f"{os.getenv('PLATFORM_ISS')}/mod/lti/certs.php"
+    try:
+        jwks_response = requests.get(jwks_url)
+        jwks_response.raise_for_status()
+        jwks = jwks_response.json()
 
-        if rubric_file and assignment_title:
-            os.makedirs(rubrics_dir, exist_ok=True)
-            save_path = os.path.join(rubrics_dir, rubric_file.filename)
-            rubric_file.save(save_path)
+        # Get the correct public key for this JWT
+        unverified_header = jwt.get_unverified_header(jwt_token)
+        kid = unverified_header.get("kid")
+        public_key = None
+        for key in jwks.get("keys", []):
+            if key.get("kid") == kid:
+                public_key = jwt.algorithms.RSAAlgorithm.from_jwk(json.dumps(key))
+                break
+        if not public_key:
+            return "❌ Public key not found.", 400
 
-            index = []
-            if os.path.exists(index_file):
-                with open(index_file, "r") as f:
-                    index = json.load(f)
+    except Exception as e:
+        return f"❌ JWKS fetch failed: {str(e)}", 400
 
-            index.append({
-    "file_name": rubric_file.filename,
-    "assignment_title": assignment_title,
-    "requires_persona": requires_persona,
-    "instructor_approval": request.form.get("instructor_approval") == "on"
-})
+    # ✅ Step 2: Decode the JWT
+    try:
+        # First decode just to get the audience
+        aud = jwt.decode(
+            jwt_token,
+            key=public_key,
+            algorithms=["RS256"],
+            options={"verify_aud": False},
+            issuer=os.getenv("PLATFORM_ISS")
+        ).get("aud")
 
-            with open(index_file, "w") as f:
-                json.dump(index, f, indent=2)
+        # Compare against allowed client IDs
+        client_ids = os.getenv("CLIENT_IDS", "")
+        valid_client_ids = [id.strip() for id in client_ids.split(",") if id.strip()]
 
-    # Load index to display
-    if os.path.exists(index_file):
-        with open(index_file, "r") as f:
-            rubric_list = json.load(f)
-    else:
-        rubric_list = []
+        print("🔐 Valid client IDs:", valid_client_ids)
+        print("🔐 Received aud:", aud)
 
-    return render_template("instructor_dashboard.html", rubric_list=rubric_list)
+        if aud not in valid_client_ids:
+            return f"❌ JWT validation error: Audience '{aud}' not allowed.", 403
+
+        # Fully decode now that audience is validated
+        decoded = jwt.decode(
+            jwt_token,
+            key=public_key,
+            algorithms=["RS256"],
+            audience=aud,
+            issuer=os.getenv("PLATFORM_ISS")
+        )
+
+        print("✅ Dashboard launch JWT verified")
+        print(json.dumps(decoded, indent=2))
+
+        # ✅ Step 3: Store decoded info in session
+        session["launch_data"] = json.loads(json.dumps(decoded))
+        session["tool_role"] = "instructor"
+
+    except Exception as e:
+        return f"❌ JWT validation error: {str(e)}", 400
+
+    # ✅ Step 4: Redirect to instructor view
+    return redirect("/review-feedback")
 
 @lti.route("/review-feedback", methods=["GET", "POST"])
 def review_feedback():
     pending_path = os.path.join("rubrics", "pending_reviews.json")
+
+    # ✅ Check if the user is actually an instructor
+    tool_role = session.get("tool_role")
+    if tool_role != "instructor":
+        return "❌ Access denied. Instructors only.", 403
+
     launch_data = session.get("launch_data", {})
     print("🔍 LAUNCH DATA:", json.dumps(launch_data, indent=2))
 
-    user_roles = launch_data.get("https://purl.imsglobal.org/spec/lti/claim/roles", [])
-    is_instructor = any(
-        role for role in user_roles
-        if any(keyword in role for keyword in ["Instructor", "Administrator", "Designer", "Teacher", "CourseDeveloper"])
-    )
-
-    if not is_instructor:
-        return "❌ Access denied. Instructors only.", 403
-
+    # ✅ Load all pending reviews
     reviews = []
     if os.path.exists(pending_path):
         with open(pending_path, "r") as f:
             reviews = json.load(f)
 
+    # ✅ Set default review index if not set
     if "review_index" not in session:
         session["review_index"] = 0
 
+    # ✅ Handle form submissions
     if request.method == "POST":
-        # Handle navigation
         nav = request.form.get("nav")
         if nav == "next":
             session["review_index"] = min(session["review_index"] + 1, len(reviews) - 1)
         elif nav == "previous":
             session["review_index"] = max(session["review_index"] - 1, 0)
 
-        # Handle grade approval
         if request.form.get("action") == "Approve and Post":
             student_id = request.form.get("student_id")
             assignment_title = request.form.get("assignment_title")
@@ -420,6 +449,7 @@ def review_feedback():
                 if session["review_index"] >= len(reviews):
                     session["review_index"] = max(0, len(reviews) - 1)
 
+    # ✅ Load the current review
     current_review = None
     if reviews:
         review_index = session.get("review_index", 0)
@@ -427,61 +457,6 @@ def review_feedback():
         current_review = reviews[review_index]
 
     return render_template("review_feedback.html", current_review=current_review)
-
-@lti.route("/dashboard-launch", methods=["POST"])
-def dashboard_launch():
-    print("🚀 /dashboard-launch hit")
-    jwt_token = request.form.get("id_token")
-    if not jwt_token:
-        return "❌ No id_token provided.", 400
-
-    # Same verification logic as /launch
-    jwks_url = f"{os.getenv('PLATFORM_ISS')}/mod/lti/certs.php"
-    try:
-        jwks_response = requests.get(jwks_url)
-        jwks_response.raise_for_status()
-        jwks = jwks_response.json()
-    except Exception as e:
-        return f"❌ JWKS fetch failed: {str(e)}", 400
-
-    try:
-        unverified_header = jwt.get_unverified_header(jwt_token)
-        kid = unverified_header.get("kid")
-        public_key = None
-        for key in jwks.get("keys", []):
-            if key.get("kid") == kid:
-                public_key = jwt.algorithms.RSAAlgorithm.from_jwk(json.dumps(key))
-                break
-        if not public_key:
-            return "❌ Public key not found.", 400
-
-        decoded = jwt.decode(
-            jwt_token,
-            key=public_key,
-            algorithms=["RS256"],
-            options={"verify_aud": False},
-            issuer=os.getenv("PLATFORM_ISS")
-        )
-
-                # ✅ Manual audience validation with comma-separated values
-        aud = decoded.get("aud")
-        client_ids = os.getenv("CLIENT_IDS", "")
-        valid_client_ids = [id.strip() for id in client_ids.split(",") if id.strip()]
-
-        print("🔐 Valid client IDs:", valid_client_ids)
-        print("🔐 Received aud:", aud)
-
-        if aud not in valid_client_ids:
-            return f"❌ JWT validation error: Audience '{aud}' not allowed.", 403
-
-        print("✅ Dashboard launch JWT verified")
-        session["launch_data"] = json.loads(json.dumps(decoded))
-
-        return redirect("/review-feedback")
-
-    except Exception as e:
-        return f"❌ JWT validation error: {str(e)}", 400
-
 
 @lti.route("/post-grade", methods=["POST"])
 def post_grade():
