@@ -1,4 +1,4 @@
-<!-- File: templates/launch.html (Updated for Rubric Upload with requires_persona logic) -->
+<!-- File: templates/launch.html (Updated for Rubric Upload with styled file inputs) -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -59,7 +59,7 @@
       margin-bottom: 1.5rem;
     }
 
-    form label {
+    form label.file-label {
       font-weight: bold;
       display: block;
       margin-top: 1rem;
@@ -68,29 +68,31 @@
       color: #1f3a54;
     }
 
-    form input[type="file"] {
-      display: block;
-      width: 100%;
-      padding: 0.65rem 0.75rem; /* reduce padding a bit */
-      font-size: 1rem;
-      border: 1px solid #ccc; /* match the button */
-      border-radius: 6px; /* slightly smaller */
-      background-color: #f9f9f9;
+    .file-button {
+      display: inline-block;
+      background-color: #1f3a54;
+      color: white;
+      font-weight: bold;
+      padding: 0.65rem 1.2rem;
+      border-radius: 6px;
+      text-align: center;
       cursor: pointer;
-      transition: border 0.3s ease;
-      margin-top: 0.5rem; /* tighten spacing */
-      box-sizing: border-box;
+      margin-top: 0.5rem;
+      transition: background-color 0.3s ease;
     }
 
-    form input[type="submit"]:hover {
-      background: #1f2a36;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    .file-button:hover {
+      background-color: #1f2a36;
+    }
+
+    .file-button input[type="file"] {
+      display: none;
     }
 
     form input[type="submit"] {
       margin-top: 1.5rem;
       width: 100%;
-      background: #1f3a54; /* dark brand blue from your logo */
+      background: #1f3a54;
       color: white;
       padding: 0.85rem 1rem;
       font-size: 1.1rem;
@@ -102,6 +104,11 @@
       position: relative;
       letter-spacing: 1px;
       text-transform: uppercase;
+    }
+
+    form input[type="submit"]:hover {
+      background: #1f2a36;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
 
     form input[type="submit"]:active {
@@ -165,15 +172,24 @@
       </p>
     {% else %}
       <form id="grade-form" action="/grade-docx" method="POST" enctype="multipart/form-data" onsubmit="showLoading()">
-        <label for="file">📄 Assignment file (.docx or .pdf):</label>
-        <input type="file" name="file" accept=".docx,.pdf" required>
+        <label for="file-upload" class="file-label">📄 Assignment file (.docx or .pdf):</label>
+        <label class="file-button">
+          <input type="file" id="file-upload" name="file" accept=".docx,.pdf" required>
+          Choose File
+        </label>
 
-        <label for="rubric">🧾 Rubric file (.json, .docx, or .pdf):</label>
-        <input type="file" name="rubric" accept=".json,.docx,.pdf" required>
+        <label for="rubric-upload" class="file-label">🧾 Rubric file (.json, .docx, or .pdf):</label>
+        <label class="file-button">
+          <input type="file" id="rubric-upload" name="rubric" accept=".json,.docx,.pdf" required>
+          Choose File
+        </label>
 
         {% if requires_persona %}
-          <label for="persona">👤 Persona Questionnaire (.docx or .pdf):</label>
-          <input type="file" name="persona" accept=".docx,.pdf">
+          <label for="persona-upload" class="file-label">👤 Persona Questionnaire (.docx or .pdf):</label>
+          <label class="file-button">
+            <input type="file" id="persona-upload" name="persona" accept=".docx,.pdf">
+            Choose File
+          </label>
         {% endif %}
 
         <input id="submit-btn" type="submit" value="Submit for Grading">
