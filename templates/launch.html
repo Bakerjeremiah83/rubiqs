@@ -1,4 +1,3 @@
-<!-- File: templates/launch.html (Updated for Rubric Upload with styled file inputs) -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -68,25 +67,33 @@
       color: #1f3a54;
     }
 
-    .file-button {
-      display: inline-block;
+    input.styled-input[type="file"] {
+      display: block;
+      width: 100%;
+      font-size: 1rem;
+      color: #333;
+      background-color: #f9f9f9;
+      border: 2px solid #ccc;
+      border-radius: 6px;
+      padding: 0.65rem 0.75rem;
+      cursor: pointer;
+      margin-top: 0.5rem;
+      box-sizing: border-box;
+    }
+
+    input.styled-input[type="file"]::file-selector-button {
       background-color: #1f3a54;
       color: white;
       font-weight: bold;
-      padding: 0.65rem 1.2rem;
+      border: none;
+      padding: 0.5rem 1rem;
       border-radius: 6px;
-      text-align: center;
+      margin-right: 1rem;
       cursor: pointer;
-      margin-top: 0.5rem;
-      transition: background-color 0.3s ease;
     }
 
-    .file-button:hover {
+    input.styled-input[type="file"]::file-selector-button:hover {
       background-color: #1f2a36;
-    }
-
-    .file-button input[type="file"] {
-      display: none;
     }
 
     form input[type="submit"] {
@@ -173,23 +180,14 @@
     {% else %}
       <form id="grade-form" action="/grade-docx" method="POST" enctype="multipart/form-data" onsubmit="showLoading()">
         <label for="file-upload" class="file-label">📄 Assignment file (.docx or .pdf):</label>
-        <label class="file-button">
-          <input type="file" id="file-upload" name="file" accept=".docx,.pdf" required>
-          Choose File
-        </label>
+        <input type="file" id="file-upload" name="file" accept=".docx,.pdf" required class="styled-input">
 
         <label for="rubric-upload" class="file-label">🧾 Rubric file (.json, .docx, or .pdf):</label>
-        <label class="file-button">
-          <input type="file" id="rubric-upload" name="rubric" accept=".json,.docx,.pdf" required>
-          Choose File
-        </label>
+        <input type="file" id="rubric-upload" name="rubric" accept=".json,.docx,.pdf" required class="styled-input">
 
         {% if requires_persona %}
           <label for="persona-upload" class="file-label">👤 Persona Questionnaire (.docx or .pdf):</label>
-          <label class="file-button">
-            <input type="file" id="persona-upload" name="persona" accept=".docx,.pdf">
-            Choose File
-          </label>
+          <input type="file" id="persona-upload" name="persona" accept=".docx,.pdf" class="styled-input">
         {% endif %}
 
         <input id="submit-btn" type="submit" value="Submit for Grading">
