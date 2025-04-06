@@ -64,15 +64,25 @@
       display: block;
       margin-top: 1rem;
       text-align: left;
+      font-size: 1.05rem;
+      color: #1f3a54;
+    }
+    
+    form input[type="file"] {
+      display: block;
+      width: 100%;
+      padding: 0.75rem;
+      font-size: 1rem;
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      background-color: #f9f9f9;
+      cursor: pointer;
+      transition: border 0.3s ease;
+      margin-top: 0.75rem;
     }
 
-    form input[type="file"] {
-      width: 100%;
-      padding: 0.5rem;
-      margin-top: 0.5rem;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      box-sizing: border-box;
+    form input[type="file"]:hover {
+      border-color: #5ca198;
     }
 
     form input[type="submit"] {
@@ -121,6 +131,12 @@
   </style>
 </head>
 <body>
+  {% if session["tool_role"] == "student" %}
+    <h2 style="color: green; text-align: center;">🧑‍🎓 Student Tool Active</h2>
+  {% elif session["tool_role"] == "instructor" %}
+    <h2 style="color: red; text-align: center;">⚠️ Instructor Launched Student Tool</h2>
+  {% endif %}
+
   <div class="card">
     <div class="brand-header">
       <img src="/static/rubiqs-logo.png" alt="Rubiqs Logo" class="logo">
