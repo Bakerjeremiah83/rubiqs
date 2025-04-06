@@ -182,12 +182,24 @@ def grade_docx():
             rubric_text = "\n".join([para.text for para in doc.paragraphs])
             rubric_title = "Assignment"
             rubric_style = ""
-            rubric_total_points = 100  # Fallback
+
+            # 🧠 Extract total points if labeled
+            match = re.search(r'Total Points:\s*(\d+)', rubric_text)
+            if match:
+                rubric_total_points = int(match.group(1))
+            else:
+                rubric_total_points = 100  # fallback if not found
+
         elif rubric_filename.endswith(".pdf"):
             rubric_text = extract_pdf_text(BytesIO(rubric_file.read()))
             rubric_title = "Assignment"
             rubric_style = ""
-            rubric_total_points = 100  # Fallback
+            # 🧠 Extract total points if labeled
+            match = re.search(r'Total Points:\s*(\d+)', rubric_text)
+            if match:
+                rubric_total_points = int(match.group(1))
+            else:
+                rubric_total_points = 100  # fallback if not found
         else:
             return "❌ Unsupported rubric file type.", 400
         print(f"📋 Rubric extracted ({len(rubric_text)} characters)")
