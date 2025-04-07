@@ -105,6 +105,10 @@ def launch():
     except Exception as e:
         return f"❌ Could not fetch JWKS: {str(e)}", 400
 
+print("🧪 JWT HEADERS:", jwt.get_unverified_header(jwt_token))
+print("🧪 JWT PAYLOAD:", unverified)
+print("🧪 CLIENT_IDS from .env:", os.getenv("CLIENT_IDS"))
+
     try:
         aud = jwt.decode(
             jwt_token,
