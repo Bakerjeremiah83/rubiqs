@@ -73,6 +73,14 @@ def openid_configuration():
 def launch():
     print("🚀 /launch hit")
     jwt_token = request.form.get("id_token")
+    # 🔍 DEBUG: Print raw, unverified JWT issuer claim
+try:
+    unverified = jwt.decode(jwt_token, options={"verify_signature": False})
+    print("🔍 UNVERIFIED JWT ISS:", unverified.get("iss"))
+    print("🔍 PLATFORM_ISS from .env:", os.getenv("PLATFORM_ISS"))
+except Exception as e:
+    print("❌ Failed to decode unverified JWT:", str(e))
+
     if not jwt_token:
         return "❌ Error: No id_token (JWT) received in launch request.", 400
 
@@ -115,8 +123,6 @@ def launch():
             issuer=os.getenv("PLATFORM_ISS")
         )
         unverified = jwt.decode(jwt_token, options={"verify_signature": False})
-        print("🔍 UNVERIFIED JWT ISS:", unverified.get("iss"))
-        print("🔍 Your .env PLATFORM_ISS:", os.getenv("PLATFORM_ISS"))
 
          # ✅ ADD DEBUG HERE
         print("JWT Issuer:", decoded.get("iss"))
