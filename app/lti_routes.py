@@ -72,11 +72,13 @@ def openid_configuration():
 @lti.route("/launch", methods=["POST"])
 def launch():
     print("🚀 /launch hit")
+
     jwt_token = request.form.get("id_token")
+    print("🌍 DEBUG - PLATFORM_ISS =", os.getenv("PLATFORM_ISS"))
     if not jwt_token:
         return "❌ Error: No id_token (JWT) received in launch request.", 400
 
-        # ✅ DEBUG: Print unverified JWT ISS
+    # ✅ DEBUG: Print unverified JWT ISS
     try:
         unverified = jwt.decode(jwt_token, options={"verify_signature": False})
         print("🔍 UNVERIFIED JWT ISS:", unverified.get("iss"))
@@ -84,8 +86,8 @@ def launch():
     except Exception as e:
         print("❌ Failed to decode unverified JWT:", str(e))
 
-    # ✅ Everything BELOW this should be outside that try/except
     jwks_url = f"{os.getenv('PLATFORM_ISS')}/mod/lti/certs.php"
+    
     try:
         jwks_response = requests.get(jwks_url)
         jwks_response.raise_for_status()
