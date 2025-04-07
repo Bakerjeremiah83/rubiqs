@@ -114,6 +114,9 @@ def launch():
             audience=aud,
             issuer=os.getenv("PLATFORM_ISS")
         )
+         # ✅ ADD DEBUG HERE
+        🚀 JWT Issuer: https://f3ca-107-191-3-25.ngrok-free.app
+        ✅ Expected Issuer (PLATFORM_ISS): https://f3ca-107-191-3-25.ngrok-free.app
 
         print("✅ JWT verified")
         print(json.dumps(decoded, indent=2))
@@ -187,8 +190,6 @@ def grade_docx():
             match = re.search(r'Total Points:\s*(\d+)', rubric_text)
             if match:
                 rubric_total_points = int(match.group(1))
-            else:
-                rubric_total_points = 100  # fallback if not found
 
         elif rubric_filename.endswith(".pdf"):
             rubric_text = extract_pdf_text(BytesIO(rubric_file.read()))
@@ -198,8 +199,7 @@ def grade_docx():
             match = re.search(r'Total Points:\s*(\d+)', rubric_text)
             if match:
                 rubric_total_points = int(match.group(1))
-            else:
-                rubric_total_points = 100  # fallback if not found
+        
         else:
             return "❌ Unsupported rubric file type.", 400
         print(f"📋 Rubric extracted ({len(rubric_text)} characters)")
