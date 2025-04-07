@@ -115,8 +115,8 @@ def launch():
             issuer=os.getenv("PLATFORM_ISS")
         )
          # ✅ ADD DEBUG HERE
-        🚀 JWT Issuer: https://f3ca-107-191-3-25.ngrok-free.app
-        ✅ Expected Issuer (PLATFORM_ISS): https://f3ca-107-191-3-25.ngrok-free.app
+        print("JWT Issuer:", decoded.get("iss"))
+        print("Expected Issuer (PLATFORM_ISS):", os.getenv("PLATFORM_ISS"))
 
         print("✅ JWT verified")
         print(json.dumps(decoded, indent=2))
