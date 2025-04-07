@@ -114,6 +114,10 @@ def launch():
             audience=aud,
             issuer=os.getenv("PLATFORM_ISS")
         )
+        unverified = jwt.decode(jwt_token, options={"verify_signature": False})
+        print("🔍 UNVERIFIED JWT ISS:", unverified.get("iss"))
+        print("🔍 Your .env PLATFORM_ISS:", os.getenv("PLATFORM_ISS"))
+
          # ✅ ADD DEBUG HERE
         print("JWT Issuer:", decoded.get("iss"))
         print("Expected Issuer (PLATFORM_ISS):", os.getenv("PLATFORM_ISS"))
