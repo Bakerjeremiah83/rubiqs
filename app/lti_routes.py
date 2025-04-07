@@ -75,6 +75,7 @@ def launch():
 
     jwt_token = request.form.get("id_token")
     print("🌍 DEBUG - PLATFORM_ISS =", os.getenv("PLATFORM_ISS"))
+
     if not jwt_token:
         return "❌ Error: No id_token (JWT) received in launch request.", 400
 
@@ -87,7 +88,7 @@ def launch():
         print("❌ Failed to decode unverified JWT:", str(e))
 
     jwks_url = f"{os.getenv('PLATFORM_ISS')}/mod/lti/certs.php"
-    
+
     try:
         jwks_response = requests.get(jwks_url)
         jwks_response.raise_for_status()
@@ -105,11 +106,12 @@ def launch():
     except Exception as e:
         return f"❌ Could not fetch JWKS: {str(e)}", 400
 
-print("🧪 JWT HEADERS:", jwt.get_unverified_header(jwt_token))
-print("🧪 JWT PAYLOAD:", unverified)
-print("🧪 CLIENT_IDS from .env:", os.getenv("CLIENT_IDS"))
+    # ✅ DEBUG: Print before decoding with validation
+    print("🧪 JWT HEADERS:", jwt.get_unverified_header(jwt_token))
+    print("🧪 JWT PAYLOAD:", unverified)
+    print("🧪 CLIENT_IDS from .env:", os.getenv("CLIENT_IDS"))
 
-try:
+    try:
         aud = jwt.decode(
             jwt_token,
             key=public_key,
@@ -117,6 +119,7 @@ try:
             options={"verify_aud": False},
             issuer=os.getenv("PLATFORM_ISS")
         ).get("aud")
+
         client_ids = os.getenv("CLIENT_IDS", "")
         valid_client_ids = [id.strip() for id in client_ids.split(",") if id.strip()]
         if aud not in valid_client_ids:
@@ -129,22 +132,24 @@ try:
             audience=aud,
             issuer=os.getenv("PLATFORM_ISS")
         )
-        unverified = jwt.decode(jwt_token, options={"verify_signature": False})
 
-         # ✅ ADD DEBUG HERE
         print("JWT Issuer:", decoded.get("iss"))
         print("Expected Issuer (PLATFORM_ISS):", os.getenv("PLATFORM_ISS"))
-
         print("✅ JWT verified")
         print(json.dumps(decoded, indent=2))
+
         session["launch_data"] = json.loads(json.dumps(decoded))
         session["tool_role"] = "student"
+
     except InvalidTokenError as e:
         return f"❌ Invalid JWT signature: {str(e)}", 400
 
-        # ✅ Now continue with render_template and persona toggle logic
+    # ✅ Continue with render_template and persona logic
     requires_persona = False
-    assignment_title = decoded.get("https://purl.imsglobal.org/spec/lti/claim/resource_link", {}).get("title", "").strip().lower()
+    assignment_title = decoded.get(
+        "https://purl.imsglobal.org/spec/lti/claim/resource_link", {}
+    ).get("title", "").strip().lower()
+
     rubric_index_path = os.path.join("rubrics", "rubric_index.json")
     if os.path.exists(rubric_index_path):
         with open(rubric_index_path, "r") as f:
