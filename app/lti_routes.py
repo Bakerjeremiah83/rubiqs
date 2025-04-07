@@ -109,7 +109,7 @@ print("🧪 JWT HEADERS:", jwt.get_unverified_header(jwt_token))
 print("🧪 JWT PAYLOAD:", unverified)
 print("🧪 CLIENT_IDS from .env:", os.getenv("CLIENT_IDS"))
 
-    try:
+try:
         aud = jwt.decode(
             jwt_token,
             key=public_key,
