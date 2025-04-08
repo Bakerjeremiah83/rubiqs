@@ -216,25 +216,34 @@
   
     <form id="grade-form" action="/grade-docx" method="POST" enctype="multipart/form-data" onsubmit="showLoading()">
       <label for="file-upload" class="file-label">📄 Assignment file (.docx or .pdf):</label>
-      <label class="file-button">
-        <input type="file" id="file-upload" name="file" accept=".docx,.pdf" required>
-        Choose File
-      </label>
-      <div id="file-label-display-1" style="margin-top: 0.25rem; font-size: 0.9rem; color: #555;"></div>
+      <div style="display: flex; align-items: center; gap: 1rem; justify-content: flex-start;">
+        <label class="file-button" style="margin: 0;">
+          <input type="file" id="file-upload" name="file" accept=".docx,.pdf" required onchange="showFileName('file-upload', 'file-label-display-1')">
+          Choose File
+        </label>
+        <div id="file-label-display-1" style="font-size: 0.9rem; color: #555;"></div>
+      </div>
     
       {% if requires_persona %}
         <label for="persona-upload" class="file-label">👤 Persona Questionnaire (.docx or .pdf):</label>
-        <label class="file-button">
-          <input type="file" id="persona-upload" name="persona" accept=".docx,.pdf">
-          Choose File
-        </label>
-        <div id="file-label-display-3" style="margin-top: 0.25rem; font-size: 0.9rem; color: #555;"></div>
+        <div style="display: flex; align-items: center; gap: 1rem; justify-content: flex-start;">
+          <label class="file-button" style="margin: 0;">
+            <input type="file" id="persona-upload" name="persona" accept=".docx,.pdf" onchange="showFileName('persona-upload', 'file-label-display-2')">
+            Choose File
+          </label>
+          <div id="file-label-display-2" style="font-size: 0.9rem; color: #555;"></div>
+        </div>
       {% endif %}
     
       <input id="submit-btn" type="submit" value="Submit for Grading">
-    </form>
+    </form>    
     
     <script>
+      function showLoading() {
+        document.getElementById('submit-btn').style.display = 'none';
+        document.getElementById('loading').style.display = 'block';
+      }
+    
       function showFileName(inputId, labelId) {
         const input = document.getElementById(inputId);
         const label = document.getElementById(labelId);
@@ -244,7 +253,7 @@
           label.innerText = '';
         }
       }
-    </script>
+    </script>    
     
 </body>
 </html>
