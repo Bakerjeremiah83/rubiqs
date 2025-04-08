@@ -174,6 +174,11 @@
     </div>
   
     <div class="welcome">
+      {% if assignment_config %}
+  <div style="background: #eef7f6; padding: 1rem; border-left: 4px solid #5ca198; margin-bottom: 1.5rem; border-radius: 6px;">
+    📌 You are submitting to: <strong>{{ assignment_config.assignment_title }}</strong>
+  </div>
+{% endif %}
       Upload your work and let <strong>Rubiqs</strong> do the rest.
     </div>
     
@@ -211,32 +216,19 @@
   
     <form id="grade-form" action="/grade-docx" method="POST" enctype="multipart/form-data" onsubmit="showLoading()">
       <label for="file-upload" class="file-label">📄 Assignment file (.docx or .pdf):</label>
-      <div style="display: flex; align-items: center; gap: 1rem;">
-        <label class="file-button" style="margin: 0;">
-          <input type="file" id="file-upload" name="file" accept=".docx,.pdf" required onchange="showFileName('file-upload', 'file-label-display-1')">
-          Choose File
-        </label>
-        <div id="file-label-display-1" style="font-size: 0.9rem; color: #555;"></div>
-      </div>
-    
-      <label for="rubric-upload" class="file-label">🧾 Rubric file (.json, .docx, or .pdf):</label>
-      <div style="display: flex; align-items: center; gap: 1rem;">
-        <label class="file-button" style="margin: 0;">
-          <input type="file" id="rubric-upload" name="rubric" accept=".json,.docx,.pdf" required onchange="showFileName('rubric-upload', 'file-label-display-2')">
-          Choose File
-        </label>
-        <div id="file-label-display-2" style="font-size: 0.9rem; color: #555;"></div>
-      </div>
+      <label class="file-button">
+        <input type="file" id="file-upload" name="file" accept=".docx,.pdf" required>
+        Choose File
+      </label>
+      <div id="file-label-display-1" style="margin-top: 0.25rem; font-size: 0.9rem; color: #555;"></div>
     
       {% if requires_persona %}
         <label for="persona-upload" class="file-label">👤 Persona Questionnaire (.docx or .pdf):</label>
-        <div style="display: flex; align-items: center; gap: 1rem;">
-          <label class="file-button" style="margin: 0;">
-            <input type="file" id="persona-upload" name="persona" accept=".docx,.pdf" onchange="showFileName('persona-upload', 'file-label-display-3')">
-            Choose File
-          </label>
-          <div id="file-label-display-3" style="font-size: 0.9rem; color: #555;"></div>
-        </div>
+        <label class="file-button">
+          <input type="file" id="persona-upload" name="persona" accept=".docx,.pdf">
+          Choose File
+        </label>
+        <div id="file-label-display-3" style="margin-top: 0.25rem; font-size: 0.9rem; color: #555;"></div>
       {% endif %}
     
       <input id="submit-btn" type="submit" value="Submit for Grading">
