@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Rubiqs | Assignment Config</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: linear-gradient(to right, #f1e2c4, #5ca198, #1f3a54);
+      color: #333;
+      margin: 0;
+      padding: 2rem;
+      display: flex;
+      justify-content: center;
+    }
+
+    .card {
+      background: white;
+      padding: 2rem;
+      max-width: 900px;
+      width: 100%;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .brand-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      margin-bottom: 2rem;
+    }
+
+    .logo {
+      max-height: 80px;
+      width: auto;
+      margin-right: 1.5rem;
+    }
+
+    .brand-text h1 {
+      margin: 0;
+      font-size: 1.8rem;
+      color: #2c3e50;
+    }
+
+    .brand-text .tagline {
+      font-size: 1rem;
+      color: #7f8c8d;
+    }
+
+    .brand-text .byline {
+      font-size: 0.9rem;
+      color: #aaa;
+    }
+
+    .assignment-title {
+      font-size: 1.5rem;
+      font-weight: bold;
+      text-align: center;
+      color: #1f3a54;
+      flex: 1 100%;
+      margin-top: 1rem;
+    }
+
+    form label {
+      display: block;
+      margin-top: 1rem;
+      font-weight: bold;
+      color: #1f3a54;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 0.65rem;
+      margin-top: 0.25rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 1rem;
+      box-sizing: border-box;
+    }
+
+    input[type="file"] {
+      margin-top: 0.5rem;
+    }
+
+    .form-check {
+      margin-top: 1rem;
+      display: flex;
+      align-items: center;
+    }
+
+    .form-check-input {
+      margin-right: 0.5rem;
+    }
+
+    form button[type="submit"] {
+      display: block;
+      margin: 2rem auto 0 auto;
+      background: #1f3a54;
+      color: white;
+      padding: 0.85rem 2rem;
+      font-size: 1rem;
+      font-weight: bold;
+      border: none;
+      border-radius: 40px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    form button[type="submit"]:hover {
+      background: #1f2a36;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    table {
+      margin-top: 1rem;
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95rem;
+    }
+
+    th, td {
+      border: 1px solid #dee2e6;
+      padding: 0.75rem;
+      text-align: center;
+    }
+
+    thead {
+      background-color: #f1f1f1;
+    }
+
+    .collapse-toggle {
+      background: none;
+      border: none;
+      color: #1f3a54;
+      font-weight: bold;
+      cursor: pointer;
+      text-decoration: underline;
+      margin-top: 2rem;
+      font-size: 1rem;
+    }
+  </style>
+  <script>
+    function toggleConfigTable() {
+      const section = document.getElementById("config-section");
+      section.style.display = section.style.display === "none" ? "block" : "none";
+    }
+
+    function limitWords(textarea, maxWords) {
+      const words = textarea.value.split(/\s+/);
+      if (words.length > maxWords) {
+        textarea.value = words.slice(0, maxWords).join(" ");
+      }
+    }
+  </script>
+</head>
+<body>
+  <div class="card">
+    <div class="brand-header">
+      <div style="display: flex; align-items: center;">
+        <img src="/static/rubiqs-logo.png" alt="Rubiqs Logo" class="logo">
+        <div class="brand-text">
+          <h1>Rubiqs</h1>
+          <div class="tagline">AI-Powered Mastery</div>
+          <div class="byline">by J. Baker Design</div>
+        </div>
+      </div>
+      <div class="assignment-title">Assignment Configuration</div>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data">
+      <label for="assignment_title">Assignment Title</label>
+      <input type="text" id="assignment_title" name="assignment_title" required>
+
+      <label for="rubric_file">Upload Rubric File (.json, .docx, .pdf)</label>
+      <input type="file" id="rubric_file" name="rubric_file" accept=".json,.docx,.pdf" required>
+
+      <label for="total_points">Total Points</label>
+      <input type="number" id="total_points" name="total_points" placeholder="e.g., 100" min="1" required>
+
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" name="instructor_approval" id="instructor_approval">
+        <label class="form-check-label" for="instructor_approval">Requires Instructor Approval</label>
+      </div>
+
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" name="requires_persona" id="requires_persona">
+        <label class="form-check-label" for="requires_persona">Requires Persona (Scenario-Based)</label>
+      </div>
+
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" name="faith_integration" id="faith_integration">
+        <label class="form-check-label" for="faith_integration">Enable Faith Integration (LDS)</label>
+      </div>
+
+      <label for="grading_difficulty">Grading Difficulty</label>
+      <select name="grading_difficulty" id="grading_difficulty" class="form-select">
+        <option value="balanced">Balanced</option>
+        <option value="lenient">Lenient</option>
+        <option value="rigorous">Rigorous</option>
+      </select>
+
+      <label for="student_level">Student Grade Level</label>
+      <select name="student_level" id="student_level" class="form-select">
+        <option value="college">College</option>
+        <option value="high school">High School</option>
+        <option value="middle school">Middle School</option>
+      </select>
+
+      <label for="feedback_tone">Feedback Tone</label>
+      <input type="text" name="feedback_tone" id="feedback_tone" placeholder="e.g., supportive, direct, faith-centered" class="form-control">
+
+      <label for="ai_notes">Additional Notes for AI (max 300 words)</label>
+      <textarea name="ai_notes" id="ai_notes" rows="4" maxlength="1800" oninput="limitWords(this, 300)"></textarea>
+
+      <button type="submit">💾 Save Configuration</button>
+    </form>
+
+    <button class="collapse-toggle" onclick="toggleConfigTable()">📂 Toggle Existing Assignment Configurations</button>
+
+    <div id="config-section" style="display: none;">
+      <h4>📋 Existing Assignment Configurations</h4>
+      <table>
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Total Points</th>
+            <th>Approval</th>
+            <th>Persona</th>
+            <th>Faith</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for config in rubric_index %}
+            <tr>
+              <td>{{ config.assignment_title }}</td>
+              <td>{{ config.total_points }}</td>
+              <td>{{ 'Yes' if config.instructor_approval else 'No' }}</td>
+              <td>{{ 'Yes' if config.requires_persona else 'No' }}</td>
+              <td>{{ 'Yes' if config.faith_integration else 'No' }}</td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="5">No configurations yet.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,19 +1,14 @@
-<!-- File: templates/review_feedback.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Review Pending Feedback | Rubiqs</title>
+  <title>Rubiqs | Review Pending Feedback</title>
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, sans-serif;
-      background: linear-gradient(to right, #f1e2c4, #de5c4b, #5ca198, #1f3a54);
+      background: linear-gradient(to right, #f1e2c4, #5ca198, #1f3a54);
       padding: 2rem;
       color: #333;
-    }
-
-    h1 {
-      color: #1f3a54;
     }
 
     .entry {
@@ -22,6 +17,28 @@
       border-radius: 10px;
       box-shadow: 0 6px 15px rgba(0,0,0,0.08);
       margin-bottom: 2rem;
+    }
+
+    .brand-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .brand-header img {
+      max-height: 60px;
+      margin-right: 1rem;
+    }
+
+    .brand-text h2 {
+      margin: 0;
+      font-size: 1.8rem;
+      color: #1f3a54;
+    }
+
+    .brand-text .tagline {
+      font-size: 0.95rem;
+      color: #7f8c8d;
     }
 
     label {
@@ -57,11 +74,18 @@
   </style>
 </head>
 <body>
-    
-  <h1>Review Pending Feedback</h1>
 
   {% if current_review %}
     <div class="entry">
+      <!-- Rubiqs logo and heading inside the white box -->
+      <div class="brand-header">
+        <img src="/static/rubiqs-logo.png" alt="Rubiqs Logo">
+        <div class="brand-text">
+          <h2>Review Pending Feedback</h2>
+          <div class="tagline">AI-Powered Mastery · by J. Baker Design</div>
+        </div>
+      </div>
+
       <form method="POST">
         <input type="hidden" name="student_id" value="{{ current_review.student_id }}">
         <input type="hidden" name="assignment_title" value="{{ current_review.assignment_title }}">

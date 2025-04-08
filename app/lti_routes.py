@@ -1,7 +1,9 @@
-from flask import request, jsonify, redirect, Blueprint, session, render_template
+from flask import (
+    request, jsonify, redirect, Blueprint, session,
+    render_template, send_file
+)
 import json
 import os
-import uuid
 import jwt
 import requests
 from jwt.exceptions import InvalidTokenError
@@ -12,6 +14,16 @@ from datetime import datetime
 from requests_oauthlib import OAuth1Session
 import re
 from pdfminer.high_level import extract_text as extract_pdf_text
+
+def load_assignment_config(assignment_title):
+    rubric_index_path = os.path.join("rubrics", "rubric_index.json")
+    if os.path.exists(rubric_index_path):
+        with open(rubric_index_path, "r") as f:
+            configs = json.load(f)
+        for config in configs:
+            if config["assignment_title"].strip().lower() == assignment_title.strip().lower():
+                return config
+    return None
 
 def get_total_points_from_rubric(rubric):
     return sum(
@@ -148,36 +160,54 @@ def launch():
     requires_persona = False
     assignment_title = decoded.get(
         "https://purl.imsglobal.org/spec/lti/claim/resource_link", {}
-    ).get("title", "").strip().lower()
+    ).get("title", "").strip()
 
-    rubric_index_path = os.path.join("rubrics", "rubric_index.json")
-    if os.path.exists(rubric_index_path):
-        with open(rubric_index_path, "r") as f:
-            rubric_index = json.load(f)
-            for item in rubric_index:
-                if item["assignment_title"].strip().lower() == assignment_title and item.get("requires_persona"):
-                    requires_persona = True
-                    break
+    assignment_config = load_assignment_config(assignment_title)
+    requires_persona = assignment_config.get("requires_persona", False) if assignment_config else False
 
     return render_template(
         "launch.html",
-        activity_name=decoded.get("https://purl.imsglobal.org/spec/lti/claim/resource_link", {}).get("title", "Assignment"),
+        activity_name=assignment_title,
         user_name=decoded.get("given_name", "Student"),
         user_roles=decoded.get("https://purl.imsglobal.org/spec/lti/claim/roles", []),
         requires_persona=requires_persona
+    )
+@lti.route("/student-test", methods=["GET"])
+def student_test_upload():
+    # Simulate a student launch with mock data
+    session["tool_role"] = "student"
+    session["launch_data"] = {
+        "https://purl.imsglobal.org/spec/lti/claim/resource_link": {
+            "title": "Test Assignment"
+        },
+        "https://purl.imsglobal.org/spec/lti/claim/roles": ["Student"],
+        "given_name": "Test User"
+    }
+
+    assignment_config = load_assignment_config("Test Assignment")
+
+    return render_template(
+        "launch.html",
+        user_roles=["Student"],
+        requires_persona=assignment_config.get("requires_persona", False) if assignment_config else False,
+        assignment_config=assignment_config
     )
 
 @lti.route("/grade-docx", methods=["POST"])
 def grade_docx():
     print("📥 /grade-docx hit")
+
+    # 1. Detect if prompt preview is requested
+    confirmed = request.form.get("confirmed_prompt") == "true"
+    show_preview = request.form.get("show_prompt") == "on" and not confirmed
+
+    # 2. Extract uploaded files
     file = request.files.get("file")
-    rubric_file = request.files.get("rubric")
     persona_file = request.files.get("persona")
 
-    if not file or not rubric_file:
-        return "❌ Assignment and rubric files are required.", 400
+    if not file:
+        return "❌ Assignment file is required.", 400
 
-    # Extract student submission text
     try:
         filename = file.filename.lower()
         if filename.endswith(".docx"):
@@ -186,49 +216,11 @@ def grade_docx():
         elif filename.endswith(".pdf"):
             full_text = extract_pdf_text(BytesIO(file.read()))
         else:
-            return "❌ Unsupported assignment file type.", 400
-        print(f"📄 Assignment text extracted ({len(full_text)} characters)")
+            return "❌ Unsupported file type.", 400
     except Exception as e:
-        return f"❌ Failed to extract assignment: {str(e)}", 500
+        return f"❌ Failed to extract text: {str(e)}", 500
 
-    # Extract rubric text and metadata
-    try:
-        rubric_filename = rubric_file.filename.lower()
-        if rubric_filename.endswith(".json"):
-            rubric_json = json.load(rubric_file)
-            rubric_total_points = get_total_points_from_rubric(rubric_json)
-            rubric_text = "\n".join(
-                [f"- {c['description']}" for c in rubric_json.get("criteria", [])]
-            )
-            rubric_title = rubric_json.get("assignment_title", "Assignment")
-            rubric_style = rubric_json.get("style_guidance", "")
-        elif rubric_filename.endswith(".docx"):
-            doc = Document(rubric_file)
-            rubric_text = "\n".join([para.text for para in doc.paragraphs])
-            rubric_title = "Assignment"
-            rubric_style = ""
-
-            # 🧠 Extract total points if labeled
-            match = re.search(r'Total Points:\s*(\d+)', rubric_text)
-            if match:
-                rubric_total_points = int(match.group(1))
-
-        elif rubric_filename.endswith(".pdf"):
-            rubric_text = extract_pdf_text(BytesIO(rubric_file.read()))
-            rubric_title = "Assignment"
-            rubric_style = ""
-            # 🧠 Extract total points if labeled
-            match = re.search(r'Total Points:\s*(\d+)', rubric_text)
-            if match:
-                rubric_total_points = int(match.group(1))
-        
-        else:
-            return "❌ Unsupported rubric file type.", 400
-        print(f"📋 Rubric extracted ({len(rubric_text)} characters)")
-    except Exception as e:
-        return f"❌ Failed to extract rubric: {str(e)}", 500
-
-    # Extract persona/reference scenario if available
+    # 3. Extract persona if provided
     reference_data = ""
     if persona_file:
         try:
@@ -238,27 +230,59 @@ def grade_docx():
                 reference_data = "\n".join([para.text for para in doc.paragraphs])
             elif persona_filename.endswith(".pdf"):
                 reference_data = extract_pdf_text(BytesIO(persona_file.read()))
-            print(f"👤 Persona extracted ({len(reference_data)} characters)")
         except Exception as e:
             return f"❌ Failed to extract persona file: {str(e)}", 500
 
-    # Compose GPT prompt
-    prompt = f"""
-You are a helpful AI grader for a college-level course.
+    # 4. Load assignment config
+    launch_data = session.get("launch_data", {})
+    assignment_title = launch_data.get("https://purl.imsglobal.org/spec/lti/claim/resource_link", {}).get("title", "").strip()
+    assignment_config = load_assignment_config(assignment_title)
 
-Evaluate the student submission below using the following rubric:
+    if not assignment_config:
+        return f"❌ No configuration found for assignment: {assignment_title}", 400
+
+    rubric_path = os.path.join("rubrics", assignment_config.get("rubric_file", ""))
+    rubric_total_points = assignment_config.get("total_points", 100)
+    grading_difficulty = assignment_config.get("grading_difficulty", "balanced")
+    student_level = assignment_config.get("student_level", "college")
+    feedback_tone = assignment_config.get("feedback_tone", "supportive")
+    ai_notes = assignment_config.get("ai_notes", "")
+
+    try:
+        if rubric_path.endswith(".json"):
+            with open(rubric_path, "r") as f:
+                rubric_json = json.load(f)
+            rubric_text = "\n".join([f"- {c['description']}" for c in rubric_json.get("criteria", [])])
+        elif rubric_path.endswith(".docx"):
+            doc = Document(rubric_path)
+            rubric_text = "\n".join([para.text for para in doc.paragraphs])
+        elif rubric_path.endswith(".pdf"):
+            rubric_text = extract_pdf_text(rubric_path)
+        else:
+            rubric_text = "(Rubric text could not be loaded.)"
+    except Exception as e:
+        return f"❌ Failed to load rubric file: {str(e)}", 500
+
+    # 5. Compose GPT prompt
+    prompt = f"""
+You are a helpful AI grader.
+
+Assignment Title: {assignment_title}
+Grading Difficulty: {grading_difficulty}
+Student Level: {student_level}
+Feedback Tone: {feedback_tone}
+Total Points: {rubric_total_points}
 
 Rubric:
 {rubric_text}
-
-Style Guidance: {rubric_style}
 """
+    if ai_notes:
+        prompt += f"\nInstructor Notes:\n{ai_notes}\n"
     if reference_data:
         prompt += f"\nReference Scenario:\n{reference_data}\n"
 
     prompt += f"""
-Assignment Submission:
-
+Student Submission:
 ---
 {full_text}
 ---
@@ -266,139 +290,49 @@ Assignment Submission:
 Return your response in this format:
 
 Score: <number from 0 to {rubric_total_points}>
-Feedback: <detailed, helpful feedback>
+Feedback: <detailed, encouraging, and helpful feedback>
 """
 
-    # Call OpenAI
+    # 6. Show prompt preview first (if requested)
+    if show_preview:
+        return render_template(
+            "prompt_preview.html",
+            gpt_prompt=prompt.strip(),
+            hidden_fields={
+                "confirmed_prompt": "true",
+                "file_text": full_text,
+                "assignment_title": assignment_title,
+                "reference_data": reference_data,
+            }
+        )
+
+    # 7. Call GPT if prompt is confirmed
     try:
         openai.api_key = os.getenv("OPENAI_API_KEY")
-        if not openai.api_key:
-            print("❌ OPENAI_API_KEY is missing")
-        else:
-            print("✅ OPENAI_API_KEY loaded")
-
         response = openai.ChatCompletion.create(
             model="gpt-4",
             messages=[{"role": "user", "content": prompt.strip()}],
             temperature=0.5,
             max_tokens=1000
         )
-
         output = response["choices"][0]["message"]["content"]
-        print("✅ GPT response received")
-
         score_match = re.search(r"Score:\s*(\d{1,3})", output)
         score = int(score_match.group(1)) if score_match else 0
-
         feedback_match = re.search(r"Feedback:\s*(.+)", output, re.DOTALL)
         feedback = feedback_match.group(1).strip() if feedback_match else output.strip()
+
+        log_gpt_interaction(assignment_title, prompt, feedback, score)
 
     except Exception as e:
         return f"❌ GPT error: {str(e)}", 500
 
-    # Check if instructor approval is required
-    launch_data = session.get("launch_data", {})
-    assignment_title = launch_data.get("https://purl.imsglobal.org/spec/lti/claim/resource_link", {}).get("title", "").strip().lower()
-    rubric_index_path = os.path.join("rubrics", "rubric_index.json")
-    requires_approval = False
-
-    if os.path.exists(rubric_index_path):
-        with open(rubric_index_path, "r") as f:
-            rubric_index = json.load(f)
-            for item in rubric_index:
-                if item["assignment_title"].strip().lower() == assignment_title and item.get("instructor_approval"):
-                    requires_approval = True
-                    break
-
-    if requires_approval:
-        print("📥 Saving grade to pending_reviews.json")
-        pending_path = os.path.join("rubrics", "pending_reviews.json")
-        pending = []
-        if os.path.exists(pending_path):
-            with open(pending_path, "r") as f:
-                pending = json.load(f)
-
-        pending.append({
-            "assignment_title": assignment_title,
-            "score": score,
-            "feedback": feedback,
-            "student_id": launch_data.get("sub"),
-            "timestamp": datetime.utcnow().isoformat() + "Z"
-        })
-
-        with open(pending_path, "w") as f:
-            json.dump(pending, f, indent=2)
-
-        return render_template("feedback.html", score=score, feedback=feedback, rubric_total_points=rubric_total_points)
-
-    # Auto-post or display feedback
-    return render_template("feedback.html", score=score, feedback=feedback, rubric_total_points=rubric_total_points)
-
-@lti.route("/dashboard-launch", methods=["POST"])
-def dashboard_launch():
-    print("🚀 /dashboard-launch hit")
-    jwt_token = request.form.get("id_token")
-    if not jwt_token:
-        return "❌ No id_token provided.", 400
-
-    # 🔐 Step 1: Fetch the JWKS (public keys) from your LMS
-    jwks_url = f"{os.getenv('PLATFORM_ISS')}/mod/lti/certs.php"
-    try:
-        jwks_response = requests.get(jwks_url)
-        jwks_response.raise_for_status()
-        jwks = jwks_response.json()
-        unverified_header = jwt.get_unverified_header(jwt_token)
-        kid = unverified_header.get("kid")
-        public_key = None
-
-        for key in jwks.get("keys", []):
-            if key.get("kid") == kid:
-                public_key = jwt.algorithms.RSAAlgorithm.from_jwk(json.dumps(key))
-                break
-
-        if not public_key:
-            return "❌ Public key not found.", 400
-
-    except Exception as e:
-        return f"❌ JWKS fetch failed: {str(e)}", 400
-
-    # ✅ Step 2: Decode the JWT
-    try:
-        aud = jwt.decode(
-            jwt_token,
-            key=public_key,
-            algorithms=["RS256"],
-            options={"verify_aud": False},
-            issuer=os.getenv("PLATFORM_ISS")
-        ).get("aud")
-
-        client_ids = os.getenv("CLIENT_IDS", "")
-        valid_client_ids = [id.strip() for id in client_ids.split(",") if id.strip()]
-
-        print("🔐 Valid client IDs:", valid_client_ids)
-        print("🔐 Received aud:", aud)
-
-        if aud not in valid_client_ids:
-            return f"❌ JWT validation error: Audience '{aud}' not allowed.", 403
-
-        decoded = jwt.decode(
-            jwt_token,
-            key=public_key,
-            algorithms=["RS256"],
-            audience=aud,
-            issuer=os.getenv("PLATFORM_ISS")
-        )
-
-        print("✅ Dashboard launch JWT verified")
-        print(json.dumps(decoded, indent=2))
-
-        session["launch_data"] = json.loads(json.dumps(decoded))
-        session["tool_role"] = "instructor"
-
-    except Exception as e:
-        return f"❌ JWT validation error: {str(e)}", 400
-
-    return redirect("/review-feedback")
+    return render_template(
+        "feedback.html",
+        score=score,
+        feedback=feedback,
+        rubric_total_points=rubric_total_points,
+        user_roles=launch_data.get("https://purl.imsglobal.org/spec/lti/claim/roles", [])
+    )
 
 @lti.route("/review-feedback", methods=["GET", "POST"])
 def review_feedback():
@@ -540,3 +474,273 @@ def post_grade():
     rubric_total_points=rubric_total_points,
     user_roles=launch_data.get("https://purl.imsglobal.org/spec/lti/claim/roles", [])
 )
+
+@lti.route("/assignment-config", methods=["GET", "POST"])
+def assignment_config():
+    session["tool_role"] = "instructor"  # TEMP: for local testing
+    tool_role = session.get("tool_role")
+    if tool_role != "instructor":
+        return "❌ Access denied. Instructors only.", 403
+
+    rubric_index_path = os.path.join("rubrics", "rubric_index.json")
+    rubric_folder = os.path.join("rubrics")
+
+    if not os.path.exists(rubric_index_path):
+        rubric_index = []
+    else:
+        with open(rubric_index_path, "r") as f:
+            rubric_index = json.load(f)
+
+    # Handle new assignment trigger
+    if request.method == "GET" and request.args.get("new") == "1":
+        rubric_index.insert(0, {
+            "assignment_title": "",
+            "rubric_file": "",
+            "total_points": 100,
+            "instructor_approval": False,
+            "requires_persona": False,
+            "faith_integration": False,
+            "grading_difficulty": "balanced",
+            "student_level": "college",
+            "feedback_tone": "supportive",
+            "ai_notes": ""
+        })
+        with open(rubric_index_path, "w") as f:
+            json.dump(rubric_index, f, indent=2)
+
+    if request.method == "POST":
+        # 📥 Get form fields
+        assignment_title = request.form.get("assignment_title", "").strip()
+        total_points = int(request.form.get("total_points", "100"))
+        instructor_approval = request.form.get("instructor_approval") == "on"
+        requires_persona = request.form.get("requires_persona") == "on"
+        faith_integration = request.form.get("faith_integration") == "on"
+        grading_difficulty = request.form.get("grading_difficulty", "balanced")
+        student_level = request.form.get("student_level", "college")
+        feedback_tone = request.form.get("feedback_tone", "").strip()
+        ai_notes = request.form.get("ai_notes", "").strip()
+
+        rubric_file = request.files.get("rubric_file")
+        saved_rubric_filename = None
+
+        if rubric_file:
+            safe_name = f"{assignment_title.lower().replace(' ', '_')}_{rubric_file.filename}"
+            rubric_path = os.path.join(rubric_folder, safe_name)
+            rubric_file.save(rubric_path)
+            saved_rubric_filename = safe_name
+
+        updated = False
+        for entry in rubric_index:
+            if entry["assignment_title"].lower() == assignment_title.lower():
+                entry.update({
+                    "rubric_file": saved_rubric_filename,
+                    "total_points": total_points,
+                    "instructor_approval": instructor_approval,
+                    "requires_persona": requires_persona,
+                    "faith_integration": faith_integration,
+                    "grading_difficulty": grading_difficulty,
+                    "student_level": student_level,
+                    "feedback_tone": feedback_tone,
+                    "ai_notes": ai_notes
+                })
+                updated = True
+                break
+
+        if not updated:
+            rubric_index.append({
+                "assignment_title": assignment_title,
+                "rubric_file": saved_rubric_filename,
+                "total_points": total_points,
+                "instructor_approval": instructor_approval,
+                "requires_persona": requires_persona,
+                "faith_integration": faith_integration,
+                "grading_difficulty": grading_difficulty,
+                "student_level": student_level,
+                "feedback_tone": feedback_tone,
+                "ai_notes": ai_notes
+            })
+
+        with open(rubric_index_path, "w") as f:
+            json.dump(rubric_index, f, indent=2)
+
+    return render_template("assignment_config.html", rubric_index=rubric_index)
+
+@lti.route("/test-grader", methods=["GET", "POST"])
+def test_grader():
+    rubric_index_path = os.path.join("rubrics", "rubric_index.json")
+    rubric_index = []
+
+    if os.path.exists(rubric_index_path):
+        with open(rubric_index_path, "r") as f:
+            rubric_index = json.load(f)
+
+    selected_config = None
+    gpt_prompt = ""
+    gpt_feedback = ""
+    gpt_score = None
+
+    if request.method == "POST":
+        assignment_title = request.form.get("assignment_title")
+        submission_text = request.form.get("submission_text", "").strip()
+
+        selected_config = next((cfg for cfg in rubric_index if cfg["assignment_title"] == assignment_title), None)
+
+        if not selected_config:
+            return "❌ No config found for that assignment.", 400
+
+        rubric_text = ""
+        rubric_path = os.path.join("rubrics", selected_config.get("rubric_file", ""))
+        try:
+            if rubric_path.endswith(".json"):
+                with open(rubric_path, "r") as f:
+                    rubric_json = json.load(f)
+                rubric_text = "\n".join([f"- {c['description']}" for c in rubric_json.get("criteria", [])])
+            elif rubric_path.endswith(".docx"):
+                doc = Document(rubric_path)
+                rubric_text = "\n".join([para.text for para in doc.paragraphs])
+            elif rubric_path.endswith(".pdf"):
+                rubric_text = extract_pdf_text(rubric_path)
+        except:
+            rubric_text = "(Unable to load rubric.)"
+
+        prompt = f"""
+You are a helpful AI grader.
+
+Assignment Title: {assignment_title}
+Grading Difficulty: {selected_config.get("grading_difficulty")}
+Student Level: {selected_config.get("student_level")}
+Feedback Tone: {selected_config.get("feedback_tone")}
+Total Points: {selected_config.get("total_points")}
+
+Rubric:
+{rubric_text}
+"""
+        if selected_config.get("ai_notes"):
+            prompt += f"\nInstructor Notes:\n{selected_config['ai_notes']}\n"
+
+        prompt += f"""
+Student Submission:
+---
+{submission_text}
+---
+
+Return your response in this format:
+
+Score: <number from 0 to {selected_config.get("total_points")}>
+Feedback: <detailed, helpful feedback>
+"""
+
+        gpt_prompt = prompt.strip()
+
+        try:
+            openai.api_key = os.getenv("OPENAI_API_KEY")
+            response = openai.ChatCompletion.create(
+                model="gpt-4",
+                messages=[{"role": "user", "content": gpt_prompt}],
+                temperature=0.5,
+                max_tokens=1000
+            )
+            output = response["choices"][0]["message"]["content"]
+            score_match = re.search(r"Score:\s*(\d{1,3})", output)
+            gpt_score = int(score_match.group(1)) if score_match else None
+            feedback_match = re.search(r"Feedback:\s*(.+)", output, re.DOTALL)
+            gpt_feedback = feedback_match.group(1).strip() if feedback_match else output.strip()
+
+            log_gpt_interaction(assignment_title, gpt_prompt, gpt_feedback, gpt_score)
+        except Exception as e:
+            gpt_feedback = f"❌ GPT error: {str(e)}"
+
+    return render_template(
+        "test_grader.html",
+        rubric_index=rubric_index,
+        selected_config=selected_config,
+        gpt_prompt=gpt_prompt,
+        gpt_feedback=gpt_feedback,
+        gpt_score=gpt_score
+    )
+@lti.route("/admin-dashboard", methods=["GET"])
+def admin_dashboard():
+    rubric_index_path = os.path.join("rubrics", "rubric_index.json")
+    rubric_index = []
+
+    if os.path.exists(rubric_index_path):
+        with open(rubric_index_path, "r") as f:
+            rubric_index = json.load(f)
+
+    return render_template("admin_dashboard.html", rubric_index=rubric_index)
+
+@lti.route("/export-configs", methods=["GET"])
+def export_configs():
+    try:
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        rubric_path = os.path.join(base_dir, "..", "rubrics", "rubric_index.json")
+
+        print("🧾 Attempting to export:", rubric_path)
+
+        if not os.path.exists(rubric_path):
+            return "No configuration file found.", 404
+
+        return send_file(
+            rubric_path,
+            mimetype="application/json",
+            as_attachment=True,
+            download_name="rubiqs_assignment_configs.json"
+        )
+    except Exception as e:
+        print("❌ EXPORT ERROR:", str(e))
+        return f"Export failed: {str(e)}", 500
+    
+@lti.route("/update-config", methods=["POST"])
+def update_config():
+    rubric_index_path = os.path.join("rubrics", "rubric_index.json")
+    assignment_title = request.form.get("assignment_title")
+    total_points = int(request.form.get("total_points", 100))
+    ai_notes = request.form.get("ai_notes", "").strip()
+    grading_difficulty = request.form.get("grading_difficulty", "balanced")
+    student_level = request.form.get("student_level", "college")
+    faith_integration = request.form.get("faith_integration") == "on"
+
+    if not os.path.exists(rubric_index_path):
+        return "Config file missing", 404
+
+    with open(rubric_index_path, "r") as f:
+        rubric_index = json.load(f)
+
+    for entry in rubric_index:
+        if entry["assignment_title"] == assignment_title:
+            entry["total_points"] = total_points
+            entry["ai_notes"] = ai_notes
+            entry["grading_difficulty"] = grading_difficulty
+            entry["student_level"] = student_level
+            entry["faith_integration"] = faith_integration
+
+    with open(rubric_index_path, "w") as f:
+        json.dump(rubric_index, f, indent=2)
+
+    return redirect("/admin-dashboard")
+
+def log_gpt_interaction(assignment_title, prompt, feedback, score=None):
+    log_path = os.path.join("logs", "prompt_logs.json")
+    os.makedirs("logs", exist_ok=True)
+
+    log_entry = {
+        "assignment_title": assignment_title,
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "prompt": prompt,
+        "feedback": feedback,
+        "score": score
+    }
+
+    logs = []
+    if os.path.exists(log_path):
+        with open(log_path, "r") as f:
+            try:
+                logs = json.load(f)
+            except json.JSONDecodeError:
+                logs = []
+
+    logs.append(log_entry)
+
+    with open(log_path, "w") as f:
+        json.dump(logs, f, indent=2)
+

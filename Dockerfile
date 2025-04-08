@@ -17,4 +17,5 @@ ENV FLASK_ENV=production
 ENV PYTHONPATH=/app
 
 # Run the app using gunicorn from the app.main module
-CMD ["gunicorn", "app.main:app"]
+CMD ["gunicorn", "-b", "0.0.0.0:8000", "app.main:app"]
+

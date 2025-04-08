@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Rubiqs | Prompt Preview</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: linear-gradient(to right, #f1e2c4, #5ca198, #1f3a54);
+      margin: 0;
+      padding: 2rem;
+      display: flex;
+      justify-content: center;
+    }
+    .card {
+      background: white;
+      padding: 2rem;
+      max-width: 900px;
+      width: 100%;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    }
+    h2 {
+      text-align: center;
+      color: #1f3a54;
+    }
+    pre {
+      background-color: #f0f0f0;
+      padding: 1rem;
+      border-radius: 6px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 0.95rem;
+    }
+    .form-actions {
+      margin-top: 2rem;
+      text-align: center;
+    }
+    .btn {
+      display: inline-block;
+      background: #1f3a54;
+      color: white;
+      font-weight: bold;
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 40px;
+      font-size: 1rem;
+      text-transform: uppercase;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .btn:hover {
+      background: #1f2a36;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>🧠 Review GPT Grading Prompt</h2>
+    <p style="text-align: center; color: #555;">This is exactly what will be sent to GPT-4 for grading.</p>
+
+    <pre>{{ gpt_prompt }}</pre>
+
+    <div class="form-actions">
+      <form method="POST" action="/grade-docx" enctype="multipart/form-data">
+        {% for field, value in hidden_fields.items() %}
+          <input type="hidden" name="{{ field }}" value="{{ value }}">
+        {% endfor %}
+        <input type="hidden" name="confirmed_prompt" value="true">
+        <button type="submit" class="btn">✅ Continue to Grade</button>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

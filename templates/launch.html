@@ -1,3 +1,4 @@
+<!-- File: templates/launch.html (with Show Prompt Preview) -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,7 +7,7 @@
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, sans-serif;
-      background: linear-gradient(to right, #f1e2c4, #de5c4b, #5ca198, #1f3a54);
+      background: linear-gradient(to right, #f1e2c4, #5ca198, #1f3a54);
       color: #333;
       padding: 2rem;
       margin: 0;
@@ -67,33 +68,36 @@
       color: #1f3a54;
     }
 
-    input.styled-input[type="file"] {
-      display: block;
-      width: 100%;
-      font-size: 1rem;
-      color: #333;
-      background-color: #f9f9f9;
-      border: 2px solid #ccc;
-      border-radius: 6px;
-      padding: 0.65rem 0.75rem;
-      cursor: pointer;
-      margin-top: 0.5rem;
-      box-sizing: border-box;
-    }
-
-    input.styled-input[type="file"]::file-selector-button {
+    .file-button {
+      display: inline-block;
       background-color: #1f3a54;
       color: white;
       font-weight: bold;
-      border: none;
-      padding: 0.5rem 1rem;
+      padding: 0.65rem 1.2rem;
       border-radius: 6px;
-      margin-right: 1rem;
+      text-align: center;
       cursor: pointer;
+      margin-top: 0.5rem;
+      transition: background-color 0.3s ease;
     }
 
-    input.styled-input[type="file"]::file-selector-button:hover {
+    .file-button:hover {
       background-color: #1f2a36;
+    }
+
+    .file-button input[type="file"] {
+      display: none;
+    }
+
+    .form-check {
+      display: flex;
+      align-items: center;
+      margin-top: 1rem;
+      justify-content: center;
+    }
+
+    .form-check input {
+      margin-right: 0.5rem;
     }
 
     form input[type="submit"] {
@@ -168,43 +172,92 @@
         <div class="byline">by J. Baker Design</div>
       </div>
     </div>
-
+  
     <div class="welcome">
       Upload your work and let <strong>Rubiqs</strong> do the rest.
     </div>
-
-    {% if "Instructor" in user_roles or "Administrator" in user_roles %}
-      <p class="admin-note">
-        This is the instructor view. File upload is disabled.
-      </p>
-    {% else %}
-      <form id="grade-form" action="/grade-docx" method="POST" enctype="multipart/form-data" onsubmit="showLoading()">
-        <label for="file-upload" class="file-label">📄 Assignment file (.docx or .pdf):</label>
-        <input type="file" id="file-upload" name="file" accept=".docx,.pdf" required class="styled-input">
-
-        <label for="rubric-upload" class="file-label">🧾 Rubric file (.json, .docx, or .pdf):</label>
-        <input type="file" id="rubric-upload" name="rubric" accept=".json,.docx,.pdf" required class="styled-input">
-
-        {% if requires_persona %}
-          <label for="persona-upload" class="file-label">👤 Persona Questionnaire (.docx or .pdf):</label>
-          <input type="file" id="persona-upload" name="persona" accept=".docx,.pdf" class="styled-input">
-        {% endif %}
-
-        <input id="submit-btn" type="submit" value="Submit for Grading">
+    
+    {% if assignment_config %}
+    <div style="margin-top: 1rem; text-align: right;">
+      <form action="/assignment-config" method="GET" style="display: inline;">
+        <button type="submit" class="btn" style="background: #1f3a54; color: white; border: none; padding: 0.5rem 1.2rem; border-radius: 6px; font-weight: bold; cursor: pointer;">
+          ✏️ Edit Assignment Settings
+        </button>
       </form>
-
-      <div id="loading" class="loading">
-        <div class="spinner"></div>
-        <p style="margin-top: 1rem;">Grading in progress… Please wait ⏳</p>
+    </div>    
+      <div style="text-align: left; margin-top: 1.5rem; background: #f9f9f9; padding: 1rem; border-radius: 8px; border-left: 5px solid #1f3a54;">
+        <strong>Assignment Settings:</strong><br>
+        <ul style="list-style-type: none; padding-left: 0; line-height: 1.6;">
+          <li><strong>Title:</strong> {{ assignment_config.assignment_title }}</li>
+          <li><strong>Total Points:</strong> {{ assignment_config.total_points }}</li>
+          <li><strong>Rubric File:</strong> {{ assignment_config.rubric_file }}</li>
+          <li><strong>Grading Difficulty:</strong> {{ assignment_config.grading_difficulty }}</li>
+          <li><strong>Student Level:</strong> {{ assignment_config.student_level }}</li>
+          <li><strong>Feedback Tone:</strong> {{ assignment_config.feedback_tone }}</li>
+          <li><strong>Faith Integration:</strong> {{ 'Yes' if assignment_config.faith_integration else 'No' }}</li>
+          {% if assignment_config.ai_notes %}
+            <li><strong>AI Notes:</strong> {{ assignment_config.ai_notes }}</li>
+          {% endif %}
+        </ul>
       </div>
-    {% endif %}
-  </div>
 
-  <script>
-    function showLoading() {
-      document.getElementById('submit-btn').style.display = 'none';
-      document.getElementById('loading').style.display = 'block';
-    }
-  </script>
+    {% endif %}   
+  
+    {# {% if "Instructor" in user_roles or "Administrator" in user_roles %} #}
+    {# <p class="admin-note">
+     This is the instructor view. File upload is disabled.
+   </p> #}
+    {# {% else %} #}
+  
+    <form id="grade-form" action="/grade-docx" method="POST" enctype="multipart/form-data" onsubmit="showLoading()">
+      <label for="file-upload" class="file-label">📄 Assignment file (.docx or .pdf):</label>
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <label class="file-button" style="margin: 0;">
+          <input type="file" id="file-upload" name="file" accept=".docx,.pdf" required onchange="showFileName('file-upload', 'file-label-display-1')">
+          Choose File
+        </label>
+        <div id="file-label-display-1" style="font-size: 0.9rem; color: #555;"></div>
+      </div>
+    
+      <label for="rubric-upload" class="file-label">🧾 Rubric file (.json, .docx, or .pdf):</label>
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <label class="file-button" style="margin: 0;">
+          <input type="file" id="rubric-upload" name="rubric" accept=".json,.docx,.pdf" required onchange="showFileName('rubric-upload', 'file-label-display-2')">
+          Choose File
+        </label>
+        <div id="file-label-display-2" style="font-size: 0.9rem; color: #555;"></div>
+      </div>
+    
+      {% if requires_persona %}
+        <label for="persona-upload" class="file-label">👤 Persona Questionnaire (.docx or .pdf):</label>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+          <label class="file-button" style="margin: 0;">
+            <input type="file" id="persona-upload" name="persona" accept=".docx,.pdf" onchange="showFileName('persona-upload', 'file-label-display-3')">
+            Choose File
+          </label>
+          <div id="file-label-display-3" style="font-size: 0.9rem; color: #555;"></div>
+        </div>
+      {% endif %}
+    
+      <div class="form-check">
+        <input type="checkbox" id="show_prompt" name="show_prompt">
+        <label for="show_prompt">Preview GPT Prompt Before Grading</label>
+      </div>
+    
+      <input id="submit-btn" type="submit" value="Submit for Grading">
+    </form>
+    
+    <script>
+      function showFileName(inputId, labelId) {
+        const input = document.getElementById(inputId);
+        const label = document.getElementById(labelId);
+        if (input && input.files.length > 0) {
+          label.innerText = input.files[0].name;
+        } else {
+          label.innerText = '';
+        }
+      }
+    </script>
+    
 </body>
 </html>

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Rubiqs | GPT Test Grader</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: linear-gradient(to right, #f1e2c4, #5ca198, #1f3a54);
+      margin: 0;
+      padding: 2rem;
+      display: flex;
+      justify-content: center;
+    }
+    .card {
+      background: white;
+      padding: 2rem;
+      max-width: 900px;
+      width: 100%;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    }
+    .brand-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+    .logo {
+      max-height: 80px;
+      width: auto;
+      margin-right: 1.5rem;
+    }
+    .brand-text h1 {
+      margin: 0;
+      font-size: 1.8rem;
+      color: #2c3e50;
+    }
+    .brand-text .tagline {
+      font-size: 1rem;
+      color: #7f8c8d;
+    }
+    .brand-text .byline {
+      font-size: 0.9rem;
+      color: #aaa;
+    }
+    h2 {
+      text-align: center;
+      color: #1f3a54;
+      margin-bottom: 1.5rem;
+    }
+    label {
+      font-weight: bold;
+      color: #1f3a54;
+      display: block;
+      margin-top: 1rem;
+    }
+    select, textarea {
+      width: 100%;
+      padding: 0.75rem;
+      font-size: 1rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+      margin-top: 0.25rem;
+    }
+    button {
+      margin-top: 1.5rem;
+      background: #1f3a54;
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 40px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      text-transform: uppercase;
+    }
+    button:hover {
+      background: #1f2a36;
+    }
+    .section {
+      margin-top: 2rem;
+    }
+    pre {
+      background: #f0f0f0;
+      padding: 1rem;
+      border-radius: 8px;
+      white-space: pre-wrap;
+      font-size: 0.95rem;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="brand-header">
+      <img src="/static/rubiqs-logo.png" alt="Rubiqs Logo" class="logo">
+      <div class="brand-text">
+        <h1>Rubiqs</h1>
+        <div class="tagline">AI-Powered Mastery</div>
+        <div class="byline">by J. Baker Design</div>
+      </div>
+    </div>
+
+    <h2>🧪 Test Grader — GPT Sandbox</h2>
+
+    <form method="POST">
+      <label for="assignment_title">Select Assignment:</label>
+      <select name="assignment_title" id="assignment_title" required>
+        <option value="" disabled selected>Choose an assignment</option>
+        {% for config in rubric_index %}
+          <option value="{{ config.assignment_title }}"
+            {% if selected_config and config.assignment_title == selected_config.assignment_title %}selected{% endif %}>
+            {{ config.assignment_title }}
+          </option>
+        {% endfor %}
+      </select>
+
+      <label for="submission_text">Paste Sample Submission:</label>
+      <textarea name="submission_text" id="submission_text" rows="10" placeholder="Paste student work here..." required>{{ request.form.submission_text or '' }}</textarea>
+
+      <button type="submit">Run GPT Test</button>
+    </form>
+
+    {% if gpt_prompt %}
+      <div class="section">
+        <h3>📄 GPT Prompt Sent:</h3>
+        <pre>{{ gpt_prompt }}</pre>
+      </div>
+    {% endif %}
+
+    {% if gpt_feedback %}
+      <div class="section">
+        <h3>✅ GPT Feedback:</h3>
+        {% if gpt_score is not none %}
+          <p><strong>Score:</strong> {{ gpt_score }} / {{ selected_config.total_points }}</p>
+        {% endif %}
+        <pre>{{ gpt_feedback }}</pre>
+      </div>
+    {% endif %}
+  </div>
+</body>
+</html>

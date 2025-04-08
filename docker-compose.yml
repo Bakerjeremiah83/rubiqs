@@ -4,7 +4,7 @@ services:
   lti_tool:
     build: .
     ports:
-      - "5050:5050"         # 🔁 Map host 5050 → container 5050
+      - "8000:8000"         # 🔁 Map host 8000 → container 8000
     env_file:
       - .env
     volumes:
