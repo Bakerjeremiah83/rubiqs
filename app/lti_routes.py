@@ -198,8 +198,8 @@ def grade_docx():
     print("📥 /grade-docx hit")
 
     # 1. Detect if prompt preview is requested
-    confirmed = request.form.get("confirmed_prompt") == "true"
-    show_preview = request.form.get("show_prompt") == "on" and not confirmed
+    # confirmed = request.form.get("confirmed_prompt") == "true"
+    # show_preview = request.form.get("show_prompt") == "on" and not confirmed
 
     # 2. Extract uploaded files
     file = request.files.get("file")
@@ -294,17 +294,17 @@ Feedback: <detailed, encouraging, and helpful feedback>
 """
 
     # 6. Show prompt preview first (if requested)
-    if show_preview:
-        return render_template(
-            "prompt_preview.html",
-            gpt_prompt=prompt.strip(),
-            hidden_fields={
-                "confirmed_prompt": "true",
-                "file_text": full_text,
-                "assignment_title": assignment_title,
-                "reference_data": reference_data,
-            }
-        )
+    # if show_preview:
+        # return render_template(
+            # "prompt_preview.html",
+            # gpt_prompt=prompt.strip(),
+            # hidden_fields={
+                # "confirmed_prompt": "true",
+                # "file_text": full_text,
+                # "assignment_title": assignment_title,
+                # "reference_data": reference_data,
+            # }
+        # )
 
     # 7. Call GPT if prompt is confirmed
     try:
