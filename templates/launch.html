@@ -238,6 +238,11 @@
       <input id="submit-btn" type="submit" value="Submit for Grading">
     </form>    
     
+    <div id="loading" class="loading">
+      <div class="spinner"></div>
+      <p style="margin-top: 1rem;">Grading in progress… Please wait ⏳</p>
+    </div>
+    
     <script>
       function showLoading() {
         document.getElementById('submit-btn').style.display = 'none';
