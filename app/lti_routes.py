@@ -336,98 +336,77 @@ Feedback: <detailed, encouraging, and helpful feedback>
 
 @lti.route("/review-feedback", methods=["GET", "POST"])
 def review_feedback():
-    session["tool_role"] = "instructor"  # TEMP: force instructor mode
+    session["tool_role"] = "instructor"  # TEMP: force instructor role for local/demo
 
     pending_path = os.path.join("rubrics", "pending_reviews.json")
-
-    # ✅ Check if the user is actually an instructor
-    tool_role = session.get("tool_role")
-    if tool_role != "instructor":
-        return "❌ Access denied. Instructors only.", 403
-
-    launch_data = session.get("launch_data", {})
-    print("🔍 LAUNCH DATA:", json.dumps(launch_data, indent=2))
-
-    # ✅ Load all pending reviews
-    reviews = []
+    all_reviews = []
     if os.path.exists(pending_path):
         with open(pending_path, "r") as f:
-            reviews = json.load(f)
+            all_reviews = json.load(f)
 
-    # ✅ Set default review index if not set
+    # Extract assignment titles from review queue
+    assignment_titles = sorted(set(r["assignment_title"] for r in all_reviews))
+
+    selected_title = request.form.get("assignment_title") if request.method == "POST" else None
+    filtered_reviews = [r for r in all_reviews if r["assignment_title"] == selected_title] if selected_title else all_reviews
+
     if "review_index" not in session:
         session["review_index"] = 0
 
-    # ✅ Handle form submissions
-    if request.method == "POST":
+    if request.method == "POST" and "nav" in request.form:
         nav = request.form.get("nav")
-        if nav == "next":
-            session["review_index"] = min(session["review_index"] + 1, len(reviews) - 1)
-        elif nav == "previous":
-            session["review_index"] = max(session["review_index"] - 1, 0)
+        session["review_index"] = max(0, min(session["review_index"] + (1 if nav == "next" else -1), len(filtered_reviews) - 1))
 
-        if request.form.get("action") == "Approve and Post":
-            student_id = request.form.get("student_id")
-            assignment_title = request.form.get("assignment_title")
-            new_score = int(request.form.get("score"))
-            new_feedback = request.form.get("feedback")
+    if request.method == "POST" and request.form.get("action") == "Approve and Post":
+        student_id = request.form.get("student_id")
+        assignment_title = request.form.get("assignment_title")
+        new_score = int(request.form.get("score"))
+        new_feedback = request.form.get("feedback")
 
-            matched = None
-            for r in reviews:
-                if r["student_id"] == student_id and r["assignment_title"] == assignment_title:
-                    matched = r
-                    break
+        matched = next((r for r in all_reviews if r["student_id"] == student_id and r["assignment_title"] == assignment_title), None)
+        if matched:
+            all_reviews.remove(matched)
+            ags_claim = session.get("launch_data", {}).get("https://purl.imsglobal.org/spec/lti-ags/claim/endpoint")
+            if ags_claim and "lineitem" in ags_claim:
+                try:
+                    lineitem_url = ags_claim["lineitem"].split("?")[0] + "/scores"
+                    private_key_path = os.path.join("app", "keys", "private_key.pem")
+                    with open(private_key_path, "r") as f:
+                        private_key = f.read()
+                    oauth = OAuth1Session(
+                        client_key=os.getenv("CLIENT_ID"),
+                        signature_method="RSA-SHA1",
+                        rsa_key=private_key,
+                        signature_type="auth_header"
+                    )
+                    score_payload = {
+                        "userId": student_id,
+                        "scoreGiven": new_score,
+                        "scoreMaximum": 100,
+                        "activityProgress": "Completed",
+                        "gradingProgress": "FullyGraded",
+                        "timestamp": datetime.utcnow().isoformat() + "Z"
+                    }
+                    oauth.post(
+                        lineitem_url,
+                        json=score_payload,
+                        headers={"Content-Type": "application/vnd.ims.lis.v1.score+json"}
+                    )
+                except Exception as e:
+                    print("❌ Grade post failed:", str(e))
 
-            if matched:
-                reviews.remove(matched)
-                with open(pending_path, "w") as f:
-                    json.dump(reviews, f, indent=2)
+        with open(pending_path, "w") as f:
+            json.dump(all_reviews, f, indent=2)
+        session["review_index"] = max(0, min(session["review_index"], len(filtered_reviews) - 1))
 
-                ags_claim = launch_data.get("https://purl.imsglobal.org/spec/lti-ags/claim/endpoint")
-                if ags_claim and "lineitem" in ags_claim:
-                    try:
-                        lineitem_url = ags_claim["lineitem"].split("?")[0] + "/scores"
-                        private_key_path = os.path.join("app", "keys", "private_key.pem")
-                        with open(private_key_path, "r") as f:
-                            private_key = f.read()
+    current_review = filtered_reviews[session.get("review_index", 0)] if filtered_reviews else None
 
-                        oauth = OAuth1Session(
-                            client_key=os.getenv("CLIENT_ID"),
-                            signature_method="RSA-SHA1",
-                            rsa_key=private_key,
-                            signature_type="auth_header"
-                        )
-
-                        score_payload = {
-                            "userId": student_id,
-                            "scoreGiven": new_score,
-                            "scoreMaximum": 100,
-                            "activityProgress": "Completed",
-                            "gradingProgress": "FullyGraded",
-                            "timestamp": datetime.utcnow().isoformat() + "Z"
-                        }
-
-                        ags_response = oauth.post(
-                            lineitem_url,
-                            json=score_payload,
-                            headers={"Content-Type": "application/vnd.ims.lis.v1.score+json"}
-                        )
-                        ags_response.raise_for_status()
-                        print(f"✅ Grade approved and posted for student {student_id}.")
-                    except Exception as e:
-                        print("❌ Grade post failed:", str(e))
-
-                if session["review_index"] >= len(reviews):
-                    session["review_index"] = max(0, len(reviews) - 1)
-
-    # ✅ Load the current review
-    current_review = None
-    if reviews:
-        review_index = session.get("review_index", 0)
-        review_index = max(0, min(review_index, len(reviews) - 1))
-        current_review = reviews[review_index]
-
-    return render_template("review_feedback.html", current_review=current_review)
+    return render_template(
+        "review_feedback.html",
+        assignment_titles=assignment_titles,
+        selected_title=selected_title,
+        current_review=current_review
+    )
 
 @lti.route("/post-grade", methods=["POST"])
 def post_grade():
