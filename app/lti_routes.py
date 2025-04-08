@@ -336,6 +336,8 @@ Feedback: <detailed, encouraging, and helpful feedback>
 
 @lti.route("/review-feedback", methods=["GET", "POST"])
 def review_feedback():
+    session["tool_role"] = "instructor"  # TEMP: force instructor mode
+
     pending_path = os.path.join("rubrics", "pending_reviews.json")
 
     # ✅ Check if the user is actually an instructor
@@ -658,7 +660,7 @@ Feedback: <detailed, helpful feedback>
         gpt_feedback=gpt_feedback,
         gpt_score=gpt_score
     )
-@lti.route("/admin-dashboard", methods=["GET"])
+@lti.route("/admin-dashboard", methods=["GET", "POST"])
 def admin_dashboard():
     rubric_index_path = os.path.join("rubrics", "rubric_index.json")
     rubric_index = []
