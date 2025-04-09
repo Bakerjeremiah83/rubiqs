@@ -1,11 +1,164 @@
 <!DOCTYPE html>
 <html lang="en" class="h-full bg-gradient-to-br from-[#d6eaff] to-[#7f9e9f]">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Rubiqs Admin Dashboard</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-</head>
+  <head>
+    <meta charset="UTF-8">
+    <title>Rubiqs | Admin Dashboard</title>
+    <style>
+      body {
+        font-family: 'Segoe UI', Tahoma, sans-serif;
+        background: linear-gradient(to right, #f1e2c4, #5ca198, #1f3a54);
+        color: #333;
+        margin: 0;
+        padding: 2rem;
+        display: flex;
+        justify-content: center;
+      }
+  
+      .card {
+        background: white;
+        padding: 2rem;
+        max-width: 900px;
+        width: 100%;
+        border-radius: 12px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      }
+  
+      .brand-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        margin-bottom: 2rem;
+      }
+  
+      .logo {
+        max-height: 80px;
+        width: auto;
+        margin-right: 1.5rem;
+      }
+  
+      .brand-text h1 {
+        margin: 0;
+        font-size: 1.8rem;
+        color: #2c3e50;
+      }
+  
+      .brand-text .tagline {
+        font-size: 1rem;
+        color: #7f8c8d;
+      }
+  
+      .brand-text .byline {
+        font-size: 0.9rem;
+        color: #aaa;
+      }
+  
+      .assignment-title {
+        font-size: 1.5rem;
+        font-weight: bold;
+        text-align: center;
+        color: #1f3a54;
+        flex: 1 100%;
+        margin-top: 1rem;
+      }
+  
+      form label {
+        display: block;
+        margin-top: 1rem;
+        font-weight: bold;
+        color: #1f3a54;
+      }
+  
+      input[type="text"],
+      input[type="number"],
+      select,
+      textarea {
+        width: 100%;
+        padding: 0.65rem;
+        margin-top: 0.25rem;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-size: 1rem;
+        box-sizing: border-box;
+      }
+  
+      input[type="file"] {
+        margin-top: 0.5rem;
+      }
+  
+      .form-check {
+        margin-top: 1rem;
+        display: flex;
+        align-items: center;
+      }
+  
+      .form-check-input {
+        margin-right: 0.5rem;
+      }
+  
+      form button[type="submit"] {
+        display: block;
+        margin: 2rem auto 0 auto;
+        background: #1f3a54;
+        color: white;
+        padding: 0.85rem 2rem;
+        font-size: 1rem;
+        font-weight: bold;
+        border: none;
+        border-radius: 40px;
+        cursor: pointer;
+        transition: background 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+  
+      form button[type="submit"]:hover {
+        background: #1f2a36;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+  
+      table {
+        margin-top: 1rem;
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.95rem;
+      }
+  
+      th, td {
+        border: 1px solid #dee2e6;
+        padding: 0.75rem;
+        text-align: center;
+      }
+  
+      thead {
+        background-color: #f1f1f1;
+      }
+  
+      .collapse-toggle {
+        background: none;
+        border: none;
+        color: #1f3a54;
+        font-weight: bold;
+        cursor: pointer;
+        text-decoration: underline;
+        margin-top: 2rem;
+        font-size: 1rem;
+      }
+    </style>
+    <script>
+      function toggleConfigTable() {
+        const section = document.getElementById("config-section");
+        section.style.display = section.style.display === "none" ? "block" : "none";
+      }
+  
+      function limitWords(textarea, maxWords) {
+        const words = textarea.value.split(/\s+/);
+        if (words.length > maxWords) {
+          textarea.value = words.slice(0, maxWords).join(" ");
+        }
+      }
+    </script>
+  </head>
 <body class="h-full text-slate-800">
   <div class="max-w-7xl mx-auto p-6">
     <h1 class="text-3xl font-bold mb-6 text-[#1a2c3f]">Rubiqs Admin Dashboard</h1>
