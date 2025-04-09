@@ -178,7 +178,7 @@
       <input type="text" id="assignment_title" name="assignment_title" required>
 
       <label for="rubric_file">Upload Rubric File (.json, .docx, .pdf)</label>
-      <input type="file" id="rubric_file" name="rubric_file" accept=".json,.docx,.pdf" required>
+      <input type="file" class="border border-gray-300 rounded-md p-2 w-full" id="rubric_file" name="rubric_file" accept=".json,.docx,.pdf" required>
 
       <label for="total_points">Total Points</label>
       <input type="number" id="total_points" name="total_points" placeholder="e.g., 100" min="1" required>
@@ -221,7 +221,7 @@
       <button type="submit">💾 Save Configuration</button>
     </form>
 
-    <button class="collapse-toggle" onclick="toggleConfigTable()">📂 Toggle Existing Assignment Configurations</button>
+    <button class="collapse-toggle" onclick="toggleConfigTable()">📂 Existing Assignments</button>
 
     <div id="config-section" style="display: none;">
       <h4>📋 Existing Assignment Configurations</h4>
@@ -255,6 +255,10 @@
   </div>
 
 <div class="text-center text-sm text-gray-500 mt-12 mb-4">
+  &copy; 2025 J. Baker Design
+</div>
+
+<div class="text-center text-sm text-gray-500 mt-8 mb-4">
   &copy; 2025 J. Baker Design
 </div>
 </body>
