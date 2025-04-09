@@ -1,273 +1,262 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full bg-gradient-to-br from-[#d6eaff] to-[#7f9e9f]">
-  <head>
-    <meta charset="UTF-8">
-    <title>Rubiqs | Admin Dashboard</title>
-    <style>
-      body {
-        font-family: 'Segoe UI', Tahoma, sans-serif;
-        background: linear-gradient(to right, #f1e2c4, #5ca198, #1f3a54);
-        color: #333;
-        margin: 0;
-        padding: 2rem;
-        display: flex;
-        justify-content: center;
-      }
-  
-      .card {
-        background: white;
-        padding: 2rem;
-        max-width: 900px;
-        width: 100%;
-        border-radius: 12px;
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-      }
-  
-      .brand-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        margin-bottom: 2rem;
-      }
-  
-      .logo {
-        max-height: 80px;
-        width: auto;
-        margin-right: 1.5rem;
-      }
-  
-      .brand-text h1 {
-        margin: 0;
-        font-size: 1.8rem;
-        color: #2c3e50;
-      }
-  
-      .brand-text .tagline {
-        font-size: 1rem;
-        color: #7f8c8d;
-      }
-  
-      .brand-text .byline {
-        font-size: 0.9rem;
-        color: #aaa;
-      }
-  
-      .assignment-title {
-        font-size: 1.5rem;
-        font-weight: bold;
-        text-align: center;
-        color: #1f3a54;
-        flex: 1 100%;
-        margin-top: 1rem;
-      }
-  
-      form label {
-        display: block;
-        margin-top: 1rem;
-        font-weight: bold;
-        color: #1f3a54;
-      }
-  
-      input[type="text"],
-      input[type="number"],
-      select,
-      textarea {
-        width: 100%;
-        padding: 0.65rem;
-        margin-top: 0.25rem;
-        border: 1px solid #ccc;
-        border-radius: 6px;
-        font-size: 1rem;
-        box-sizing: border-box;
-      }
-  
-      input[type="file"] {
-        margin-top: 0.5rem;
-      }
-  
-      .form-check {
-        margin-top: 1rem;
-        display: flex;
-        align-items: center;
-      }
-  
-      .form-check-input {
-        margin-right: 0.5rem;
-      }
-  
-      form button[type="submit"] {
-        display: block;
-        margin: 2rem auto 0 auto;
-        background: #1f3a54;
-        color: white;
-        padding: 0.85rem 2rem;
-        font-size: 1rem;
-        font-weight: bold;
-        border: none;
-        border-radius: 40px;
-        cursor: pointer;
-        transition: background 0.3s ease;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-      }
-  
-      form button[type="submit"]:hover {
-        background: #1f2a36;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-      }
-  
-      table {
-        margin-top: 1rem;
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.95rem;
-      }
-  
-      th, td {
-        border: 1px solid #dee2e6;
-        padding: 0.75rem;
-        text-align: center;
-      }
-  
-      thead {
-        background-color: #f1f1f1;
-      }
-  
-      .collapse-toggle {
-        background: none;
-        border: none;
-        color: #1f3a54;
-        font-weight: bold;
-        cursor: pointer;
-        text-decoration: underline;
-        margin-top: 2rem;
-        font-size: 1rem;
-      }
-    </style>
-    <script>
-      function toggleConfigTable() {
-        const section = document.getElementById("config-section");
-        section.style.display = section.style.display === "none" ? "block" : "none";
-      }
-  
-      function limitWords(textarea, maxWords) {
-        const words = textarea.value.split(/\s+/);
-        if (words.length > maxWords) {
-          textarea.value = words.slice(0, maxWords).join(" ");
-        }
-      }
-    </script>
-  </head>
-<body class="h-full text-slate-800">
-  <div class="max-w-7xl mx-auto p-6">
-    <h1 class="text-3xl font-bold mb-6 text-[#1a2c3f]">Rubiqs Admin Dashboard</h1>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Rubiqs | Admin Dashboard</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: linear-gradient(to right, #f1e2c4, #5ca198, #1f3a54);
+      color: #1f3a54;
+      margin: 0;
+      padding: 2rem;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+    }
 
-    <!-- Tabs -->
-    <div class="border-b border-gray-300 mb-4">
-      <nav class="-mb-px flex space-x-8" id="tabs">
-        <button class="tab-link text-slate-600 py-2 px-1 border-b-2 font-medium text-sm hover:text-[#1a2c3f] active-tab" data-tab="create">Assignment Setup</button>
-        <button class="tab-link text-slate-600 py-2 px-1 border-b-2 font-medium text-sm hover:text-[#1a2c3f]" data-tab="table">Assignment Table</button>
-        <button class="tab-link text-slate-600 py-2 px-1 border-b-2 font-medium text-sm hover:text-[#1a2c3f]" data-tab="logs">Activity Logs</button>
-      </nav>
-    </div>
+    .card {
+      background: white;
+      padding: 2rem;
+      width: 100%;
+      max-width: 1000px;
+      border-radius: 12px;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+    }
 
-    <div id="tab-content">
-      <!-- Assignment Setup -->
-      <div class="tab-panel" id="tab-create">
-        <div class="bg-white shadow-md rounded-lg p-6 mb-6">
-          <h2 class="text-xl font-semibold mb-6 text-[#1a2c3f]">Create New Assignment</h2>
-          <form class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    h2.title {
+      text-align: center;
+      font-size: 1.75rem;
+      font-weight: bold;
+      margin-bottom: 1.5rem;
+    }
 
-            <!-- Assignment Name -->
-            <div>
-              <label class="block text-sm font-medium mb-1">Assignment Name</label>
-              <input type="text" name="title" class="p-2 border border-gray-300 rounded-md w-full" />
-            </div>
+    .tabs {
+      display: flex;
+      gap: 0.5rem;
+      border-bottom: 1px solid #ccc;
+      margin-bottom: 1.5rem;
+    }
 
-            <!-- Rubric File -->
-            <div>
-              <label class="block text-sm font-medium mb-1">Rubric File (.json)</label>
-              <input type="file" name="rubricFile" accept=".json" class="p-2 border border-gray-300 rounded-md w-full" />
-            </div>
+    .tab-button {
+      padding: 0.6rem 1.2rem;
+      background: #eee;
+      border: none;
+      border-top-left-radius: 8px;
+      border-top-right-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      color: #1f3a54;
+      font-size: 0.95rem;
+    }
 
-            <!-- Grade Level -->
-            <div>
-              <label class="block text-sm font-medium mb-1">Grade Level</label>
-              <select name="student_level" class="p-2 border border-gray-300 rounded-md w-full">
-                <option value="">Select level</option>
-                <option>Middle School</option>
-                <option>High School</option>
-                <option>College</option>
-                <option>Graduate</option>
-              </select>
-            </div>
+    .tab-button.active {
+      background: white;
+      border: 1px solid #ccc;
+      border-bottom: none;
+    }
 
-            <!-- Grading Difficulty -->
-            <div>
-              <label class="block text-sm font-medium mb-1">Grading Difficulty</label>
-              <select name="grading_difficulty" class="p-2 border border-gray-300 rounded-md w-full">
-                <option value="">Select level</option>
-                <option>Basic</option>
-                <option>Intermediate</option>
-                <option>Advanced</option>
-              </select>
-            </div>
+    .tab-panel {
+      display: none;
+    }
 
-            <!-- Faith Integration Toggle -->
-            <div>
-              <label class="block text-sm font-medium mb-1">Faith Integration</label>
-              <input type="checkbox" name="faith_integration" class="w-5 h-5 mt-2 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
-            </div>
+    .tab-panel.active {
+      display: block;
+    }
 
-            <!-- AI Notes -->
-            <div class="md:col-span-2">
-              <label class="block text-sm font-medium mb-1">AI Notes</label>
-              <textarea name="ai_notes" rows="3" class="p-2 border border-gray-300 rounded-md w-full"></textarea>
-            </div>
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
 
-            <!-- Save Button -->
-            <div class="col-span-full text-center mt-6">
-              <button type="submit" class="bg-[#1a2c3f] hover:bg-[#13212e] text-white font-semibold py-2 px-6 rounded-md">
-                Save Assignment
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
+    .form-group {
+      flex: 1 1 48%;
+    }
 
-      <!-- Other Tabs Placeholder -->
-      <div class="tab-panel hidden" id="tab-table">
-        <div class="bg-white shadow-md rounded-lg p-6">
-          <h2 class="text-xl font-semibold mb-4 text-[#1a2c3f]">Assignments</h2>
-          <p class="text-sm text-gray-500">Assignment table view will go here.</p>
-        </div>
-      </div>
+    .wide {
+      flex: 1 1 100%;
+    }
 
-      <div class="tab-panel hidden" id="tab-logs">
-        <div class="bg-white shadow-md rounded-lg p-6">
-          <h2 class="text-xl font-semibold mb-4 text-[#1a2c3f]">Activity Logs</h2>
-          <p class="text-sm text-gray-500">Audit trail coming soon.</p>
-        </div>
-      </div>
+    label {
+      font-weight: bold;
+      margin-bottom: 0.3rem;
+      display: block;
+    }
+
+    input[type="text"],
+    select,
+    textarea,
+    input[type="file"] {
+      width: 100%;
+      padding: 0.6rem;
+      font-size: 1rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+
+    textarea {
+      resize: vertical;
+    }
+
+    button.submit {
+      display: block;
+      margin: 2rem auto 0 auto;
+      background: #1f3a54;
+      color: white;
+      padding: 0.85rem 2rem;
+      font-size: 1rem;
+      font-weight: bold;
+      border: none;
+      border-radius: 40px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    button.submit:hover {
+      background: #142835;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    
+  <div style="display: flex; align-items: center; margin-bottom: 1rem;">
+    <img src="https://jeremiahbakerdesign.com/logo.png" alt="Rubiqs Logo" style="height: 60px; margin-right: 1rem;" />
+    <div>
+      <h1 style="margin: 0; font-size: 1.6rem; color: #1f3a54;">Rubiqs Suite</h1>
+      <div style="font-size: 1rem; color: #7f8c8d;">AI-Powered Mastery</div>
+      <div style="font-size: 0.85rem; color: #aaa;">by J. Baker Design</div>
     </div>
   </div>
 
+<h2 class="title">Assignment Setup</h2>
+
+    <div class="tabs">
+      <button class="tab-button active" onclick="showTab('setup')">Assignment Setup</button>
+      <button class="tab-button" onclick="showTab('gospel')">Gospel-Centered</button>
+      <button class="tab-button" onclick="showTab('reviews')">Pending Reviews</button>
+      <button class="tab-button" onclick="showTab('logs')">Activity Logs</button>
+    </div>
+
+    <div class="tab-panel active" id="setup">
+      <div class="row">
+        <div class="form-group">
+          <label>Assignment Name</label>
+          <input type="text" />
+        </div>
+        <div class="form-group">
+          <label>Grade Level</label>
+          <select>
+            <option value="">Select Level</option>
+            <option>Middle School</option>
+            <option>High School</option>
+            <option>College</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="form-group">
+          <label>Rubric Upload</label>
+          <input type="file" />
+        </div>
+        <div class="form-group">
+          <label>Grading Difficulty</label>
+          <select>
+            <option value="">Select Difficulty</option>
+            <option>Basic</option>
+            <option>Intermediate</option>
+            <option>Advanced</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="form-group wide">
+          <label>AI Notes</label>
+          <textarea rows="4"></textarea>
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="tab-panel" id="gospel">
+      <div style="margin-bottom: 1rem;">
+        <label style="font-weight: bold; display: inline-block; margin-right: 0.5rem;">
+          <input type="checkbox" id="gospelToggle" style="transform: scale(1.4); margin-right: 0.5rem;" />
+          Enable Gospel-Centered Feedback
+        </label>
+      </div>
+
+      <label>Gospel-Centered Principles, Themes, and References</label>
+      <textarea rows="6"></textarea>
+    </div>
+
+    
+    <div class="tab-panel" id="reviews">
+      <table style="width:100%; border-collapse: collapse; font-size: 0.95rem;">
+        <thead style="background-color: #f1f1f1;">
+          <tr>
+            <th style="border: 1px solid #ccc; padding: 0.75rem;">Student</th>
+            <th style="border: 1px solid #ccc; padding: 0.75rem;">Assignment</th>
+            <th style="border: 1px solid #ccc; padding: 0.75rem;">Score</th>
+            <th style="border: 1px solid #ccc; padding: 0.75rem;">Submitted</th>
+            <th style="border: 1px solid #ccc; padding: 0.75rem;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="border: 1px solid #ccc; padding: 0.75rem;">Sarah Kim</td>
+            <td style="border: 1px solid #ccc; padding: 0.75rem;">I-485 Application</td>
+            <td style="border: 1px solid #ccc; padding: 0.75rem;">91</td>
+            <td style="border: 1px solid #ccc; padding: 0.75rem;">2025-04-08</td>
+            <td style="border: 1px solid #ccc; padding: 0.75rem; text-align:center;">
+              <button style="padding: 0.4rem 1rem; background: #1f3a54; color: white; border: none; border-radius: 20px;">Review</button>
+              <button style="padding: 0.4rem 1rem; background: #4b887f; color: white; border: none; border-radius: 20px;">Approve</button>
+              <button style="padding: 0.4rem 1rem; background: #999; color: white; border: none; border-radius: 20px;">Edit</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+
+    
+    <div class="tab-panel" id="logs">
+      <table style="width:100%; border-collapse: collapse; font-size: 0.95rem;">
+        <thead style="background-color: #f1f1f1;">
+          <tr>
+            <th style="border: 1px solid #ccc; padding: 0.75rem;">Timestamp</th>
+            <th style="border: 1px solid #ccc; padding: 0.75rem;">User</th>
+            <th style="border: 1px solid #ccc; padding: 0.75rem;">Action</th>
+            <th style="border: 1px solid #ccc; padding: 0.75rem;">Assignment</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="border: 1px solid #ccc; padding: 0.75rem;">2025-04-08 10:03 PM</td>
+            <td style="border: 1px solid #ccc; padding: 0.75rem;">Instructor A</td>
+            <td style="border: 1px solid #ccc; padding: 0.75rem;">Approved Feedback</td>
+            <td style="border: 1px solid #ccc; padding: 0.75rem;">Leadership Reflection</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+
+    <button class="submit">Save Assignment</button>
+  </div>
+
   <script>
-    const tabs = document.querySelectorAll(".tab-link");
-    const panels = document.querySelectorAll(".tab-panel");
-
-    tabs.forEach(tab => {
-      tab.addEventListener("click", () => {
-        tabs.forEach(t => t.classList.remove("border-[#1a2c3f]", "text-[#1a2c3f]", "active-tab"));
-        tab.classList.add("border-[#1a2c3f]", "text-[#1a2c3f]", "active-tab");
-
-        const target = tab.dataset.tab;
-        panels.forEach(panel => {
-          panel.classList.toggle("hidden", panel.id !== "tab-" + target);
-        });
-      });
-    });
+    function showTab(id) {
+      document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
+      document.querySelector(`[onclick="showTab('${id}')"]`).classList.add('active');
+      document.getElementById(id).classList.add('active');
+    }
   </script>
 </body>
 </html>
