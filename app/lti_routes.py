@@ -800,3 +800,26 @@ def scan_ai_text():
 
     result = check_ai_generated_text(text)
     return jsonify(result)
+
+@lti.route("/instructor-review", methods=["GET", "POST"])
+def instructor_review():
+    from app.utils.storage import load_all_pending_feedback, store_pending_feedback
+    from flask import render_template, request, redirect, url_for
+    from datetime import datetime
+
+    reviews = load_all_pending_feedback()
+    if not reviews:
+        return render_template("instructor_review.html", current_review=None)
+
+    current_review = reviews[0]
+    submission_id = current_review.get("submission_id", "")
+
+    if request.method == "POST":
+        current_review["score"] = int(request.form.get("score"))
+        current_review["feedback"] = request.form.get("feedback")
+        current_review["timestamp"] = datetime.utcnow().isoformat()
+        store_pending_feedback(submission_id, current_review)
+        return redirect(url_for("lti.instructor_review"))
+
+    return render_template("instructor_review.html", current_review=current_review)
+

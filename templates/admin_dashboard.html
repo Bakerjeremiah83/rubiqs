@@ -120,14 +120,13 @@
     button.submit:hover {
       background: #142835;
     }
-  
+
     .logo {
       max-height: 80px;
       width: auto;
       margin-right: 1.5rem;
     }
-    
-</style>
+  </style>
 </head>
 <body>
   <div class="card">
@@ -140,131 +139,128 @@
           <div style="font-size: 0.85rem; color: #aaa;">by J. Baker Design</div>
         </div>
       </div>
-      
 
-<h2 class="title">Assignment Setup</h2>
+      <h2 class="title">Assignment Setup</h2>
 
-    <div class="tabs">
-      <button class="tab-button active" onclick="showTab('setup')">Assignment Setup</button>
-      <button class="tab-button" onclick="showTab('gospel')">Gospel-Centered</button>
-      <button class="tab-button" onclick="location.href='/instructor-review'">Instructor Review</button>
-      <button class="tab-button" onclick="showTab('reviews')">Pending Reviews</button>
-      <button class="tab-button" onclick="showTab('logs')">Activity Logs</button>
-    </div>
-
-    <div class="tab-panel active" id="setup">
-      <div class="row">
-        <div class="form-group">
-          <label>Assignment Name</label>
-          <input type="text" />
-        </div>
-        <div class="form-group">
-          <label>Grade Level</label>
-          <select>
-            <option value="">Select Level</option>
-            <option>Middle School</option>
-            <option>High School</option>
-            <option>College</option>
-          </select>
-        </div>
-      </div>
-      <div class="row">
-        <div class="form-group">
-          <label>Rubric Upload</label>
-          <input type="file" />
-        </div>
-        <div class="form-group">
-          <label>Grading Difficulty</label>
-          <select>
-            <option value="">Select Difficulty</option>
-            <option>Basic</option>
-            <option>Intermediate</option>
-            <option>Advanced</option>
-          </select>
-        </div>
-      </div>
-      <div class="row">
-        <div class="form-group wide">
-          <label>AI Notes</label>
-          <textarea rows="4"></textarea>
-        </div>
-      </div>
-    </div>
-
-    
-    <div class="tab-panel" id="gospel">
-      <div style="margin-bottom: 1rem;">
-        <label style="font-weight: bold; display: inline-block; margin-right: 0.5rem;">
-          <input type="checkbox" id="gospelToggle" style="transform: scale(1.4); margin-right: 0.5rem;" />
-          Enable Gospel-Centered Feedback
-        </label>
+      <div class="tabs">
+        <button class="tab-button active" onclick="showTab('setup')">Assignment Setup</button>
+        <button class="tab-button" onclick="showTab('gospel')">Gospel-Centered</button>
+        <button class="tab-button" onclick="location.href='/instructor-review'">Instructor Review</button>
+        <button class="tab-button" onclick="showTab('reviews')">Pending Reviews</button>
+        <button class="tab-button" onclick="showTab('logs')">Activity Logs</button>
       </div>
 
-      <label>Gospel-Centered Principles, Themes, and References</label>
-      <textarea rows="6"></textarea>
+      <div class="tab-panel active" id="setup">
+        <div class="row">
+          <div class="form-group">
+            <label>Assignment Name</label>
+            <input type="text" />
+          </div>
+          <div class="form-group">
+            <label>Grade Level</label>
+            <select>
+              <option value="">Select Level</option>
+              <option>Middle School</option>
+              <option>High School</option>
+              <option>College</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <div class="form-group">
+            <label>Rubric Upload</label>
+            <input type="file" />
+          </div>
+          <div class="form-group">
+            <label>Grading Difficulty</label>
+            <select>
+              <option value="">Select Difficulty</option>
+              <option>Basic</option>
+              <option>Intermediate</option>
+              <option>Advanced</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <div class="form-group wide">
+            <label>AI Notes</label>
+            <textarea rows="4"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-panel" id="gospel">
+        <div style="margin-bottom: 1rem;">
+          <label style="font-weight: bold; display: inline-block; margin-right: 0.5rem;">
+            <input type="checkbox" id="gospelToggle" style="transform: scale(1.4); margin-right: 0.5rem;" />
+            Enable Gospel-Centered Feedback
+          </label>
+        </div>
+
+        <label>Gospel-Centered Principles, Themes, and References</label>
+        <textarea rows="6"></textarea>
+      </div>
+
+      <div class="tab-panel" id="reviews">
+        {% if pending_feedback %}
+        <table style="width:100%; border-collapse: collapse; font-size: 0.95rem;">
+          <thead style="background-color: #f1f1f1;">
+            <tr>
+              <th style="border: 1px solid #ccc; padding: 0.75rem;">Student</th>
+              <th style="border: 1px solid #ccc; padding: 0.75rem;">Assignment</th>
+              <th style="border: 1px solid #ccc; padding: 0.75rem;">Score</th>
+              <th style="border: 1px solid #ccc; padding: 0.75rem;">Submitted</th>
+              <th style="border: 1px solid #ccc; padding: 0.75rem;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if pending_feedback|length > 0 %}
+              {% for item in pending_feedback %}
+                <tr>
+                  <td style="border: 1px solid #ccc; padding: 0.75rem;">{{ item.student_id }}</td>
+                  <td style="border: 1px solid #ccc; padding: 0.75rem;">{{ item.assignment_title }}</td>
+                  <td style="border: 1px solid #ccc; padding: 0.75rem;">{{ item.score }}</td>
+                  <td style="border: 1px solid #ccc; padding: 0.75rem;">{{ item.timestamp }}</td>
+                  <td style="border: 1px solid #ccc; padding: 0.75rem; text-align:center;">
+                    <form action="/instructor-review" method="GET" style="display:inline;">
+                      <button style="padding: 0.4rem 1rem; background: #1f3a54; color: white; border: none; border-radius: 20px;">Review</button>
+                    </form>
+                    <form action="/delete-review" method="POST" style="display:inline;">
+                      <input type="hidden" name="submission_id" value="{{ item.submission_id }}">
+                      <button style="padding: 0.4rem 1rem; background: #4b887f; color: white; border: none; border-radius: 20px;">Approve</button>
+                    </form>
+                  </td>
+                </tr>
+              {% endfor %}
+            {% else %}
+              <tr>
+                <td colspan="5" style="text-align: center; padding: 1rem; background: #f8f8f8; font-style: italic;">
+                  🎉 You're all caught up! No pending submissions to review.
+                </td>
+              </tr>
+            {% endif %}
+          </tbody>
+          
+        </table>
+        {% else %}
+          <p style="padding: 1rem; background: #fff; border-radius: 6px;">No pending reviews at the moment.</p>
+        {% endif %}
+      </div>
+
+      <div class="tab-panel" id="logs">
+        <p>Activity Logs coming soon...</p>
+      </div>
+
+      <button class="submit">Save Assignment</button>
     </div>
-
-    
-    <div class="tab-panel" id="reviews">
-      <table style="width:100%; border-collapse: collapse; font-size: 0.95rem;">
-        <thead style="background-color: #f1f1f1;">
-          <tr>
-            <th style="border: 1px solid #ccc; padding: 0.75rem;">Student</th>
-            <th style="border: 1px solid #ccc; padding: 0.75rem;">Assignment</th>
-            <th style="border: 1px solid #ccc; padding: 0.75rem;">Score</th>
-            <th style="border: 1px solid #ccc; padding: 0.75rem;">Submitted</th>
-            <th style="border: 1px solid #ccc; padding: 0.75rem;">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td style="border: 1px solid #ccc; padding: 0.75rem;">Sarah Kim</td>
-            <td style="border: 1px solid #ccc; padding: 0.75rem;">I-485 Application</td>
-            <td style="border: 1px solid #ccc; padding: 0.75rem;">91</td>
-            <td style="border: 1px solid #ccc; padding: 0.75rem;">2025-04-08</td>
-            <td style="border: 1px solid #ccc; padding: 0.75rem; text-align:center;">
-              <button style="padding: 0.4rem 1rem; background: #1f3a54; color: white; border: none; border-radius: 20px;">Review</button>
-              <button style="padding: 0.4rem 1rem; background: #4b887f; color: white; border: none; border-radius: 20px;">Approve</button>
-              <button style="padding: 0.4rem 1rem; background: #999; color: white; border: none; border-radius: 20px;">Edit</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-
-    
-    <div class="tab-panel" id="logs">
-      <table style="width:100%; border-collapse: collapse; font-size: 0.95rem;">
-        <thead style="background-color: #f1f1f1;">
-          <tr>
-            <th style="border: 1px solid #ccc; padding: 0.75rem;">Timestamp</th>
-            <th style="border: 1px solid #ccc; padding: 0.75rem;">User</th>
-            <th style="border: 1px solid #ccc; padding: 0.75rem;">Action</th>
-            <th style="border: 1px solid #ccc; padding: 0.75rem;">Assignment</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td style="border: 1px solid #ccc; padding: 0.75rem;">2025-04-08 10:03 PM</td>
-            <td style="border: 1px solid #ccc; padding: 0.75rem;">Instructor A</td>
-            <td style="border: 1px solid #ccc; padding: 0.75rem;">Approved Feedback</td>
-            <td style="border: 1px solid #ccc; padding: 0.75rem;">Leadership Reflection</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-
-    <button class="submit">Save Assignment</button>
   </div>
 
   <script>
     function showTab(id) {
       document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
       document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
-      document.querySelector(`[onclick="showTab('${id}')"]`).classList.add('active');
       document.getElementById(id).classList.add('active');
+      document.querySelector(`[onclick="showTab('${id}')"]`).classList.add('active');
     }
   </script>
 </body>

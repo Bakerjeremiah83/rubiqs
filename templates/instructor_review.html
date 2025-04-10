@@ -16,6 +16,9 @@
       border-radius: 10px;
       box-shadow: 0 6px 15px rgba(0,0,0,0.08);
       margin-bottom: 2rem;
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
     }
     .btn {
       background: #1f3a54;
@@ -25,6 +28,8 @@
       border-radius: 6px;
       cursor: pointer;
       margin-top: 1rem;
+      text-decoration: none;
+      display: inline-block;
     }
     .btn.scan {
       background-color: #f39c12;
@@ -36,6 +41,12 @@
       border-radius: 6px;
       border: 1px solid #ccc;
       box-sizing: border-box;
+    }
+    .button-group {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1.5rem;
+      justify-content: flex-start;
     }
   </style>
 </head>
@@ -71,10 +82,22 @@
         <label for="feedback">Feedback</label>
         <textarea name="feedback" rows="6" required>{{ current_review.feedback }}</textarea>
 
-        <input class="btn" type="submit" name="action" value="Approve and Post">
+        <div class="button-group">
+          <input class="btn" type="submit" name="action" value="Approve and Post">
+          <button type="reset" class="btn" style="background-color: #888;">Reset</button>
+          <button type="button" class="btn" onclick="window.location.href='/admin-dashboard'">Cancel</button>
+        </div>
       </form>
+
+      <!-- ✅ Back to Dashboard Button -->
+      <div class="button-group" style="margin-top: 2rem;">
+        <a href="/admin-dashboard" class="btn" style="background-color: #4b887f;">⬅ Back to Admin Dashboard</a>
+      </div>
     {% else %}
       <p>No pending submissions to review.</p>
+      <div class="button-group" style="margin-top: 2rem;">
+        <a href="/admin-dashboard" class="btn" style="background-color: #4b887f;">⬅ Back to Admin Dashboard</a>
+      </div>
     {% endif %}
   </div>
 
