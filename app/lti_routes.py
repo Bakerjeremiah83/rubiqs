@@ -800,7 +800,8 @@ def test_store():
 
 # In app/lti_routes.py
 from flask import request, jsonify
-from app.zerogpt_api import check_ai_generated_text
+from app.utils.zerogpt_api import check_ai_with_gpt
+
 
 @lti.route('/scan-ai', methods=['POST'])
 def scan_ai_text():
