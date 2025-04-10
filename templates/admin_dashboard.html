@@ -120,13 +120,20 @@
     button.submit:hover {
       background: #142835;
     }
-  </style>
+  
+    .logo {
+      max-height: 80px;
+      width: auto;
+      margin-right: 1.5rem;
+    }
+    
+</style>
 </head>
 <body>
   <div class="card">
     <div class="brand-header">
       <div style="display: flex; align-items: center; margin-bottom: 2rem;">
-        <img src="/static/rubiqs-logo.png" alt="Rubiqs Logo" style="height: 40px; width: auto; margin-right: 1rem;" />
+        <img src="/static/rubiqs-logo.png" alt="Rubiqs Logo" class="logo" />
         <div>
           <h1 style="margin: 0; font-size: 1.5rem; color: #1f3a54;">Rubiqs</h1>
           <div style="font-size: 1rem; color: #7f8c8d;">AI-Powered Mastery</div>
@@ -140,7 +147,7 @@
     <div class="tabs">
       <button class="tab-button active" onclick="showTab('setup')">Assignment Setup</button>
       <button class="tab-button" onclick="showTab('gospel')">Gospel-Centered</button>
-      <button onclick="location.href='/instructor-review'">Instructor Review</button>
+      <button class="tab-button" onclick="location.href='/instructor-review'">Instructor Review</button>
       <button class="tab-button" onclick="showTab('reviews')">Pending Reviews</button>
       <button class="tab-button" onclick="showTab('logs')">Activity Logs</button>
     </div>

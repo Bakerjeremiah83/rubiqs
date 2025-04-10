@@ -808,21 +808,22 @@ import uuid
 from datetime import datetime
 from app.utils.zerogpt_api import check_ai_generated_text
 
+
 @lti.route("/instructor-review", methods=["GET", "POST"])
 def instructor_review():
     reviews = load_pending_feedback()
-    if not reviews:
+    review_items = list(reviews.items())
+    if not review_items:
         return render_template("instructor_review.html", current_review=None)
 
     # Get the first pending review
-    submission_id, current_review = next(iter(reviews.items()))
+    submission_id, current_review = review_items[0]
 
     if request.method == "POST":
         current_review["score"] = int(request.form.get("score"))
         current_review["feedback"] = request.form.get("feedback")
         current_review["timestamp"] = datetime.utcnow().isoformat()
         store_pending_feedback(submission_id, current_review)
-        # Optionally log or mark as reviewed
         return redirect(url_for("lti.instructor_review"))
 
     return render_template("instructor_review.html", current_review=current_review)
