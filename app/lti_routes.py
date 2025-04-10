@@ -812,18 +812,25 @@ from app.utils.zerogpt_api import check_ai_generated_text
 @lti.route("/instructor-review", methods=["GET", "POST"])
 def instructor_review():
     reviews = load_all_pending_feedback()
-    review_items = list(reviews.items())
-    if not review_items:
+    if not reviews:
         return render_template("instructor_review.html", current_review=None)
 
-    # Get the first pending review
-    submission_id, current_review = review_items[0]
+    # Grab the first review (for now)
+    current_review = reviews[0]
+    submission_id = current_review.get("submission_id", None)
+
+    if not submission_id:
+        return "❌ Error: Submission ID is missing.", 400
 
     if request.method == "POST":
-        current_review["score"] = int(request.form.get("score"))
-        current_review["feedback"] = request.form.get("feedback")
-        current_review["timestamp"] = datetime.utcnow().isoformat()
-        store_pending_feedback(submission_id, current_review)
+        try:
+            current_review["score"] = int(request.form.get("score", 0))
+            current_review["feedback"] = request.form.get("feedback", "").strip()
+            current_review["timestamp"] = datetime.utcnow().isoformat()
+            store_pending_feedback(submission_id, current_review)
+        except ValueError:
+            return "❌ Error: Invalid score provided.", 400
+
         return redirect(url_for("lti.instructor_review"))
 
     return render_template("instructor_review.html", current_review=current_review)
