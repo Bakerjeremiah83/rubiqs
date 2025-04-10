@@ -9,6 +9,8 @@ from app.utils.storage import (
     load_all_pending_feedback
 )
 
+from app.utils.zerogpt_api import check_ai_with_gpt
+
 
 import json
 import os
@@ -22,7 +24,7 @@ from datetime import datetime
 from requests_oauthlib import OAuth1Session
 import re
 from pdfminer.high_level import extract_text as extract_pdf_text
-from app.utils.zerogpt_api import check_ai_generated_text
+from app.utils.zerogpt_api import check_ai_with_gpt
 
 
 def load_assignment_config(assignment_title):
@@ -785,12 +787,8 @@ from app.zerogpt_api import check_ai_generated_text
 
 @lti.route('/scan-ai', methods=['POST'])
 def scan_ai_text():
-    if 'launch_data' not in session or 'https://purl.imsglobal.org/spec/lti/claim/roles' not in session['launch_data']:
+    if 'launch_data' not in session:
         return jsonify({"error": "Unauthorized"}), 403
-
-    roles = session['launch_data']['https://purl.imsglobal.org/spec/lti/claim/roles']
-    if not any(role for role in roles if "Instructor" in role or "Administrator" in role):
-        return jsonify({"error": "Instructor access only"}), 403
 
     data = request.get_json()
     text = data.get('text', '')
@@ -798,7 +796,7 @@ def scan_ai_text():
     if not text:
         return jsonify({"error": "No text provided"}), 400
 
-    result = check_ai_generated_text(text)
+    result = check_ai_with_gpt(text)
     return jsonify(result)
 
 @lti.route("/instructor-review", methods=["GET", "POST"])
@@ -819,7 +817,9 @@ def instructor_review():
         current_review["feedback"] = request.form.get("feedback")
         current_review["timestamp"] = datetime.utcnow().isoformat()
         store_pending_feedback(submission_id, current_review)
+        
         return redirect(url_for("lti.instructor_review"))
+
 
     return render_template("instructor_review.html", current_review=current_review)
 
