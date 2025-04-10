@@ -338,7 +338,7 @@ Feedback: <detailed, encouraging, and helpful feedback>
 
         from datetime import datetime
         import uuid
-        from utils.storage import store_pending_feedback
+        from app.utils.storage import store_pending_feedback
 
         submission_id = str(uuid.uuid4())  # create unique ID
 
@@ -762,7 +762,7 @@ def log_gpt_interaction(assignment_title, prompt, feedback, score=None):
 def test_store():
     import uuid
     from datetime import datetime
-    from utils.storage import store_pending_feedback
+    from app.utils.storage import store_pending_feedback
 
     submission_id = str(uuid.uuid4())
     test_data = {
@@ -800,37 +800,3 @@ def scan_ai_text():
 
     result = check_ai_generated_text(text)
     return jsonify(result)
-
-
-from flask import render_template, request, redirect, url_for
-from app.utils.storage import load_pending_feedback, store_pending_feedback
-import uuid
-from datetime import datetime
-from app.utils.zerogpt_api import check_ai_generated_text
-
-
-@lti.route("/instructor-review", methods=["GET", "POST"])
-def instructor_review():
-    reviews = load_all_pending_feedback()
-    if not reviews:
-        return render_template("instructor_review.html", current_review=None)
-
-    # Grab the first review (for now)
-    current_review = reviews[0]
-    submission_id = current_review.get("submission_id", None)
-
-    if not submission_id:
-        return "❌ Error: Submission ID is missing.", 400
-
-    if request.method == "POST":
-        try:
-            current_review["score"] = int(request.form.get("score", 0))
-            current_review["feedback"] = request.form.get("feedback", "").strip()
-            current_review["timestamp"] = datetime.utcnow().isoformat()
-            store_pending_feedback(submission_id, current_review)
-        except ValueError:
-            return "❌ Error: Invalid score provided.", 400
-
-        return redirect(url_for("lti.instructor_review"))
-
-    return render_template("instructor_review.html", current_review=current_review)
