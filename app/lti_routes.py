@@ -811,7 +811,7 @@ from app.utils.zerogpt_api import check_ai_generated_text
 
 @lti.route("/instructor-review", methods=["GET", "POST"])
 def instructor_review():
-    reviews = load_pending_feedback()
+    reviews = load_all_pending_feedback()
     review_items = list(reviews.items())
     if not review_items:
         return render_template("instructor_review.html", current_review=None)
