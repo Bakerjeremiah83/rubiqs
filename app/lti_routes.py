@@ -231,7 +231,7 @@ def grade_docx():
             return "❌ Unsupported file type.", 400
 
         # 2b. Optional: Run AI Detection (ZeroGPT)
-        ai_check_result = check_ai_generated_text(full_text)
+        ai_check_result = check_ai_with_gpt(full_text)
         print("🤖 AI Detection Result:", ai_check_result)
 
     except Exception as e:
