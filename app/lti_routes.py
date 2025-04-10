@@ -2,14 +2,6 @@ from flask import (
     request, jsonify, redirect, Blueprint, session,
     render_template, send_file
 )
-
-from app.utils.storage import (
-    store_pending_feedback,
-    load_pending_feedback,
-    load_all_pending_feedback
-)
-
-
 import json
 import os
 import jwt
@@ -22,8 +14,6 @@ from datetime import datetime
 from requests_oauthlib import OAuth1Session
 import re
 from pdfminer.high_level import extract_text as extract_pdf_text
-from app.utils.zerogpt_api import check_ai_generated_text
-
 
 def load_assignment_config(assignment_title):
     rubric_index_path = os.path.join("rubrics", "rubric_index.json")
@@ -227,11 +217,6 @@ def grade_docx():
             full_text = extract_pdf_text(BytesIO(file.read()))
         else:
             return "❌ Unsupported file type.", 400
-
-        # 2b. Optional: Run AI Detection (ZeroGPT)
-        ai_check_result = check_ai_generated_text(full_text)
-        print("🤖 AI Detection Result:", ai_check_result)
-
     except Exception as e:
         return f"❌ Failed to extract text: {str(e)}", 500
 
@@ -310,16 +295,16 @@ Feedback: <detailed, encouraging, and helpful feedback>
 
     # 6. Show prompt preview first (if requested)
     # if show_preview:
-    #     return render_template(
-    #         "prompt_preview.html",
-    #         gpt_prompt=prompt.strip(),
-    #         hidden_fields={
-    #             "confirmed_prompt": "true",
-    #             "file_text": full_text,
-    #             "assignment_title": assignment_title,
-    #             "reference_data": reference_data,
-    #         }
-    #     )
+        # return render_template(
+            # "prompt_preview.html",
+            # gpt_prompt=prompt.strip(),
+            # hidden_fields={
+                # "confirmed_prompt": "true",
+                # "file_text": full_text,
+                # "assignment_title": assignment_title,
+                # "reference_data": reference_data,
+            # }
+        # )
 
     # 7. Call GPT if prompt is confirmed
     try:
@@ -336,24 +321,6 @@ Feedback: <detailed, encouraging, and helpful feedback>
         feedback_match = re.search(r"Feedback:\s*(.+)", output, re.DOTALL)
         feedback = feedback_match.group(1).strip() if feedback_match else output.strip()
 
-        from datetime import datetime
-        import uuid
-        from app.utils.storage import store_pending_feedback
-
-        submission_id = str(uuid.uuid4())  # create unique ID
-
-        submission_data = {
-            "submission_id": submission_id,
-            "student_id": "demo_student_001",  # you can update this later
-            "assignment_title": assignment_title,
-            "timestamp": datetime.utcnow().isoformat(),
-            "score": score,
-            "feedback": feedback,
-            "student_text": full_text,  # this should already exist
-            "ai_check_result": None
-        }
-
-        store_pending_feedback(submission_id, submission_data)
         log_gpt_interaction(assignment_title, prompt, feedback, score)
 
     except Exception as e:
@@ -758,45 +725,17 @@ def log_gpt_interaction(assignment_title, prompt, feedback, score=None):
     with open(log_path, "w") as f:
         json.dump(logs, f, indent=2)
 
-@lti.route("/test-store")
-def test_store():
-    import uuid
-    from datetime import datetime
-    from app.utils.storage import store_pending_feedback
 
-    submission_id = str(uuid.uuid4())
-    test_data = {
-        "submission_id": submission_id,
-        "student_id": "tester001",
-        "assignment_title": "Test Assignment",
-        "timestamp": datetime.utcnow().isoformat(),
-        "score": 88,
-        "feedback": "Nice test work!",
-        "student_text": "This is a test submission.",
-        "ai_check_result": None
-    }
+@lti.route("/delete-review", methods=["POST"])
+def delete_review():
+    submission_id = request.form.get("submission_id")
+    if not submission_id:
+        return "Missing submission ID", 400
 
-    store_pending_feedback(submission_id, test_data)
-    return f"✅ Submission saved: {submission_id}"
+    all_reviews = load_all_pending_feedback()
+    filtered = [r for r in all_reviews if r.get("submission_id") != submission_id]
 
-# In app/lti_routes.py
-from flask import request, jsonify
-from app.zerogpt_api import check_ai_generated_text
+    with open("rubrics/pending_reviews.json", "w") as f:
+        json.dump(filtered, f, indent=2)
 
-@lti.route('/scan-ai', methods=['POST'])
-def scan_ai_text():
-    if 'launch_data' not in session or 'https://purl.imsglobal.org/spec/lti/claim/roles' not in session['launch_data']:
-        return jsonify({"error": "Unauthorized"}), 403
-
-    roles = session['launch_data']['https://purl.imsglobal.org/spec/lti/claim/roles']
-    if not any(role for role in roles if "Instructor" in role or "Administrator" in role):
-        return jsonify({"error": "Instructor access only"}), 403
-
-    data = request.get_json()
-    text = data.get('text', '')
-
-    if not text:
-        return jsonify({"error": "No text provided"}), 400
-
-    result = check_ai_generated_text(text)
-    return jsonify(result)
+    return redirect("/admin-dashboard")

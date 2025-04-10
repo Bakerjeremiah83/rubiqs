@@ -1,294 +1,163 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Rubiqs | Admin Dashboard</title>
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, sans-serif;
       background: linear-gradient(to right, #f1e2c4, #5ca198, #1f3a54);
-      color: #1f3a54;
-      margin: 0;
       padding: 2rem;
-      min-height: 100vh;
+      margin: 0;
       display: flex;
       justify-content: center;
     }
-
     .card {
       background: white;
       padding: 2rem;
       width: 100%;
       max-width: 1000px;
       border-radius: 12px;
-      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
     }
-
-    h2.title {
-      text-align: center;
-      font-size: 1.75rem;
-      font-weight: bold;
-      margin-bottom: 1.5rem;
-    }
-
-    .tabs {
+    .header-bar {
       display: flex;
-      gap: 0.5rem;
-      border-bottom: 1px solid #ccc;
-      margin-bottom: 1.5rem;
-    }
-
-    .tab-button {
-      padding: 0.6rem 1.2rem;
-      background: #eee;
-      border: none;
-      border-top-left-radius: 8px;
-      border-top-right-radius: 8px;
-      font-weight: bold;
-      cursor: pointer;
-      color: #1f3a54;
-      font-size: 0.95rem;
-    }
-
-    .tab-button.active {
-      background: white;
-      border: 1px solid #ccc;
-      border-bottom: none;
-    }
-
-    .tab-panel {
-      display: none;
-    }
-
-    .tab-panel.active {
-      display: block;
-    }
-
-    .row {
-      display: flex;
+      justify-content: space-between;
+      align-items: center;
       flex-wrap: wrap;
-      gap: 1rem;
-      margin-bottom: 1rem;
     }
-
-    .form-group {
-      flex: 1 1 48%;
+    h2 {
+      color: #1f3a54;
     }
-
-    .wide {
-      flex: 1 1 100%;
-    }
-
-    label {
-      font-weight: bold;
-      margin-bottom: 0.3rem;
-      display: block;
-    }
-
-    input[type="text"],
-    select,
-    textarea,
-    input[type="file"] {
-      width: 100%;
-      padding: 0.6rem;
-      font-size: 1rem;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      box-sizing: border-box;
-    }
-
-    textarea {
-      resize: vertical;
-    }
-
-    button.submit {
-      display: block;
-      margin: 2rem auto 0 auto;
+    .btn {
       background: #1f3a54;
       color: white;
-      padding: 0.85rem 2rem;
-      font-size: 1rem;
-      font-weight: bold;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
       border: none;
-      border-radius: 40px;
-      cursor: pointer;
-      transition: background 0.3s ease;
       text-transform: uppercase;
-      letter-spacing: 1px;
+      font-weight: bold;
+      font-size: 0.85rem;
+      cursor: pointer;
+      text-decoration: none;
     }
-
-    button.submit:hover {
-      background: #142835;
+    .btn:hover {
+      background: #1f2a36;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 2rem;
+      font-size: 0.95rem;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 0.75rem;
+      text-align: center;
+    }
+    th {
+      background: #f1f1f1;
+      color: #1f3a54;
+    }
+    input[type="number"],
+    select,
+    textarea {
+      font-size: 0.9rem;
+      padding: 0.3rem;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      width: 100%;
+      box-sizing: border-box;
     }
   </style>
 </head>
 <body>
   <div class="card">
-    <div class="brand-header">
-      <div style="display: flex; align-items: center; margin-bottom: 2rem;">
-        <img src="/static/rubiqs-logo.png" alt="Rubiqs Logo" style="height: 40px; width: auto; margin-right: 1rem;" />
-        <div>
-          <h1 style="margin: 0; font-size: 1.5rem; color: #1f3a54;">Rubiqs</h1>
-          <div style="font-size: 1rem; color: #7f8c8d;">AI-Powered Mastery</div>
-          <div style="font-size: 0.85rem; color: #aaa;">by J. Baker Design</div>
+    <div class="header-bar" style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;">
+        <div class="brand-header" style="display: flex; align-items: center; gap: 1rem;">
+          <img src="/static/rubiqs-logo.png" alt="Rubiqs Logo" style="max-height: 60px;">
+          <div class="brand-text">
+            <h2 style="margin: 0; font-size: 1.8rem; color: #1f3a54;">Rubiqs Admin Dashboard</h2>
+            <div class="tagline" style="font-size: 0.95rem; color: #7f8c8d;">AI-Powered Mastery · by J. Baker Design</div>
+          </div>
         </div>
-      </div>
       
-
-<h2 class="title">Assignment Setup</h2>
-
-    <div class="tabs">
-      <button class="tab-button active" onclick="showTab('setup')">Assignment Setup</button>
-      <button class="tab-button" onclick="showTab('gospel')">Gospel-Centered</button>
-      <button class="tab-button" onclick="showTab('reviews')">Pending Reviews</button>
-      <button class="tab-button" onclick="showTab('logs')">Activity Logs</button>
-    </div>
-
-    <div class="tab-panel active" id="setup">
-      <div class="row">
-        <div class="form-group">
-          <label>Assignment Name</label>
-          <input type="text" />
+        <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+          <a href="/export-configs" class="btn">Export Configs</a>
+          <a href="/export-logs" class="btn">Export Prompt Logs</a>
+          <a href="/assignment-config?new=1" class="btn">New Assignment</a>
         </div>
-        <div class="form-group">
-          <label>Grade Level</label>
-          <select>
-            <option value="">Select Level</option>
-            <option>Middle School</option>
-            <option>High School</option>
-            <option>College</option>
-          </select>
-        </div>
-      </div>
-      <div class="row">
-        <div class="form-group">
-          <label>Rubric Upload</label>
-          <input type="file" />
-        </div>
-        <div class="form-group">
-          <label>Grading Difficulty</label>
-          <select>
-            <option value="">Select Difficulty</option>
-            <option>Basic</option>
-            <option>Intermediate</option>
-            <option>Advanced</option>
-          </select>
-        </div>
-      </div>
-      <div class="row">
-        <div class="form-group wide">
-          <label>AI Notes</label>
-          <textarea rows="4"></textarea>
-        </div>
-      </div>
-    </div>
+      </div>      
 
-    
-    <div class="tab-panel" id="gospel">
-      <div style="margin-bottom: 1rem;">
-        <label style="font-weight: bold; display: inline-block; margin-right: 0.5rem;">
-          <input type="checkbox" id="gospelToggle" style="transform: scale(1.4); margin-right: 0.5rem;" />
-          Enable Gospel-Centered Feedback
-        </label>
-      </div>
-
-      <label>Gospel-Centered Principles, Themes, and References</label>
-      <textarea rows="6"></textarea>
-    </div>
-
-    
-    <div class="tab-panel" id="reviews">
-      {% if pending_feedback %}
-      <table style="width:100%; border-collapse: collapse; font-size: 0.95rem;">
-        <thead style="background-color: #f1f1f1;">
-          <tr>
-            <th style="border: 1px solid #ccc; padding: 0.75rem;">Student</th>
-            <th style="border: 1px solid #ccc; padding: 0.75rem;">Assignment</th>
-            <th style="border: 1px solid #ccc; padding: 0.75rem;">Score</th>
-            <th style="border: 1px solid #ccc; padding: 0.75rem;">Submitted</th>
-            <th style="border: 1px solid #ccc; padding: 0.75rem;">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for item in pending_feedback %}
-          <tr>
-            <td style="border: 1px solid #ccc; padding: 0.75rem;">{{ item.student_id }}</td>
-            <td style="border: 1px solid #ccc; padding: 0.75rem;">{{ item.assignment_title }}</td>
-            <td style="border: 1px solid #ccc; padding: 0.75rem;">{{ item.score }}</td>
-            <td style="border: 1px solid #ccc; padding: 0.75rem;">{{ item.timestamp }}</td>
-            <td style="border: 1px solid #ccc; padding: 0.75rem; text-align:center;">
-              <form action="/instructor-review" method="GET" style="display:inline;">
-                <button style="padding: 0.4rem 1rem; background: #1f3a54; color: white; border: none; border-radius: 20px;">Review</button>
-              </form>
+    <table>
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Total Points</th>
+          <th>Faith</th>
+          <th>AI Notes</th>
+          <th>Difficulty</th>
+          <th>Level</th>
+          <th>Save</th>
+          <th>Test</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for config in rubric_index %}
+        <tr>
+          <form action="/update-config" method="POST">
+            <td>
+              {{ config.assignment_title }}
+              <input type="hidden" name="assignment_title" value="{{ config.assignment_title }}">
             </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-      {% else %}
-        <p style="padding: 1rem; background: #fff; border-radius: 6px;">No pending reviews at the moment.</p>
-      {% endif %}
-    </div>
-      <table style="width:100%; border-collapse: collapse; font-size: 0.95rem;">
-        <thead style="background-color: #f1f1f1;">
-          <tr>
-            <th style="border: 1px solid #ccc; padding: 0.75rem;">Student</th>
-            <th style="border: 1px solid #ccc; padding: 0.75rem;">Assignment</th>
-            <th style="border: 1px solid #ccc; padding: 0.75rem;">Score</th>
-            <th style="border: 1px solid #ccc; padding: 0.75rem;">Submitted</th>
-            <th style="border: 1px solid #ccc; padding: 0.75rem;">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td style="border: 1px solid #ccc; padding: 0.75rem;">Sarah Kim</td>
-            <td style="border: 1px solid #ccc; padding: 0.75rem;">I-485 Application</td>
-            <td style="border: 1px solid #ccc; padding: 0.75rem;">91</td>
-            <td style="border: 1px solid #ccc; padding: 0.75rem;">2025-04-08</td>
-            <td style="border: 1px solid #ccc; padding: 0.75rem; text-align:center;">
-              <button style="padding: 0.4rem 1rem; background: #1f3a54; color: white; border: none; border-radius: 20px;">Review</button>
-              <button style="padding: 0.4rem 1rem; background: #4b887f; color: white; border: none; border-radius: 20px;">Approve</button>
-              <button style="padding: 0.4rem 1rem; background: #999; color: white; border: none; border-radius: 20px;">Edit</button>
+            <td>
+              <input type="number" name="total_points" value="{{ config.total_points if config.total_points is defined else '' }}">
             </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-
-    
-    <div class="tab-panel" id="logs">
-      <table style="width:100%; border-collapse: collapse; font-size: 0.95rem;">
-        <thead style="background-color: #f1f1f1;">
-          <tr>
-            <th style="border: 1px solid #ccc; padding: 0.75rem;">Timestamp</th>
-            <th style="border: 1px solid #ccc; padding: 0.75rem;">User</th>
-            <th style="border: 1px solid #ccc; padding: 0.75rem;">Action</th>
-            <th style="border: 1px solid #ccc; padding: 0.75rem;">Assignment</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td style="border: 1px solid #ccc; padding: 0.75rem;">2025-04-08 10:03 PM</td>
-            <td style="border: 1px solid #ccc; padding: 0.75rem;">Instructor A</td>
-            <td style="border: 1px solid #ccc; padding: 0.75rem;">Approved Feedback</td>
-            <td style="border: 1px solid #ccc; padding: 0.75rem;">Leadership Reflection</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-
-    <button class="submit">Save Assignment</button>
+            <td>
+                <input type="checkbox" name="faith_integration" {% if config.faith_integration %}checked{% endif %}>
+              </td>              
+            <td>
+              <textarea name="ai_notes" rows="2">{{ config.ai_notes if config.ai_notes is defined else '' }}</textarea>
+            </td>
+            <td>
+              <select name="grading_difficulty">
+                <option value="lenient" {% if config.grading_difficulty == 'lenient' %}selected{% endif %}>Lenient</option>
+                <option value="balanced" {% if config.grading_difficulty == 'balanced' %}selected{% endif %}>Balanced</option>
+                <option value="rigorous" {% if config.grading_difficulty == 'rigorous' %}selected{% endif %}>Rigorous</option>
+              </select>
+            </td>
+            <td>
+                <select name="student_level">
+                  <option value="middle school" {% if config.student_level == 'middle school' %}selected{% endif %}>Middle School</option>
+                  <option value="high school" {% if config.student_level == 'high school' %}selected{% endif %}>High School</option>
+                  <option value="college" {% if config.student_level == 'college' %}selected{% endif %}>College</option>
+                </select>
+              </td>              
+            <td>
+              <button type="submit" class="btn">💾 Save</button>
+            </td>
+          </form>
+          <td>
+            <form action="/test-grader" method="POST">
+              <input type="hidden" name="assignment_title" value="{{ config.assignment_title }}">
+              <input type="hidden" name="submission_text" value="Paste sample here...">
+              <button type="submit" class="btn">🧪 Test</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="7">No assignment configurations found.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
 
-  <script>
-    function showTab(id) {
-      document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-      document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
-      document.querySelector(`[onclick="showTab('${id}')"]`).classList.add('active');
-      document.getElementById(id).classList.add('active');
-    }
-  </script>
+
+
+<div class="text-center text-sm text-gray-500 mt-8 mb-4">
+  &copy; 2025 J. Baker Design
+</div>
 </body>
 </html>

@@ -95,62 +95,17 @@
   </div>
 
   {% if current_review %}
-  <div class="entry">
-    <form method="POST">
-      <!-- Hidden Inputs -->
-      <input type="hidden" name="student_id" value="{{ current_review.student_id }}">
-      <input type="hidden" name="assignment_title" value="{{ current_review.assignment_title }}">
+    <div class="entry">
+      <form method="POST">
+        <input type="hidden" name="student_id" value="{{ current_review.student_id }}">
+        <input type="hidden" name="assignment_title" value="{{ current_review.assignment_title }}">
 
-      <!-- Submission Info -->
-      <p><strong>Assignment:</strong> {{ current_review.assignment_title }}</p>
-      <p><strong>Submitted:</strong> {{ current_review.timestamp }}</p>
+        <p><strong>Assignment:</strong> {{ current_review.assignment_title }}</p>
+        <p><strong>Submitted:</strong> {{ current_review.timestamp }}</p>
 
-      <!-- Score Input -->
-      <label for="score">Score</label>
-      <input type="number" name="score" value="{{ current_review.score }}" min="0" max="100" required>
+        <label for="score">Score</label>
+        <input type="number" name="score" value="{{ current_review.score }}" min="0" max="100" required>
 
-      <!-- 🔍 AI Check Block -->
-      {% if not current_review.ai_check_result %}
-        <button type="button"
-                id="scan-ai-btn"
-                class="nav-btn"
-                style="background-color: #f39c12;"
-                data-submission-id="{{ current_review.submission_id }}"
-                data-student-text="{{ current_review.student_text | escape }}">
-            🧠 Check for AI Writing
-        </button>
-        <div id="ai-result" class="mt-2" style="font-weight: bold;"></div>
-      {% else %}
-        <div class="alert alert-info mt-3">
-          <strong>AI Verdict:</strong> {{ current_review.ai_check_result.verdict }}<br>
-          <strong>AI Probability:</strong> {{ current_review.ai_check_result.ai_probability }}%
-        </div>
-      {% endif %}
-
-      <!-- Feedback Field -->
-      <label for="feedback">Feedback</label>
-      <textarea name="feedback" rows="6" required>{{ current_review.feedback }}</textarea>
-
-      <input type="submit" name="action" value="Approve and Post">
-    </form>
-
-    <!-- Navigation Buttons -->
-    <div class="nav-controls">
-      <form method="POST" style="display:inline;">
-        <input type="hidden" name="nav" value="previous">
-        <button class="nav-btn">⬅️ Previous</button>
-      </form>
-      <form method="POST" style="display:inline;">
-        <input type="hidden" name="nav" value="next">
-        <button class="nav-btn">Next ➡️</button>
-      </form>
-    </div>
-  </div>
-{% else %}
-  <p style="background: white; padding: 1rem; border-radius: 6px;">No pending submissions for this assignment.</p>
-{% endif %}
-
-       
         <label for="feedback">Feedback</label>
         <textarea name="feedback" rows="6" required>{{ current_review.feedback }}</textarea>
 
@@ -176,39 +131,5 @@
   {% else %}
     <p style="background: white; padding: 1rem; border-radius: 6px;">No pending submissions for this assignment.</p>
   {% endif %}
-
-  <script>
-    document.querySelectorAll('.scan-ai-btn').forEach(button => {
-      button.addEventListener('click', async () => {
-        const submissionId = button.dataset.submissionId;
-        const studentText = button.dataset.studentText;
-        const resultDiv = document.getElementById(`ai-result-${submissionId}`);
-        resultDiv.innerText = "⏳ Scanning with ZeroGPT...";
-  
-        try {
-          const response = await fetch("/scan-ai", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ text: studentText })
-          });
-  
-          const result = await response.json();
-          if (result.error) {
-            resultDiv.innerText = "⚠️ Error: " + result.error;
-          } else {
-            resultDiv.innerHTML = `
-              🤖 <strong>AI Probability:</strong> ${result.ai_probability || "N/A"}%<br>
-              🧠 <strong>Verdict:</strong> ${result.verdict}
-            `;
-          }
-        } catch (err) {
-          resultDiv.innerText = "❌ Failed to contact ZeroGPT.";
-        }
-      });
-    });
-  </script>  
-
 </body>
 </html>
