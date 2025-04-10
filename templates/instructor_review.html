@@ -123,9 +123,10 @@
             resultDiv.innerText = "⚠️ Error: " + result.error;
           } else {
             resultDiv.innerHTML = `
-              🤖 <strong>AI Probability:</strong> ${result.ai_probability || "N/A"}%<br>
-              🧠 <strong>Verdict:</strong> ${result.verdict}
+              🧠 <strong>AI Detection Result:</strong><br>
+              <pre style="white-space: pre-wrap;">${result.result}</pre>
             `;
+
           }
         } catch (err) {
           resultDiv.innerText = "❌ Failed to contact ZeroGPT.";
