@@ -32,3 +32,4 @@ Here is the student's submission:
 
     except Exception as e:
         return {"error": f"❌ GPT check failed: {str(e)}"}
+# rebuild
