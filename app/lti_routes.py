@@ -725,17 +725,3 @@ def log_gpt_interaction(assignment_title, prompt, feedback, score=None):
     with open(log_path, "w") as f:
         json.dump(logs, f, indent=2)
 
-
-@lti.route("/delete-review", methods=["POST"])
-def delete_review():
-    submission_id = request.form.get("submission_id")
-    if not submission_id:
-        return "Missing submission ID", 400
-
-    all_reviews = load_all_pending_feedback()
-    filtered = [r for r in all_reviews if r.get("submission_id") != submission_id]
-
-    with open("rubrics/pending_reviews.json", "w") as f:
-        json.dump(filtered, f, indent=2)
-
-    return redirect("/admin-dashboard")
