@@ -1,3 +1,13 @@
+# Environment files
 .env
-.env
-.env
+.env.*
+
+# MacOS system files
+.DS_Store
+
+# Python artifacts
+__pycache__/
+*.pyc
+
+# Virtual environments
+venv/
