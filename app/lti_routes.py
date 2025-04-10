@@ -674,16 +674,33 @@ Feedback: <detailed, helpful feedback>
         gpt_feedback=gpt_feedback,
         gpt_score=gpt_score
     )
+
 @lti.route("/admin-dashboard", methods=["GET", "POST"])
 def admin_dashboard():
-    rubric_index_path = os.path.join("rubrics", "rubric_index.json")
-    rubric_index = []
+    session["tool_role"] = "instructor"  # TEMP for local testing
 
+    rubric_index_path = os.path.join("rubrics", "rubric_index.json")
+    pending_path = os.path.join("rubrics", "pending_reviews.json")
+
+    rubric_index = []
     if os.path.exists(rubric_index_path):
         with open(rubric_index_path, "r") as f:
             rubric_index = json.load(f)
 
-    return render_template("admin_dashboard.html", rubric_index=rubric_index)
+    pending_feedback = []
+    if os.path.exists(pending_path):
+        with open(pending_path, "r") as f:
+            pending_feedback = json.load(f)
+
+    pending_count = len(pending_feedback)
+    approved_count = sum(1 for r in rubric_index if r.get("instructor_approval"))
+
+    return render_template("admin_dashboard.html",
+                           rubric_index=rubric_index,
+                           pending_feedback=pending_feedback,
+                           pending_count=pending_count,
+                           approved_count=approved_count)
+
 
 @lti.route("/export-configs", methods=["GET"])
 def export_configs():
