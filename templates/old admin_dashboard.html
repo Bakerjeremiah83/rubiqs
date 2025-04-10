@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Rubiqs | Admin Dashboard</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: linear-gradient(to right, #f1e2c4, #5ca198, #1f3a54);
+      padding: 2rem;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+    }
+    .card {
+      background: white;
+      padding: 2rem;
+      width: 100%;
+      max-width: 1000px;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    }
+    .header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    h2 {
+      color: #1f3a54;
+    }
+    .btn {
+      background: #1f3a54;
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      border: none;
+      text-transform: uppercase;
+      font-weight: bold;
+      font-size: 0.85rem;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .btn:hover {
+      background: #1f2a36;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 2rem;
+      font-size: 0.95rem;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 0.75rem;
+      text-align: center;
+    }
+    th {
+      background: #f1f1f1;
+      color: #1f3a54;
+    }
+    input[type="number"],
+    select,
+    textarea {
+      font-size: 0.9rem;
+      padding: 0.3rem;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      width: 100%;
+      box-sizing: border-box;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header-bar" style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;">
+        <div class="brand-header" style="display: flex; align-items: center; gap: 1rem;">
+          <img src="/static/rubiqs-logo.png" alt="Rubiqs Logo" style="max-height: 60px;">
+          <div class="brand-text">
+            <h2 style="margin: 0; font-size: 1.8rem; color: #1f3a54;">Rubiqs Admin Dashboard</h2>
+            <div class="tagline" style="font-size: 0.95rem; color: #7f8c8d;">AI-Powered Mastery · by J. Baker Design</div>
+          </div>
+        </div>
+      
+        <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+          <a href="/export-configs" class="btn">Export Configs</a>
+          <a href="/export-logs" class="btn">Export Prompt Logs</a>
+          <a href="/assignment-config?new=1" class="btn">New Assignment</a>
+        </div>
+      </div>      
+
+    <table>
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Total Points</th>
+          <th>Faith</th>
+          <th>AI Notes</th>
+          <th>Difficulty</th>
+          <th>Level</th>
+          <th>Save</th>
+          <th>Test</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for config in rubric_index %}
+        <tr>
+          <form action="/update-config" method="POST">
+            <td>
+              {{ config.assignment_title }}
+              <input type="hidden" name="assignment_title" value="{{ config.assignment_title }}">
+            </td>
+            <td>
+              <input type="number" name="total_points" value="{{ config.total_points if config.total_points is defined else '' }}">
+            </td>
+            <td>
+                <input type="checkbox" name="faith_integration" {% if config.faith_integration %}checked{% endif %}>
+              </td>              
+            <td>
+              <textarea name="ai_notes" rows="2">{{ config.ai_notes if config.ai_notes is defined else '' }}</textarea>
+            </td>
+            <td>
+              <select name="grading_difficulty">
+                <option value="lenient" {% if config.grading_difficulty == 'lenient' %}selected{% endif %}>Lenient</option>
+                <option value="balanced" {% if config.grading_difficulty == 'balanced' %}selected{% endif %}>Balanced</option>
+                <option value="rigorous" {% if config.grading_difficulty == 'rigorous' %}selected{% endif %}>Rigorous</option>
+              </select>
+            </td>
+            <td>
+                <select name="student_level">
+                  <option value="middle school" {% if config.student_level == 'middle school' %}selected{% endif %}>Middle School</option>
+                  <option value="high school" {% if config.student_level == 'high school' %}selected{% endif %}>High School</option>
+                  <option value="college" {% if config.student_level == 'college' %}selected{% endif %}>College</option>
+                </select>
+              </td>              
+            <td>
+              <button type="submit" class="btn">💾 Save</button>
+            </td>
+          </form>
+          <td>
+            <form action="/test-grader" method="POST">
+              <input type="hidden" name="assignment_title" value="{{ config.assignment_title }}">
+              <input type="hidden" name="submission_text" value="Paste sample here...">
+              <button type="submit" class="btn">🧪 Test</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="7">No assignment configurations found.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+
+
+<div class="text-center text-sm text-gray-500 mt-8 mb-4">
+  &copy; 2025 J. Baker Design
+</div>
+</body>
+</html>

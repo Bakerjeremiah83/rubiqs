@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Instructor Review | Rubiqs</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: linear-gradient(to right, #f1e2c4, #5ca198, #1f3a54);
+      padding: 2rem;
+      color: #333;
+    }
+    .review-card {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 10px;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.08);
+      margin-bottom: 2rem;
+    }
+    .btn {
+      background: #1f3a54;
+      color: white;
+      border: none;
+      padding: 0.6rem 1.2rem;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 1rem;
+    }
+    .btn.scan {
+      background-color: #f39c12;
+    }
+    textarea, input[type="number"] {
+      width: 100%;
+      padding: 0.5rem;
+      margin-top: 0.3rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+  </style>
+</head>
+<body>
+  <div class="review-card">
+    <h2>Instructor Review</h2>
+    {% if current_review %}
+      <p><strong>Student ID:</strong> {{ current_review.student_id }}</p>
+      <p><strong>Assignment:</strong> {{ current_review.assignment_title }}</p>
+      <p><strong>Submitted:</strong> {{ current_review.timestamp }}</p>
+      <p><strong>Submission:</strong> {{ current_review.student_text }}</p>
+
+      <form method="POST">
+        <label for="score">Score</label>
+        <input type="number" name="score" value="{{ current_review.score }}" min="0" max="100" required>
+
+        {% if not current_review.ai_check_result %}
+          <button type="button"
+                  id="scan-ai-btn"
+                  class="btn scan"
+                  data-submission-id="{{ current_review.submission_id }}"
+                  data-student-text="{{ current_review.student_text | escape }}">
+            🧠 Check for AI Writing
+          </button>
+          <div id="ai-result" class="mt-2" style="font-weight: bold;"></div>
+        {% else %}
+          <div class="alert alert-info mt-3">
+            <strong>AI Verdict:</strong> {{ current_review.ai_check_result.verdict }}<br>
+            <strong>AI Probability:</strong> {{ current_review.ai_check_result.ai_probability }}%
+          </div>
+        {% endif %}
+
+        <label for="feedback">Feedback</label>
+        <textarea name="feedback" rows="6" required>{{ current_review.feedback }}</textarea>
+
+        <input class="btn" type="submit" name="action" value="Approve and Post">
+      </form>
+    {% else %}
+      <p>No pending submissions to review.</p>
+    {% endif %}
+  </div>
+
+  <script>
+    const scanBtn = document.getElementById("scan-ai-btn");
+    if (scanBtn) {
+      scanBtn.addEventListener("click", async () => {
+        const text = scanBtn.dataset.studentText;
+        const resultDiv = document.getElementById("ai-result");
+        resultDiv.innerText = "⏳ Scanning with ZeroGPT...";
+
+        try {
+          const response = await fetch("/scan-ai", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ text })
+          });
+
+          const result = await response.json();
+          if (result.error) {
+            resultDiv.innerText = "⚠️ Error: " + result.error;
+          } else {
+            resultDiv.innerHTML = `
+              🤖 <strong>AI Probability:</strong> ${result.ai_probability || "N/A"}%<br>
+              🧠 <strong>Verdict:</strong> ${result.verdict}
+            `;
+          }
+        } catch (err) {
+          resultDiv.innerText = "❌ Failed to contact ZeroGPT.";
+        }
+      });
+    }
+  </script>
+</body>
+</html>
