@@ -783,7 +783,7 @@ def test_store():
 from flask import request, jsonify
 from app.zerogpt_api import check_ai_generated_text
 
-@app.route('/scan-ai', methods=['POST'])
+@lti.route('/scan-ai', methods=['POST'])
 def scan_ai_text():
     if 'launch_data' not in session or 'https://purl.imsglobal.org/spec/lti/claim/roles' not in session['launch_data']:
         return jsonify({"error": "Unauthorized"}), 403
