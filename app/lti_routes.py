@@ -760,7 +760,15 @@ def admin_dashboard():
     session["tool_role"] = "instructor"  # TEMP for local testing
 
     rubric_index_path = os.path.join("rubrics", "rubric_index.json")
+    print("✅ File written. Re-opening to verify...")
+    with open(rubric_index_path, "r") as f:
+        confirm = json.load(f)
+    print("📑 File contents after save:", json.dumps(confirm, indent=2))
+
     pending_path = os.path.join("rubrics", "pending_reviews.json")
+
+    if session.get("tool_role") != "instructor":
+        return "❌ Access denied. Instructors only.", 403
 
     rubric_index = []
     if os.path.exists(rubric_index_path):
