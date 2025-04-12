@@ -743,7 +743,16 @@ def save_assignment():
         confirm = json.load(f)
     print("📑 File contents after save:", json.dumps(confirm, indent=2))
 
-    return redirect("/admin-dashboard")
+    def load_assignment_config(assignment_title):
+        print("🔍 Looking for config:", assignment_title)
+        rubric_index_path = os.path.join("rubrics", "rubric_index.json")
+        if os.path.exists(rubric_index_path):
+            with open(rubric_index_path, "r") as f:
+                configs = json.load(f)
+            for config in configs:
+                if config["assignment_title"].strip().lower() == assignment_title.strip().lower():
+                    return config
+        return None
 
 @lti.route("/admin-dashboard", methods=["GET", "POST"])
 def admin_dashboard():
