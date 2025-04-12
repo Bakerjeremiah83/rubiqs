@@ -672,8 +672,60 @@ Feedback: <detailed, helpful feedback>
         selected_config=selected_config,
         gpt_prompt=gpt_prompt,
         gpt_feedback=gpt_feedback,
-        gpt_score=gpt_score
+        gpt_score=gpt_score if 'gpt_score' in locals() else None
     )
+
+@lti.route("/save-assignment", methods=["POST"])
+def save_assignment():
+    # Get form data
+    assignment_name = request.form.get("assignment_name")
+    grade_level = request.form.get("grade_level")
+    grading_difficulty = request.form.get("grading_difficulty")
+    requires_review = request.form.get("requires_review") == "true"
+    gospel_enabled = request.form.get("gospel_enabled") == "true"
+    custom_ai = request.form.get("custom_ai")
+
+    rubric_file = request.files.get("rubric_upload")
+    additional_file = request.files.get("additional_files")
+
+    # Safety check
+    if not assignment_name:
+        return "Assignment name is required", 400
+
+    # Prepare directory for uploads
+    upload_dir = os.path.join("uploads", secure_filename(assignment_name))
+    os.makedirs(upload_dir, exist_ok=True)
+
+    rubric_filename = ""
+    if rubric_file and rubric_file.filename:
+        rubric_filename = secure_filename(rubric_file.filename)
+        rubric_path = os.path.join(upload_dir, rubric_filename)
+        rubric_file.save(rubric_path)
+
+    additional_filename = ""
+    if additional_file and additional_file.filename:
+        additional_filename = secure_filename(additional_file.filename)
+        additional_path = os.path.join(upload_dir, additional_filename)
+        additional_file.save(additional_path)
+
+    # Load existing assignments
+    assignments = load_assignment_data()
+
+    # Update or insert this assignment
+    assignments[assignment_name] = {
+        "grade_level": grade_level,
+        "grading_difficulty": grading_difficulty,
+        "requires_review": requires_review,
+        "gospel_enabled": gospel_enabled,
+        "custom_ai": custom_ai,
+        "rubric_file": rubric_filename,
+        "additional_file": additional_filename
+    }
+
+    # Save back to storage
+    save_assignment_data(assignments)
+
+    return redirect("/admin-dashboard")
 
 @lti.route("/admin-dashboard", methods=["GET", "POST"])
 def admin_dashboard():
@@ -814,14 +866,19 @@ def scan_ai_text():
     if not text:
         return jsonify({"error": "No text provided"}), 400
 
-    result = check_ai_with_gpt(text)
-    return jsonify(result)
+    try:
+        result = check_ai_with_gpt(text)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": f"AI scan failed: {str(e)}"}), 500
 
 @lti.route("/instructor-review", methods=["GET", "POST"])
 def instructor_review():
     from app.utils.storage import load_all_pending_feedback, store_pending_feedback
-    from flask import render_template, request, redirect, url_for
     from datetime import datetime
+    from flask import request, redirect, render_template, session, url_for
+    import os
+    import json
 
     reviews = load_all_pending_feedback()
     if not reviews:
@@ -829,6 +886,25 @@ def instructor_review():
 
     current_review = reviews[0]
     submission_id = current_review.get("submission_id", "")
+
+    if request.method == "POST":
+        # Update score and feedback
+        current_review["score"] = int(request.form.get("score"))
+        current_review["feedback"] = request.form.get("feedback")
+        current_review["timestamp"] = datetime.utcnow().isoformat()
+
+        if request.form.get("action") == "Approve and Post":
+            matched = next((r for r in reviews if r["submission_id"] == submission_id), None)
+            if matched:
+                reviews.remove(matched)
+            # Optionally post grade here using AGS if needed
+
+        # Save updated review list (or remove approved)
+        store_pending_feedback(submission_id, current_review)
+
+        return redirect(url_for("lti.instructor_review"))
+
+    return render_template("instructor_review.html", current_review=current_review)
 
     if request.method == "POST":
         current_review["score"] = int(request.form.get("score"))
@@ -841,3 +917,25 @@ def instructor_review():
 
     return render_template("instructor_review.html", current_review=current_review)
 
+@lti.route("/instructor-review/save-notes", methods=["POST"])
+def save_notes():
+    submission_id = request.form.get("submission_id")
+    new_notes = request.form.get("notes", "").strip()
+
+    if not submission_id:
+        return "❌ Missing submission ID", 400
+
+    import os
+    import json
+    from app.utils.storage import load_pending_feedback, store_pending_feedback
+
+    # Load the existing submission file
+    submission = load_pending_feedback(submission_id)
+    if not submission:
+        return f"❌ No submission found for ID {submission_id}", 404
+
+    # Update notes and save
+    submission["notes"] = new_notes
+    store_pending_feedback(submission_id, submission)
+
+    return redirect("/admin-dashboard")

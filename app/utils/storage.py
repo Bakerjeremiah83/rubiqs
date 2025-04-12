@@ -26,3 +26,15 @@ def load_all_pending_feedback():
             with open(os.path.join(PENDING_DIR, fname), "r") as f:
                 all_data.append(json.load(f))
     return all_data
+
+ASSIGNMENT_DATA_FILE = "rubric_index.json"
+
+def load_assignment_data():
+    if not os.path.exists(ASSIGNMENT_DATA_FILE):
+        return {}
+    with open(ASSIGNMENT_DATA_FILE, "r") as f:
+        return json.load(f)
+
+def save_assignment_data(data):
+    with open(ASSIGNMENT_DATA_FILE, "w") as f:
+        json.dump(data, f, indent=2)
