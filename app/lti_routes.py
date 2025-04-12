@@ -255,6 +255,8 @@ def grade_docx():
             return f"❌ Failed to extract persona file: {str(e)}", 500
 
     # 4. Load assignment config
+    print("🔍 Loading assignment config for:", assignment_title)
+    print("📄 Looking in:", os.path.join("rubrics", "rubric_index.json"))
     launch_data = session.get("launch_data", {})
     assignment_title = launch_data.get("https://purl.imsglobal.org/spec/lti/claim/resource_link", {}).get("title", "").strip()
     assignment_config = load_assignment_config(assignment_title)
@@ -833,6 +835,10 @@ def save_assignment():
     }
 
     save_assignment_data(assignments)
+
+    print("✅ Saved assignment:", assignment_title)
+    print("📂 Current config:", assignments)
+
 
     return redirect("/admin-dashboard")
 
