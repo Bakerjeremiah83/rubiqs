@@ -9,18 +9,19 @@ from app.utils.storage import (
     load_all_pending_feedback
 )
 
-from app.utils.zerogpt_api import check_ai_with_gpt
+# Removed duplicate import of check_ai_with_gpt
 
 
 import json
 import os
 import jwt
+from jwt.algorithms import RSAAlgorithm  # Ensure this is used for decoding JWTs
 import requests
 from jwt.exceptions import InvalidTokenError
 from docx import Document
 from io import BytesIO
 import openai
-from datetime import datetime
+from datetime import datetime  # Already imported; ensure no duplicates
 from requests_oauthlib import OAuth1Session
 import re
 from pdfminer.high_level import extract_text as extract_pdf_text
@@ -130,7 +131,7 @@ def launch():
 
         if not public_key:
             return "❌ No matching public key found in JWKS", 400
-    except Exception as e:
+    except requests.RequestException as e:
         return f"❌ Could not fetch JWKS: {str(e)}", 400
 
     # ✅ DEBUG: Print before decoding with validation
@@ -168,8 +169,8 @@ def launch():
         session["launch_data"] = json.loads(json.dumps(decoded))
         session["tool_role"] = "student"
 
-    except InvalidTokenError as e:
-        return f"❌ Invalid JWT signature: {str(e)}", 400
+    except (InvalidTokenError, KeyError) as e:
+        return f"❌ Invalid JWT signature or missing key: {str(e)}", 400
 
     # ✅ Continue with render_template and persona logic
     requires_persona = False
@@ -237,7 +238,7 @@ def grade_docx():
         ai_check_result = check_ai_with_gpt(full_text)
         print("🤖 AI Detection Result:", ai_check_result)
 
-    except Exception as e:
+    except (Exception, ValueError) as e:
         return f"❌ Failed to extract text: {str(e)}", 500
 
     # 3. Extract persona if provided
@@ -280,7 +281,7 @@ def grade_docx():
             rubric_text = extract_pdf_text(rubric_path)
         else:
             rubric_text = "(Rubric text could not be loaded.)"
-    except Exception as e:
+    except (FileNotFoundError, ValueError) as e:
         return f"❌ Failed to load rubric file: {str(e)}", 500
 
     # 5. Compose GPT prompt
@@ -341,27 +342,128 @@ Feedback: <detailed, encouraging, and helpful feedback>
         feedback_match = re.search(r"Feedback:\s*(.+)", output, re.DOTALL)
         feedback = feedback_match.group(1).strip() if feedback_match else output.strip()
 
-        from datetime import datetime
-        import uuid
-        from app.utils.storage import store_pending_feedback
-
-        submission_id = str(uuid.uuid4())  # create unique ID
+        submission_id = str(uuid.uuid4())
 
         submission_data = {
             "submission_id": submission_id,
-            "student_id": "demo_student_001",  # you can update this later
+            "student_id": "demo_student_001",  # Update this if needed
             "assignment_title": assignment_title,
             "timestamp": datetime.utcnow().isoformat(),
             "score": score,
             "feedback": feedback,
-            "student_text": full_text,  # this should already exist
+            "student_text": full_text,
             "ai_check_result": None
         }
 
+        if assignment_config.get("instructor_approval"):
+            store_pending_feedback(submission_id, submission_data)
+            log_gpt_interaction(assignment_title, prompt, feedback, score)
+
+            return render_template(
+                "feedback.html",
+                score=score,
+                feedback=feedback,
+                rubric_total_points=rubric_total_points,
+                user_roles=session.get("launch_data", {}).get("https://purl.imsglobal.org/spec/lti/claim/roles", []),
+                pending_message="This submission requires instructor review. Your feedback is saved, and your score will be posted after approval."
+            )
+
+        # Auto-post (if not instructor approval)
+        log_gpt_interaction(assignment_title, prompt, feedback, score)
+        return render_template(
+            "feedback.html",
+            score=score,
+            feedback=feedback,
+            rubric_total_points=rubric_total_points,
+            user_roles=session.get("launch_data", {}).get("https://purl.imsglobal.org/spec/lti/claim/roles", [])
+        )
+
+    except openai.error.OpenAIError as e:
+        return f"❌ GPT error: {str(e)}", 500
+
+    from datetime import datetime
+    import uuid
+    from app.utils.storage import store_pending_feedback, load_pending_feedback, load_all_pending_feedback  # Ensure all required functions are imported
+
+    def log_gpt_interaction(assignment_title, prompt, feedback, score=None):
+        log_path = os.path.join("logs", "prompt_logs.json")
+        os.makedirs("logs", exist_ok=True)
+
+        log_entry = {
+            "assignment_title": assignment_title,
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "prompt": prompt,
+            "feedback": feedback,
+            "score": score
+        }
+
+        logs = []
+        if os.path.exists(log_path):
+            with open(log_path, "r") as f:
+                try:
+                    logs = json.load(f)
+                except json.JSONDecodeError:
+                    logs = []
+
+        logs.append(log_entry)
+
+        with open(log_path, "w") as f:
+            json.dump(logs, f, indent=2)
+
+    submission_id = str(uuid.uuid4())  # create unique ID
+
+    submission_data = {
+        "submission_id": submission_id,
+        "student_id": "demo_student_001",  # you can update this later
+        "assignment_title": assignment_title,
+        "timestamp": datetime.utcnow().isoformat(),
+        "score": score,
+        "feedback": feedback,
+        "student_text": full_text,  # this should already exist
+        "ai_check_result": None
+    }
+
+    if assignment_config.get("instructor_approval"):
         store_pending_feedback(submission_id, submission_data)
         log_gpt_interaction(assignment_title, prompt, feedback, score)
 
+    return render_template(
+        "feedback.html",
+        score=score,
+        feedback=feedback,
+        rubric_total_points=rubric_total_points,
+        user_roles=session.get("launch_data", {}).get("https://purl.imsglobal.org/spec/lti/claim/roles", []),
+        pending_message="This submission requires instructor review. Your feedback is saved, and your score will be posted after approval."
+    )
+
+    return render_template(
+        "feedback.html",
+        score=score,
+        feedback=feedback,
+        rubric_total_points=rubric_total_points,
+        user_roles=launch_data.get("https://purl.imsglobal.org/spec/lti/claim/roles", []),
+        pending_message="This submission requires instructor review. Your feedback is saved, and your score will be posted after approval."
+    )
+
+    # ✅ Otherwise: auto-post (optional or placeholder)
+    # LMS posting logic would go here if instructor approval is not required
+
+    # Default fallback if no post logic yet
+    return render_template(
+        "feedback.html",
+        score=score,
+        feedback=feedback,
+        rubric_total_points=rubric_total_points,
+        user_roles=session.get("launch_data", {}).get("https://purl.imsglobal.org/spec/lti/claim/roles", [])
+    )
+
+
+    try:
+        # Add the code that might raise an exception here
+        pass  # Replace this with the actual code
     except Exception as e:
+        print(f"❌ An error occurred: {str(e)}")
+    except openai.error.OpenAIError as e:
         return f"❌ GPT error: {str(e)}", 500
 
     return render_template(
@@ -911,7 +1013,7 @@ def instructor_review():
 
         return redirect(url_for("lti.instructor_review"))
 
-    return render_template("instructor_review.html", current_review=current_review)
+    return render_template("instructor_review.html", current_review=current_review, reviews=reviews)
 
     if request.method == "POST":
         current_review["score"] = int(request.form.get("score"))
@@ -935,8 +1037,16 @@ def save_notes():
     import os
     import json
     from app.utils.storage import load_pending_feedback, store_pending_feedback
+import uuid
 
     # Load the existing submission file
+def save_notes():
+    submission_id = request.form.get("submission_id")
+    new_notes = request.form.get("notes", "").strip()
+
+    if not submission_id:
+        return "❌ Missing submission ID", 400
+
     submission = load_pending_feedback(submission_id)
     if not submission:
         return f"❌ No submission found for ID {submission_id}", 404
