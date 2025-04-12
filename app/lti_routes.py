@@ -674,26 +674,29 @@ def save_assignment():
         additional_path = os.path.join(upload_dir, additional_filename)
         additional_file.save(additional_path)
 
-    # ✅ Load existing list-based config
+    # ✅ Load rubric_index.json as a list
     rubric_index = []
     if os.path.exists(rubric_index_path):
         with open(rubric_index_path, "r") as f:
-            rubric_index = json.load(f)
+            try:
+                rubric_index = json.load(f)
+            except json.JSONDecodeError:
+                rubric_index = []
 
-    # ✅ Remove existing entry with same title
+    # ✅ Remove any existing assignment with same title
     rubric_index = [entry for entry in rubric_index if entry.get("assignment_title", "").strip().lower() != assignment_title.lower()]
 
-    # ✅ Append new config
+    # ✅ Append the new assignment
     rubric_index.append({
         "assignment_title": assignment_title,
         "rubric_file": rubric_filename,
         "total_points": 100,
         "instructor_approval": requires_review,
         "requires_persona": False,
-        "faith_integration": False,
+        "faith_integration": gospel_enabled,
         "grading_difficulty": grading_difficulty,
         "student_level": grade_level,
-        "feedback_tone": "Supportive",
+        "feedback_tone": "supportive",
         "ai_notes": custom_ai
     })
 
@@ -703,6 +706,7 @@ def save_assignment():
 
     print("✅ Saved assignment to rubric_index.json:", assignment_title)
     return redirect("/admin-dashboard")
+
 
 @lti.route("/admin-dashboard", methods=["GET", "POST"])
 def admin_dashboard():
