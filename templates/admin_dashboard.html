@@ -264,6 +264,7 @@
     <!-- Hidden inputs to capture toggle state -->
     <input type="hidden" name="requires_review" id="requiresReviewValue" />
     <input type="hidden" name="gospel_enabled" id="gospelEnabledValue" />
+    <input type="hidden" name="instructor_approval" id="instructorApprovalValue" />
 
     <div id="saveButtonWrapper">
       <button type="submit" class="submit" id="saveButton" disabled>Save Assignment</button>
@@ -273,14 +274,19 @@
 
 <!-- Gospel-Centered Tab Panel -->
 <div class="tab-panel" id="gospel">
-  <div class="row">
-    <div class="form-group wide">
-      <label>
-        <input type="checkbox" id="gospelToggle" style="transform: scale(1.2); margin-right: 0.5rem;" />
-        Enable Gospel-Centered Feedback for this Assignment
-      </label>
+  <!-- Instructor Approval Toggle -->
+<div class="row">
+  <div class="form-group wide require-toggle" style="flex-direction: row; align-items: center;">
+    <label style="margin-right: 1rem; white-space: nowrap;">Instructor Approval Required?</label>
+    <div style="display: flex; gap: 1rem; margin-right: 1rem;">
+      <div class="toggle-option" onclick="toggleApproval(this)">YES</div>
+      <div class="toggle-option" onclick="toggleApproval(this)">NO</div>
+    </div>
+    <div class="instruction-note" style="flex: 1;">
+      If enabled, submissions for this assignment will appear in the Instructor Review panel before grades are posted.
     </div>
   </div>
+</div>
   <div class="row">
     <div class="form-group wide">
       <label>Gospel-Centered Themes or Principles to Emphasize</label>
@@ -465,6 +471,15 @@
         showTab('gospel');
       }
 
+      document.getElementById('saveButton').disabled = false;
+    }
+
+    function toggleApproval(selected) {
+      const options = selected.parentElement.querySelectorAll('.toggle-option');
+      options.forEach(opt => opt.classList.remove('active'));
+      selected.classList.add('active');
+
+      document.getElementById('instructorApprovalValue').value = selected.textContent.trim() === 'YES';
       document.getElementById('saveButton').disabled = false;
     }
 
