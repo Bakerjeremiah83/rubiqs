@@ -753,6 +753,7 @@ def save_assignment():
                 if config["assignment_title"].strip().lower() == assignment_title.strip().lower():
                     return config
         return None
+        return redirect("/admin-dashboard")
 
 @lti.route("/admin-dashboard", methods=["GET", "POST"])
 def admin_dashboard():
