@@ -732,6 +732,17 @@ def save_assignment():
     print("✅ Saved to rubric_index.json")
     print("✅ Final rubric_index.json content:", json.dumps(rubric_index, indent=2))
 
+    rubric_index_path = os.path.abspath(os.path.join("rubrics", "rubric_index.json"))
+    print("📄 Absolute path for rubric_index.json:", rubric_index_path)
+
+    with open(rubric_index_path, "w") as f:
+        json.dump(rubric_index, f, indent=2)
+
+    print("✅ File written. Re-opening to verify...")
+    with open(rubric_index_path, "r") as f:
+        confirm = json.load(f)
+    print("📑 File contents after save:", json.dumps(confirm, indent=2))
+
     return redirect("/admin-dashboard")
 
 @lti.route("/admin-dashboard", methods=["GET", "POST"])
