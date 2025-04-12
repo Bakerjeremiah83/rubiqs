@@ -75,6 +75,10 @@
       flex: 1 1 48%;
     }
 
+    .form-group.third {
+      flex: 1 1 48%;
+    }
+
     .wide {
       flex: 1 1 100%;
     }
@@ -101,6 +105,33 @@
       resize: vertical;
     }
 
+    .require-toggle {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      flex-direction: column;
+    }
+
+    .toggle-option {
+      padding: 0.5rem 1rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .toggle-option.active {
+      background-color: #1f3a54;
+      color: white;
+      border-color: #1f3a54;
+    }
+
+    .instruction-note {
+      font-size: 0.85rem;
+      color: #555;
+      margin-top: 0.3rem;
+    }
+
     button.submit {
       display: block;
       margin: 2rem auto 0 auto;
@@ -117,7 +148,12 @@
       letter-spacing: 1px;
     }
 
-    button.submit:hover {
+    button.submit:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    button.submit:hover:not(:disabled) {
       background: #142835;
     }
 
@@ -139,8 +175,7 @@
           <div style="font-size: 0.85rem; color: #aaa;">by J. Baker Design</div>
         </div>
       </div>
-
-      <h2 class="title">Assignment Setup</h2>
+      <h2 class="title">Rubiqs Mastery Dashboard</h2>
 
       <div class="tabs">
         <button class="tab-button active" onclick="showTab('setup')">Assignment Setup</button>
@@ -152,18 +187,12 @@
 
       <div class="tab-panel active" id="setup">
         <div class="row">
-          <div class="form-group">
+          <div class="form-group" style="flex: 1;">
             <label>Assignment Name</label>
             <input type="text" />
           </div>
-          <div class="form-group">
-            <label>Grade Level</label>
-            <select>
-              <option value="">Select Level</option>
-              <option>Middle School</option>
-              <option>High School</option>
-              <option>College</option>
-            </select>
+          <div class="instruction-note" style="flex: 1; align-self: center; margin-left: 1rem;">
+            Note: The assignment title entered here must match the title used in the course exactly, including spelling, capitalization, and punctuation.
           </div>
         </div>
         <div class="row">
@@ -172,6 +201,33 @@
             <input type="file" />
           </div>
           <div class="form-group">
+            <label>Additional Files</label>
+            <input type="file" />
+          </div>
+        </div>
+        <div class="row">
+          <div class="form-group wide require-toggle" style="flex-direction: row; align-items: center;">
+            <label style="margin-right: 1rem; white-space: nowrap;">Requires Instructor Review</label>
+            <div style="display: flex; gap: 1rem; margin-right: 1rem;">
+              <div class="toggle-option" onclick="toggleReview(this)">YES</div>
+              <div class="toggle-option" onclick="toggleReview(this)">NO</div>
+            </div>
+            <div class="instruction-note" style="flex: 1;">
+              Note: If instructor review is selected, the assignment goes to Pending Reviews for approval before posting. If not, the grade and feedback will be auto-posted to the gradebook.
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="form-group third">
+            <label>Grade Level</label>
+            <select>
+              <option value="">Select Level</option>
+              <option>Middle School</option>
+              <option>High School</option>
+              <option>College</option>
+            </select>
+          </div>
+          <div class="form-group third">
             <label>Grading Difficulty</label>
             <select>
               <option value="">Select Difficulty</option>
@@ -183,84 +239,29 @@
         </div>
         <div class="row">
           <div class="form-group wide">
-            <label>AI Notes</label>
+            <label>Custom AI Grading Instructions</label>
             <textarea rows="4"></textarea>
           </div>
         </div>
       </div>
 
-      <div class="tab-panel" id="gospel">
-        <div style="margin-bottom: 1rem;">
-          <label style="font-weight: bold; display: inline-block; margin-right: 0.5rem;">
-            <input type="checkbox" id="gospelToggle" style="transform: scale(1.4); margin-right: 0.5rem;" />
-            Enable Gospel-Centered Feedback
-          </label>
-        </div>
-
-        <label>Gospel-Centered Principles, Themes, and References</label>
-        <textarea rows="6"></textarea>
-      </div>
-
-      <div class="tab-panel" id="reviews">
-        {% if pending_feedback %}
-        <table style="width:100%; border-collapse: collapse; font-size: 0.95rem;">
-          <thead style="background-color: #f1f1f1;">
-            <tr>
-              <th style="border: 1px solid #ccc; padding: 0.75rem;">Student</th>
-              <th style="border: 1px solid #ccc; padding: 0.75rem;">Assignment</th>
-              <th style="border: 1px solid #ccc; padding: 0.75rem;">Score</th>
-              <th style="border: 1px solid #ccc; padding: 0.75rem;">Submitted</th>
-              <th style="border: 1px solid #ccc; padding: 0.75rem;">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% if pending_feedback|length > 0 %}
-              {% for item in pending_feedback %}
-                <tr>
-                  <td style="border: 1px solid #ccc; padding: 0.75rem;">{{ item.student_id }}</td>
-                  <td style="border: 1px solid #ccc; padding: 0.75rem;">{{ item.assignment_title }}</td>
-                  <td style="border: 1px solid #ccc; padding: 0.75rem;">{{ item.score }}</td>
-                  <td style="border: 1px solid #ccc; padding: 0.75rem;">{{ item.timestamp }}</td>
-                  <td style="border: 1px solid #ccc; padding: 0.75rem; text-align:center;">
-                    <form action="/instructor-review" method="GET" style="display:inline;">
-                      <button style="padding: 0.4rem 1rem; background: #1f3a54; color: white; border: none; border-radius: 20px;">Review</button>
-                    </form>
-                    <form action="/delete-review" method="POST" style="display:inline;">
-                      <input type="hidden" name="submission_id" value="{{ item.submission_id }}">
-                      <button style="padding: 0.4rem 1rem; background: #4b887f; color: white; border: none; border-radius: 20px;">Approve</button>
-                    </form>
-                  </td>
-                </tr>
-              {% endfor %}
-            {% else %}
-              <tr>
-                <td colspan="5" style="text-align: center; padding: 1rem; background: #f8f8f8; font-style: italic;">
-                  🎉 You're all caught up! No pending submissions to review.
-                </td>
-              </tr>
-            {% endif %}
-          </tbody>
-          
-        </table>
-        {% else %}
-          <p style="padding: 1rem; background: #fff; border-radius: 6px;">No pending reviews at the moment.</p>
-        {% endif %}
-      </div>
-
-      <div class="tab-panel" id="logs">
-        <p>Activity Logs coming soon...</p>
-      </div>
-
-      <button class="submit">Save Assignment</button>
+      <button class="submit" id="saveButton" disabled>Save Assignment</button>
     </div>
   </div>
-
   <script>
     function showTab(id) {
       document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
       document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
       document.getElementById(id).classList.add('active');
       document.querySelector(`[onclick="showTab('${id}')"]`).classList.add('active');
+    }
+
+    function toggleReview(selected) {
+      const options = selected.parentElement.querySelectorAll('.toggle-option');
+      options.forEach(opt => opt.classList.remove('active'));
+      selected.classList.add('active');
+
+      document.getElementById('saveButton').disabled = false;
     }
   </script>
 </body>
