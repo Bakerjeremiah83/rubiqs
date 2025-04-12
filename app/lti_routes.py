@@ -209,15 +209,11 @@ def student_test_upload():
         assignment_config=assignment_config
     )
 
+
 @lti.route("/grade-docx", methods=["POST"])
 def grade_docx():
     print("📥 /grade-docx hit")
 
-    # 1. Detect if prompt preview is requested
-    # confirmed = request.form.get("confirmed_prompt") == "true"
-    # show_preview = request.form.get("show_prompt") == "on" and not confirmed
-
-    # 2. Extract uploaded files
     file = request.files.get("file")
     persona_file = request.files.get("persona")
 
@@ -234,14 +230,12 @@ def grade_docx():
         else:
             return "❌ Unsupported file type.", 400
 
-        # 2b. Optional: Run AI Detection (ZeroGPT)
         ai_check_result = check_ai_with_gpt(full_text)
         print("🤖 AI Detection Result:", ai_check_result)
 
-    except (Exception, ValueError) as e:
+    except Exception as e:
         return f"❌ Failed to extract text: {str(e)}", 500
 
-    # 3. Extract persona if provided
     reference_data = ""
     if persona_file:
         try:
@@ -254,13 +248,6 @@ def grade_docx():
         except Exception as e:
             return f"❌ Failed to extract persona file: {str(e)}", 500
 
-    # 4. Load assignment config
-    launch_data = session.get("launch_data", {})
-    assignment_title = launch_data.get("https://purl.imsglobal.org/spec/lti/claim/resource_link", {}).get("title", "").strip()
-
-    print("🔍 Loading assignment config for:", assignment_title)
-    print("🔍 Loading assignment config for:", assignment_title)
-    print("📄 Looking in:", os.path.join("rubrics", "rubric_index.json"))
     launch_data = session.get("launch_data", {})
     assignment_title = launch_data.get("https://purl.imsglobal.org/spec/lti/claim/resource_link", {}).get("title", "").strip()
     assignment_config = load_assignment_config(assignment_title)
@@ -287,12 +274,10 @@ def grade_docx():
             rubric_text = extract_pdf_text(rubric_path)
         else:
             rubric_text = "(Rubric text could not be loaded.)"
-    except (FileNotFoundError, ValueError) as e:
+    except Exception as e:
         return f"❌ Failed to load rubric file: {str(e)}", 500
 
-    # 5. Compose GPT prompt
-    prompt = f"""
-You are a helpful AI grader.
+    prompt = f"""\nYou are a helpful AI grader.
 
 Assignment Title: {assignment_title}
 Grading Difficulty: {grading_difficulty}
@@ -307,33 +292,8 @@ Rubric:
         prompt += f"\nInstructor Notes:\n{ai_notes}\n"
     if reference_data:
         prompt += f"\nReference Scenario:\n{reference_data}\n"
+    prompt += f"\nStudent Submission:\n---\n{full_text}\n---\n\nReturn your response in this format:\n\nScore: <number from 0 to {rubric_total_points}>\nFeedback: <detailed, encouraging, and helpful feedback>"
 
-    prompt += f"""
-Student Submission:
----
-{full_text}
----
-
-Return your response in this format:
-
-Score: <number from 0 to {rubric_total_points}>
-Feedback: <detailed, encouraging, and helpful feedback>
-"""
-
-    # 6. Show prompt preview first (if requested)
-    # if show_preview:
-    #     return render_template(
-    #         "prompt_preview.html",
-    #         gpt_prompt=prompt.strip(),
-    #         hidden_fields={
-    #             "confirmed_prompt": "true",
-    #             "file_text": full_text,
-    #             "assignment_title": assignment_title,
-    #             "reference_data": reference_data,
-    #         }
-    #     )
-
-    # 7. Call GPT if prompt is confirmed
     try:
         openai.api_key = os.getenv("OPENAI_API_KEY")
         response = openai.ChatCompletion.create(
@@ -348,138 +308,31 @@ Feedback: <detailed, encouraging, and helpful feedback>
         feedback_match = re.search(r"Feedback:\s*(.+)", output, re.DOTALL)
         feedback = feedback_match.group(1).strip() if feedback_match else output.strip()
 
-        submission_id = str(uuid.uuid4())
-
-        submission_data = {
-            "submission_id": submission_id,
-            "student_id": "demo_student_001",  # Update this if needed
-            "assignment_title": assignment_title,
-            "timestamp": datetime.utcnow().isoformat(),
-            "score": score,
-            "feedback": feedback,
-            "student_text": full_text,
-            "ai_check_result": None
-        }
-
-        if assignment_config.get("instructor_approval"):
-            store_pending_feedback(submission_id, submission_data)
-            log_gpt_interaction(assignment_title, prompt, feedback, score)
-
-            return render_template(
-                "feedback.html",
-                score=score,
-                feedback=feedback,
-                rubric_total_points=rubric_total_points,
-                user_roles=session.get("launch_data", {}).get("https://purl.imsglobal.org/spec/lti/claim/roles", []),
-                pending_message="This submission requires instructor review. Your feedback is saved, and your score will be posted after approval."
-            )
-
-        # Auto-post (if not instructor approval)
-        log_gpt_interaction(assignment_title, prompt, feedback, score)
-        return render_template(
-            "feedback.html",
-            score=score,
-            feedback=feedback,
-            rubric_total_points=rubric_total_points,
-            user_roles=session.get("launch_data", {}).get("https://purl.imsglobal.org/spec/lti/claim/roles", [])
-        )
-
     except openai.error.OpenAIError as e:
         return f"❌ GPT error: {str(e)}", 500
 
-    from datetime import datetime
-    import uuid
-    from app.utils.storage import store_pending_feedback, load_pending_feedback, load_all_pending_feedback  # Ensure all required functions are imported
-
-    def log_gpt_interaction(assignment_title, prompt, feedback, score=None):
-        log_path = os.path.join("logs", "prompt_logs.json")
-        os.makedirs("logs", exist_ok=True)
-
-        log_entry = {
-            "assignment_title": assignment_title,
-            "timestamp": datetime.utcnow().isoformat() + "Z",
-            "prompt": prompt,
-            "feedback": feedback,
-            "score": score
-        }
-
-        logs = []
-        if os.path.exists(log_path):
-            with open(log_path, "r") as f:
-                try:
-                    logs = json.load(f)
-                except json.JSONDecodeError:
-                    logs = []
-
-        logs.append(log_entry)
-
-        with open(log_path, "w") as f:
-            json.dump(logs, f, indent=2)
-
-    submission_id = str(uuid.uuid4())  # create unique ID
-
+    submission_id = str(uuid.uuid4())
     submission_data = {
         "submission_id": submission_id,
-        "student_id": "demo_student_001",  # you can update this later
+        "student_id": "demo_student_001",
         "assignment_title": assignment_title,
         "timestamp": datetime.utcnow().isoformat(),
         "score": score,
         "feedback": feedback,
-        "student_text": full_text,  # this should already exist
+        "student_text": full_text,
         "ai_check_result": None
     }
 
     if assignment_config.get("instructor_approval"):
         store_pending_feedback(submission_id, submission_data)
         log_gpt_interaction(assignment_title, prompt, feedback, score)
+        return render_template("feedback.html", score=score, feedback=feedback, rubric_total_points=rubric_total_points,
+                               user_roles=session.get("launch_data", {}).get("https://purl.imsglobal.org/spec/lti/claim/roles", []),
+                               pending_message="This submission requires instructor review. Your feedback is saved, and your score will be posted after approval.")
 
-    return render_template(
-        "feedback.html",
-        score=score,
-        feedback=feedback,
-        rubric_total_points=rubric_total_points,
-        user_roles=session.get("launch_data", {}).get("https://purl.imsglobal.org/spec/lti/claim/roles", []),
-        pending_message="This submission requires instructor review. Your feedback is saved, and your score will be posted after approval."
-    )
-
-    return render_template(
-        "feedback.html",
-        score=score,
-        feedback=feedback,
-        rubric_total_points=rubric_total_points,
-        user_roles=launch_data.get("https://purl.imsglobal.org/spec/lti/claim/roles", []),
-        pending_message="This submission requires instructor review. Your feedback is saved, and your score will be posted after approval."
-    )
-
-    # ✅ Otherwise: auto-post (optional or placeholder)
-    # LMS posting logic would go here if instructor approval is not required
-
-    # Default fallback if no post logic yet
-    return render_template(
-        "feedback.html",
-        score=score,
-        feedback=feedback,
-        rubric_total_points=rubric_total_points,
-        user_roles=session.get("launch_data", {}).get("https://purl.imsglobal.org/spec/lti/claim/roles", [])
-    )
-
-
-    try:
-        # Add the code that might raise an exception here
-        pass  # Replace this with the actual code
-    except Exception as e:
-        print(f"❌ An error occurred: {str(e)}")
-    except openai.error.OpenAIError as e:
-        return f"❌ GPT error: {str(e)}", 500
-
-    return render_template(
-        "feedback.html",
-        score=score,
-        feedback=feedback,
-        rubric_total_points=rubric_total_points,
-        user_roles=launch_data.get("https://purl.imsglobal.org/spec/lti/claim/roles", [])
-    )
-
+    log_gpt_interaction(assignment_title, prompt, feedback, score)
+    return render_template("feedback.html", score=score, feedback=feedback, rubric_total_points=rubric_total_points,
+                           user_roles=session.get("launch_data", {}).get("https://purl.imsglobal.org/spec/lti/claim/roles", []))
 @lti.route("/review-feedback", methods=["GET", "POST"])
 def review_feedback():
     session["tool_role"] = "instructor"  # TEMP: force instructor role for local/demo
