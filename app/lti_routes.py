@@ -689,7 +689,7 @@ def save_assignment():
     if not assignment_title:
         return "❌ Assignment title is required", 400
 
-    # ✅ Get other form data
+    # ✅ Continue with remaining fields...
     grade_level = request.form.get("grade_level")
     grading_difficulty = request.form.get("grading_difficulty")
     requires_review = request.form.get("requires_review") == "true"
@@ -698,6 +698,7 @@ def save_assignment():
 
     rubric_file = request.files.get("rubric_upload")
     additional_file = request.files.get("additional_files")
+
 
     # ✅ Create upload folder
     upload_dir = os.path.join("uploads", secure_filename(assignment_title))
@@ -729,46 +730,6 @@ def save_assignment():
         "additional_file": additional_filename
     }
 
-    save_assignment_data(assignments)
-
-    return redirect("/admin-dashboard")
-
-
-    # Safety check
-    if not assignment_name:
-        return "Assignment name is required", 400
-
-    # Prepare directory for uploads
-    upload_dir = os.path.join("uploads", secure_filename(assignment_name))
-    os.makedirs(upload_dir, exist_ok=True)
-
-    rubric_filename = ""
-    if rubric_file and rubric_file.filename:
-        rubric_filename = secure_filename(rubric_file.filename)
-        rubric_path = os.path.join(upload_dir, rubric_filename)
-        rubric_file.save(rubric_path)
-
-    additional_filename = ""
-    if additional_file and additional_file.filename:
-        additional_filename = secure_filename(additional_file.filename)
-        additional_path = os.path.join(upload_dir, additional_filename)
-        additional_file.save(additional_path)
-
-    # Load existing assignments
-    assignments = load_assignment_data()
-
-    # Update or insert this assignment
-    assignments[assignment_name] = {
-        "grade_level": grade_level,
-        "grading_difficulty": grading_difficulty,
-        "requires_review": requires_review,
-        "gospel_enabled": gospel_enabled,
-        "custom_ai": custom_ai,
-        "rubric_file": rubric_filename,
-        "additional_file": additional_filename
-    }
-
-    # Save back to storage
     save_assignment_data(assignments)
 
     return redirect("/admin-dashboard")
