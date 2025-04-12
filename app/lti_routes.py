@@ -42,7 +42,6 @@ def load_assignment_config(assignment_title):
     return None
 
 
-
 def get_total_points_from_rubric(rubric):
     return sum(
         max(level["score"] for level in criterion["levels"])
@@ -645,14 +644,12 @@ Feedback: <detailed, helpful feedback>
 def save_assignment():
     from werkzeug.utils import secure_filename
     import os
-    from app.utils.storage import load_assignment_data, save_assignment_data
+    rubric_index_path = os.path.join("rubrics", "rubric_index.json")
 
-    # ✅ Get and validate assignment title
     assignment_title = request.form.get("assignment_title", "").strip()
     if not assignment_title:
         return "❌ Assignment title is required", 400
 
-    # ✅ Continue with remaining fields...
     grade_level = request.form.get("grade_level")
     grading_difficulty = request.form.get("grading_difficulty")
     requires_review = request.form.get("requires_review") == "true"
@@ -662,8 +659,6 @@ def save_assignment():
     rubric_file = request.files.get("rubric_upload")
     additional_file = request.files.get("additional_files")
 
-
-    # ✅ Create upload folder
     upload_dir = os.path.join("uploads", secure_filename(assignment_title))
     os.makedirs(upload_dir, exist_ok=True)
 
@@ -679,26 +674,34 @@ def save_assignment():
         additional_path = os.path.join(upload_dir, additional_filename)
         additional_file.save(additional_path)
 
-    # ✅ Load and save to rubric_index.json
-    assignments = load_assignment_data()
+    # ✅ Load existing list-based config
+    rubric_index = []
+    if os.path.exists(rubric_index_path):
+        with open(rubric_index_path, "r") as f:
+            rubric_index = json.load(f)
 
-    assignments[assignment_title] = {
-        "assignment_title": assignment_title,  # ← must be stored!
-        "grade_level": grade_level,
-        "grading_difficulty": grading_difficulty,
-        "requires_review": requires_review,
-        "gospel_enabled": gospel_enabled,
-        "custom_ai": custom_ai,
+    # ✅ Remove existing entry with same title
+    rubric_index = [entry for entry in rubric_index if entry.get("assignment_title", "").strip().lower() != assignment_title.lower()]
+
+    # ✅ Append new config
+    rubric_index.append({
+        "assignment_title": assignment_title,
         "rubric_file": rubric_filename,
-        "additional_file": additional_filename
-    }
+        "total_points": 100,
+        "instructor_approval": requires_review,
+        "requires_persona": False,
+        "faith_integration": False,
+        "grading_difficulty": grading_difficulty,
+        "student_level": grade_level,
+        "feedback_tone": "Supportive",
+        "ai_notes": custom_ai
+    })
 
-    save_assignment_data(assignments)
+    # ✅ Save back to rubric_index.json
+    with open(rubric_index_path, "w") as f:
+        json.dump(rubric_index, f, indent=2)
 
-    print("✅ Saved assignment:", assignment_title)
-    print("📂 Current config:", assignments)
-
-
+    print("✅ Saved assignment to rubric_index.json:", assignment_title)
     return redirect("/admin-dashboard")
 
 @lti.route("/admin-dashboard", methods=["GET", "POST"])
