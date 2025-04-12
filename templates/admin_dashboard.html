@@ -180,8 +180,8 @@
       <div class="tabs">
         <button class="tab-button active" onclick="showTab('setup')">Assignment Setup</button>
         <button class="tab-button" onclick="showTab('gospel')">Gospel-Centered</button>
-        <button class="tab-button" onclick="location.href='/instructor-review'">Instructor Review</button>
-        <button class="tab-button" onclick="showTab('reviews')">Pending Reviews</button>
+        <button class="tab-button" onclick="showTab('instructor')">Instructor Review</button>
+        <button class="tab-button" onclick="showTab('history')">Submission History</button>
         <button class="tab-button" onclick="showTab('logs')">Activity Logs</button>
       </div>
 
@@ -244,17 +244,173 @@
           </div>
         </div>
       </div>
+      <!-- Gospel-Centered Option Toggle -->
+<div class="row">
+  <div class="form-group wide require-toggle" style="flex-direction: row; align-items: center;">
+    <label style="margin-right: 1rem; white-space: nowrap;">Enable Gospel-Centered Feedback?</label>
+    <div style="display: flex; gap: 1rem; margin-right: 1rem;">
+      <div class="toggle-option" onclick="selectGospelOption(this, true)">YES</div>
+      <div class="toggle-option" onclick="selectGospelOption(this, false)">NO</div>
+    </div>
+    <div class="instruction-note" style="flex: 1;">
+      If enabled, gospel-centered themes and scriptures will be incorporated into AI feedback. You will be taken to the Gospel-Centered tab to review or edit those settings.
+    </div>
+  </div>
+</div>
 
-      <button class="submit" id="saveButton" disabled>Save Assignment</button>
+      <div class="tab-panel" id="gospel">
+        <div class="row">
+          <div class="form-group wide">
+            <label>
+              <input type="checkbox" id="gospelToggle" style="transform: scale(1.2); margin-right: 0.5rem;" />
+              Enable Gospel-Centered Feedback for this Assignment
+            </label>
+          </div>
+        </div>
+        <div class="row">
+          <div class="form-group wide">
+            <label>Gospel-Centered Themes or Principles to Emphasize</label>
+            <textarea rows="5" placeholder="e.g., Charity, Faith in Christ, Repentance, Eternal Identity"></textarea>
+          </div>
+        </div>
+        <div class="row">
+          <div class="form-group wide">
+            <label>Scriptural References or Quotes to Include</label>
+            <textarea rows="5" placeholder="e.g., Mosiah 2:17, John 13:34–35, 'The worth of souls is great' (D&C 18:10)"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="tab-panel" id="instructor">
+        <div class="row">
+          <div class="form-group wide">
+            <label>Instructor Review</label>
+            <p>This section will display student submissions that require manual review and approval.</p>
+            <p>Click a submission below to view and edit feedback before posting.</p>
+          </div>
+        </div>
+        <div class="row">
+          <div class="form-group wide">
+            <table style="width:100%; border-collapse: collapse; font-size: 0.95rem;">
+              <thead style="background-color: #f1f1f1;">
+                <tr>
+                  <th style="border: 1px solid #ccc; padding: 0.75rem;">Student</th>
+                  <th style="border: 1px solid #ccc; padding: 0.75rem;">Assignment</th>
+                  <th style="border: 1px solid #ccc; padding: 0.75rem;">Submitted</th>
+                  <th style="border: 1px solid #ccc; padding: 0.75rem;">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Placeholder row; replace with server-side logic -->
+                <tr>
+                  <td style="border: 1px solid #ccc; padding: 0.75rem;">John Smith</td>
+                  <td style="border: 1px solid #ccc; padding: 0.75rem;">Essay 1</td>
+                  <td style="border: 1px solid #ccc; padding: 0.75rem;">2025-04-11</td>
+                  <td style="border: 1px solid #ccc; padding: 0.75rem;">
+                    <button style="padding: 0.4rem 1rem; background: #1f3a54; color: white; border: none; border-radius: 20px;">Review</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="tab-panel" id="history">
+        <div class="row">
+          <div class="form-group wide">
+            <label>Submission History</label>
+            <p>This table includes all assignments that have been submitted, whether instructor-reviewed or auto-graded.</p>
+            <table style="width:100%; border-collapse: collapse; font-size: 0.95rem;">
+              <thead style="background-color: #f1f1f1;">
+                <tr>
+                  <th style="border: 1px solid #ccc; padding: 0.75rem;">Student</th>
+                  <th style="border: 1px solid #ccc; padding: 0.75rem;">Assignment</th>
+                  <th style="border: 1px solid #ccc; padding: 0.75rem;">Score</th>
+                  <th style="border: 1px solid #ccc; padding: 0.75rem;">Submitted</th>
+                  <th style="border: 1px solid #ccc; padding: 0.75rem;">Review Type</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Placeholder for real data -->
+                <tr>
+                  <td style="border: 1px solid #ccc; padding: 0.75rem;">Emily Clark</td>
+                  <td style="border: 1px solid #ccc; padding: 0.75rem;">Reflection 2</td>
+                  <td style="border: 1px solid #ccc; padding: 0.75rem;">88%</td>
+                  <td style="border: 1px solid #ccc; padding: 0.75rem;">2025-04-10</td>
+                  <td style="border: 1px solid #ccc; padding: 0.75rem;">Auto-Posted</td>
+                </tr>
+                <tr>
+                  <td style="border: 1px solid #ccc; padding: 0.75rem;">Jason Lee</td>
+                  <td style="border: 1px solid #ccc; padding: 0.75rem;">USCIS Letter Draft</td>
+                  <td style="border: 1px solid #ccc; padding: 0.75rem;">94%</td>
+                  <td style="border: 1px solid #ccc; padding: 0.75rem;">2025-04-11</td>
+                  <td style="border: 1px solid #ccc; padding: 0.75rem;">Instructor Reviewed</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="tab-panel" id="logs">
+        <div class="row">
+          <div class="form-group wide">
+            <label>Activity Logs</label>
+            <p>This panel shows recent system activity related to submissions, grading, approvals, and assignment configuration.</p>
+            <table style="width:100%; border-collapse: collapse; font-size: 0.95rem;">
+              <thead style="background-color: #f1f1f1;">
+                <tr>
+                  <th style="border: 1px solid #ccc; padding: 0.75rem;">Timestamp</th>
+                  <th style="border: 1px solid #ccc; padding: 0.75rem;">User</th>
+                  <th style="border: 1px solid #ccc; padding: 0.75rem;">Action</th>
+                  <th style="border: 1px solid #ccc; padding: 0.75rem;">Details</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Placeholder data -->
+                <tr>
+                  <td style="border: 1px solid #ccc; padding: 0.75rem;">2025-04-11 14:20</td>
+                  <td style="border: 1px solid #ccc; padding: 0.75rem;">John Smith</td>
+                  <td style="border: 1px solid #ccc; padding: 0.75rem;">Submitted Assignment</td>
+                  <td style="border: 1px solid #ccc; padding: 0.75rem;">Reflection 2</td>
+                </tr>
+                <tr>
+                  <td style="border: 1px solid #ccc; padding: 0.75rem;">2025-04-11 14:22</td>
+                  <td style="border: 1px solid #ccc; padding: 0.75rem;">System (GPT)</td>
+                  <td style="border: 1px solid #ccc; padding: 0.75rem;">Auto-Graded</td>
+                  <td style="border: 1px solid #ccc; padding: 0.75rem;">Score: 88%</td>
+                </tr>
+                <tr>
+                  <td colspan="4" style="text-align: center; padding: 1rem; background: #f8f8f8; font-style: italic;">
+                    More activity coming soon...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <title>Rubiqs | Mastery Dashboard</title>
+      
+      <div id="saveButtonWrapper">
+        <button class="submit" id="saveButton" disabled>Save Assignment</button>
+      </div>
+      
     </div>
   </div>
   <script>
     function showTab(id) {
-      document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-      document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
-      document.getElementById(id).classList.add('active');
-      document.querySelector(`[onclick="showTab('${id}')"]`).classList.add('active');
-    }
+  document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelector(`[onclick="showTab('${id}')"]`).classList.add('active');
+
+  // Toggle Save Assignment button visibility
+  const saveButtonWrapper = document.getElementById('saveButtonWrapper');
+  if (id === 'setup') {
+    saveButtonWrapper.style.display = 'block';
+  } else {
+    saveButtonWrapper.style.display = 'none';
+  }
+}
 
     function toggleReview(selected) {
       const options = selected.parentElement.querySelectorAll('.toggle-option');
@@ -263,6 +419,18 @@
 
       document.getElementById('saveButton').disabled = false;
     }
+    let gospelTabViewed = false;
+
+function selectGospelOption(element, isYes) {
+  const options = element.parentElement.querySelectorAll('.toggle-option');
+  options.forEach(opt => opt.classList.remove('active'));
+  element.classList.add('active');
+  if (isYes) {
+    gospelTabViewed = true;
+    showTab('gospel');
+  }
+}
+
   </script>
 </body>
 </html>
