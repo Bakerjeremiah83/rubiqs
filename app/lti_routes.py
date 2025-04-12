@@ -710,7 +710,9 @@ def save_assignment():
     print("📄 rubric_index.json path:", os.path.abspath(rubric_index_path))
     print("📑 Updated contents:", json.dumps(rubric_index, indent=2))
 
-    return redirect("/admin-dashboard")  # ✅ Final return
+    print("🧪 Matching against assignment_title:", assignment_title)
+    print("📄 Available configs:", [c.get("assignment_title") for c in configs])
+    return render_template("admin_dashboard.html", rubric_index=rubric_index)  # ✅ Final return
 
 @lti.route("/admin-dashboard", methods=["GET", "POST"])
 def admin_dashboard():
