@@ -36,10 +36,12 @@ def load_assignment_config(assignment_title):
     if os.path.exists(rubric_index_path):
         with open(rubric_index_path, "r") as f:
             configs = json.load(f)
-        for config in configs:
-            if config["assignment_title"].strip().lower() == assignment_title.strip().lower():
-                return config
+        # Dict-based lookup
+        config = configs.get(assignment_title.strip())
+        if config:
+            return config
     return None
+
 
 def get_total_points_from_rubric(rubric):
     return sum(
