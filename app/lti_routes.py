@@ -710,6 +710,14 @@ def save_assignment():
     except Exception as e:
         print("❌ Failed to write rubric_index.json:", str(e))
 
+    print("📥 FORM DATA:", dict(request.form))
+    print("📁 FILES:", [file.filename for file in request.files.values() if file])
+    print("📄 Target path:", rubric_index_path)
+
+    with open(rubric_index_path, "w") as f:
+        json.dump(rubric_index, f, indent=2)
+    print("✅ Saved rubric_index.json content:", rubric_index)
+
     return redirect("/admin-dashboard")
 
 @lti.route("/admin-dashboard", methods=["GET", "POST"])
