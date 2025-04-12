@@ -25,6 +25,8 @@ from requests_oauthlib import OAuth1Session
 import re
 from pdfminer.high_level import extract_text as extract_pdf_text
 from app.utils.zerogpt_api import check_ai_with_gpt
+from werkzeug.utils import secure_filename
+
 
 
 def load_assignment_config(assignment_title):
