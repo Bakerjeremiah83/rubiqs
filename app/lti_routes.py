@@ -711,7 +711,7 @@ def save_assignment():
     print("📑 Updated contents:", json.dumps(rubric_index, indent=2))
 
     print("🧪 Matching against assignment_title:", assignment_title)
-    print("📄 Available configs:", [c.get("assignment_title") for c in configs])
+    print("📄 Available configs:", [c.get("assignment_title") for c in rubric_index])
     print("📄 Available configs:", [c.get("assignment_title") for c in rubric_index])
     return render_template("admin_dashboard.html", rubric_index=rubric_index)  # ✅ Final return
 
