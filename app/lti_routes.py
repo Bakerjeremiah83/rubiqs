@@ -256,7 +256,7 @@ def grade_docx():
     if not assignment_config:
         return f"❌ No configuration found for assignment: {assignment_title}", 400
 
-    rubric_path = os.path.join("rubrics", assignment_config.get("rubric_file", ""))
+    rubric_path = os.path.join("uploads", secure_filename(assignment_title), assignment_config.get("rubric_file", ""))
     rubric_total_points = assignment_config.get("total_points", 100)
     grading_difficulty = assignment_config.get("grading_difficulty", "balanced")
     student_level = assignment_config.get("student_level", "college")
