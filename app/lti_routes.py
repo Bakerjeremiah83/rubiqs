@@ -673,7 +673,7 @@ def save_assignment():
         additional_filename = secure_filename(additional_file.filename)
         additional_file.save(os.path.join(upload_dir, additional_filename))
 
-    # ✅ Load current index (list of assignments)
+    # ✅ Load current index
     rubric_index = []
     if os.path.exists(rubric_index_path):
         try:
@@ -682,13 +682,13 @@ def save_assignment():
         except json.JSONDecodeError:
             rubric_index = []
 
-    # ✅ Remove any existing entry with same title
+    # ✅ Remove duplicates
     rubric_index = [
         entry for entry in rubric_index
         if entry.get("assignment_title", "").strip().lower() != assignment_title.lower()
     ]
 
-    # ✅ Append new entry
+    # ✅ Append new
     rubric_index.append({
         "assignment_title": assignment_title,
         "rubric_file": rubric_filename,
@@ -702,58 +702,15 @@ def save_assignment():
         "ai_notes": custom_ai
     })
 
-    # ✅ Save back to file
-    try:
-        with open(rubric_index_path, "w") as f:
-            json.dump(rubric_index, f, indent=2)
-        print("✅ Successfully wrote assignment:", assignment_title)
-    except Exception as e:
-        print("❌ Failed to write rubric_index.json:", str(e))
-
-    print("📥 FORM DATA:", dict(request.form))
-    print("📁 FILES:", [file.filename for file in request.files.values() if file])
-    print("📄 Target path:", rubric_index_path)
-
-    with open(rubric_index_path, "w") as f:
-        json.dump(rubric_index, f, indent=2)
-    print("✅ Saved rubric_index.json content:", rubric_index)
-
-    rubric_index_path = os.path.abspath(os.path.join("rubrics", "rubric_index.json"))
-    print("📄 Absolute path for rubric_index.json:", rubric_index_path)
-    print("✅ Final rubric_index.json content:", json.dumps(rubric_index, indent=2))
-    print("📥 FORM DATA:", dict(request.form))
-    print("📁 FILES:", [file.filename for file in request.files.values() if file])
-
-    rubric_index_path = os.path.abspath(os.path.join("rubrics", "rubric_index.json"))
-    print("📄 Absolute path for rubric_index.json:", rubric_index_path)
-
-    with open(rubric_index_path, "w") as f:
-        json.dump(rubric_index, f, indent=2)
-    print("✅ Saved to rubric_index.json")
-    print("✅ Final rubric_index.json content:", json.dumps(rubric_index, indent=2))
-
-    rubric_index_path = os.path.abspath(os.path.join("rubrics", "rubric_index.json"))
-    print("📄 Absolute path for rubric_index.json:", rubric_index_path)
-
+    # ✅ Write back
     with open(rubric_index_path, "w") as f:
         json.dump(rubric_index, f, indent=2)
 
-    print("✅ File written. Re-opening to verify...")
-    with open(rubric_index_path, "r") as f:
-        confirm = json.load(f)
-    print("📑 File contents after save:", json.dumps(confirm, indent=2))
+    print("✅ Successfully saved assignment:", assignment_title)
+    print("📄 rubric_index.json path:", os.path.abspath(rubric_index_path))
+    print("📑 Updated contents:", json.dumps(rubric_index, indent=2))
 
-    def load_assignment_config(assignment_title):
-        print("🔍 Looking for config:", assignment_title)
-        rubric_index_path = os.path.join("rubrics", "rubric_index.json")
-        if os.path.exists(rubric_index_path):
-            with open(rubric_index_path, "r") as f:
-                configs = json.load(f)
-            for config in configs:
-                if config["assignment_title"].strip().lower() == assignment_title.strip().lower():
-                    return config
-        return None
-        return redirect("/admin-dashboard")
+    return redirect("/admin-dashboard")  # ✅ Final return
 
 @lti.route("/admin-dashboard", methods=["GET", "POST"])
 def admin_dashboard():
