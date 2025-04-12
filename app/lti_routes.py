@@ -642,8 +642,9 @@ Feedback: <detailed, helpful feedback>
 
 @lti.route("/save-assignment", methods=["POST"])
 def save_assignment():
-    from werkzeug.utils import secure_filename
     import os
+    from werkzeug.utils import secure_filename
+
     rubric_index_path = os.path.join("rubrics", "rubric_index.json")
 
     assignment_title = request.form.get("assignment_title", "").strip()
@@ -665,28 +666,29 @@ def save_assignment():
     rubric_filename = ""
     if rubric_file and rubric_file.filename:
         rubric_filename = secure_filename(rubric_file.filename)
-        rubric_path = os.path.join(upload_dir, rubric_filename)
-        rubric_file.save(rubric_path)
+        rubric_file.save(os.path.join(upload_dir, rubric_filename))
 
     additional_filename = ""
     if additional_file and additional_file.filename:
         additional_filename = secure_filename(additional_file.filename)
-        additional_path = os.path.join(upload_dir, additional_filename)
-        additional_file.save(additional_path)
+        additional_file.save(os.path.join(upload_dir, additional_filename))
 
-    # ✅ Load rubric_index.json as a list
+    # ✅ Load current index (list of assignments)
     rubric_index = []
     if os.path.exists(rubric_index_path):
-        with open(rubric_index_path, "r") as f:
-            try:
+        try:
+            with open(rubric_index_path, "r") as f:
                 rubric_index = json.load(f)
-            except json.JSONDecodeError:
-                rubric_index = []
+        except json.JSONDecodeError:
+            rubric_index = []
 
-    # ✅ Remove any existing assignment with same title
-    rubric_index = [entry for entry in rubric_index if entry.get("assignment_title", "").strip().lower() != assignment_title.lower()]
+    # ✅ Remove any existing entry with same title
+    rubric_index = [
+        entry for entry in rubric_index
+        if entry.get("assignment_title", "").strip().lower() != assignment_title.lower()
+    ]
 
-    # ✅ Append the new assignment
+    # ✅ Append new entry
     rubric_index.append({
         "assignment_title": assignment_title,
         "rubric_file": rubric_filename,
@@ -700,13 +702,15 @@ def save_assignment():
         "ai_notes": custom_ai
     })
 
-    # ✅ Save back to rubric_index.json
-    with open(rubric_index_path, "w") as f:
-        json.dump(rubric_index, f, indent=2)
+    # ✅ Save back to file
+    try:
+        with open(rubric_index_path, "w") as f:
+            json.dump(rubric_index, f, indent=2)
+        print("✅ Successfully wrote assignment:", assignment_title)
+    except Exception as e:
+        print("❌ Failed to write rubric_index.json:", str(e))
 
-    print("✅ Saved assignment to rubric_index.json:", assignment_title)
     return redirect("/admin-dashboard")
-
 
 @lti.route("/admin-dashboard", methods=["GET", "POST"])
 def admin_dashboard():
