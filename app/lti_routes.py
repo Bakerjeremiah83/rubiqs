@@ -34,6 +34,7 @@ from app.utils.storage import store_submission_history
 
 
 
+
 def load_assignment_config(assignment_title):
     rubric_index = load_assignment_data()  # This now returns a list ✅
     print("🧪 Matching against assignment_title:", assignment_title)
@@ -681,13 +682,15 @@ def save_assignment():
 
     grading_difficulty = request.form.get("grading_difficulty")
     grade_level = request.form.get("grade_level")
-    instructor_approval = request.form.get("instructor_approval") == "true"   # ✅ ADD THIS LINE
+    total_points = int(request.form.get("total_points", "0"))  # ✅ Must pull from dashboard input
+    instructor_approval = request.form.get("instructor_approval") == "true"
     gospel_enabled = request.form.get("gospel_enabled") == "true"
     custom_ai = request.form.get("custom_ai", "")
 
     rubric_file = request.files.get("rubric_upload")
     additional_file = request.files.get("additional_files")
 
+    from werkzeug.utils import secure_filename
     upload_dir = os.path.join("uploads", secure_filename(assignment_title))
     os.makedirs(upload_dir, exist_ok=True)
 
@@ -701,23 +704,24 @@ def save_assignment():
         additional_filename = secure_filename(additional_file.filename)
         additional_file.save(os.path.join(upload_dir, additional_filename))
 
-    # ✅ Load from shared function
+    # ✅ LOAD EXISTING DATA
     assignments = load_assignment_data()
-    assignments = [a for a in assignments if a["assignment_title"] != assignment_title]
 
-    assignments.append({
-    "assignment_title": assignment_title,
-    "rubric_file": rubric_filename,
-    "total_points": int(request.form.get("total_points", "").strip()),
-    "instructor_approval": instructor_approval,
-    "requires_persona": False,
-    "faith_integration": gospel_enabled,
-    "grading_difficulty": grading_difficulty,
-    "student_level": grade_level,
-    "feedback_tone": "supportive",
-    "ai_notes": custom_ai
-})
+    # ✅ ADD/UPDATE ENTRY
+    assignments[assignment_title] = {
+        "assignment_title": assignment_title,
+        "rubric_file": rubric_filename,
+        "total_points": total_points,
+        "instructor_approval": instructor_approval,
+        "requires_persona": False,
+        "faith_integration": gospel_enabled,
+        "grading_difficulty": grading_difficulty,
+        "student_level": grade_level,
+        "feedback_tone": "supportive",
+        "ai_notes": custom_ai
+    }
 
+    # ✅ SAVE TO rubric_index.json
     save_assignment_data(assignments)
 
     print("✅ Successfully saved assignment:", assignment_title)
