@@ -280,8 +280,7 @@ def grade_docx():
     except Exception as e:
         return f"❌ Failed to load rubric file: {str(e)}", 500
 
-    prompt = f"""
-You are a helpful AI grader.
+    prompt = f"""\nYou are a helpful AI grader.
 
 Assignment Title: {assignment_title}
 Grading Difficulty: {grading_difficulty}
@@ -324,7 +323,7 @@ Rubric:
         "score": score,
         "feedback": feedback,
         "student_text": full_text,
-        "ai_check_result": ai_check_result
+        "ai_check_result": None
     }
 
     if assignment_config.get("instructor_approval"):
@@ -337,7 +336,6 @@ Rubric:
     log_gpt_interaction(assignment_title, prompt, feedback, score)
     return render_template("feedback.html", score=score, feedback=feedback, rubric_total_points=rubric_total_points,
                            user_roles=session.get("launch_data", {}).get("https://purl.imsglobal.org/spec/lti/claim/roles", []))
-
 @lti.route("/review-feedback", methods=["GET", "POST"])
 def review_feedback():
     session["tool_role"] = "instructor"  # TEMP: force instructor role for local/demo
