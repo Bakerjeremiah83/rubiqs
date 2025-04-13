@@ -252,6 +252,10 @@ def grade_docx():
             return f"❌ Failed to extract persona file: {str(e)}", 500
 
     launch_data = session.get("launch_data", {})
+    print("🧪 SESSION CONTENTS:", dict(session))
+    launch_data = session.get("launch_data", {})
+    print("🧪 LAUNCH DATA:", json.dumps(launch_data, indent=2))
+
     assignment_title = launch_data.get("https://purl.imsglobal.org/spec/lti/claim/resource_link", {}).get("title", "").strip()
     assignment_config = load_assignment_config(assignment_title)
 
