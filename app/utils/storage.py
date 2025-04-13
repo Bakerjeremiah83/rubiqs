@@ -31,7 +31,7 @@ ASSIGNMENT_DATA_FILE = "rubric_index.json"
 
 def load_assignment_data():
     if not os.path.exists(ASSIGNMENT_DATA_FILE):
-        return {}
+        return []
     with open(ASSIGNMENT_DATA_FILE, "r") as f:
         return json.load(f)
 

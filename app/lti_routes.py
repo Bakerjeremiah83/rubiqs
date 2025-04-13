@@ -33,15 +33,12 @@ from app.utils.storage import load_assignment_data, save_assignment_data
 
 
 def load_assignment_config(assignment_title):
-    rubric_index_path = os.path.join("rubrics", "rubric_index.json")
-    if os.path.exists(rubric_index_path):
-        with open(rubric_index_path, "r") as f:
-            configs = json.load(f)
-        print("🧪 Matching against assignment_title:", assignment_title)
-        print("📄 Available configs:", [c.get("assignment_title") for c in configs])
-        for config in configs:
-            if config["assignment_title"].strip().lower() == assignment_title.strip().lower():
-                return config
+    rubric_index = load_assignment_data()  # This now returns a list ✅
+    print("🧪 Matching against assignment_title:", assignment_title)
+    print("📄 Available configs:", [c.get("assignment_title") for c in rubric_index])
+    for config in rubric_index:
+        if config.get("assignment_title", "").strip().lower() == assignment_title.strip().lower():
+            return config
     return None
 
 
@@ -677,22 +674,21 @@ def save_assignment():
 
     # ✅ Load from shared function
     assignments = load_assignment_data()
+    assignments = [a for a in assignments if a["assignment_title"] != assignment_title]
 
-    # ✅ Update or insert
-    assignments[assignment_title] = {
-        "assignment_title": assignment_title,
-        "rubric_file": rubric_filename,
-        "total_points": 100,
-        "instructor_approval": instructor_approval,
-        "requires_persona": False,
-        "faith_integration": gospel_enabled,
-        "grading_difficulty": grading_difficulty,
-        "student_level": grade_level,
-        "feedback_tone": "supportive",
-        "ai_notes": custom_ai
-    }
+    assignments.append({
+    "assignment_title": assignment_title,
+    "rubric_file": rubric_filename,
+    "total_points": 100,
+    "instructor_approval": instructor_approval,
+    "requires_persona": False,
+    "faith_integration": gospel_enabled,
+    "grading_difficulty": grading_difficulty,
+    "student_level": grade_level,
+    "feedback_tone": "supportive",
+    "ai_notes": custom_ai
+})
 
-    # ✅ Save using shared function
     save_assignment_data(assignments)
 
     print("✅ Successfully saved assignment:", assignment_title)
