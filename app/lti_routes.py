@@ -28,6 +28,8 @@ from pdfminer.high_level import extract_text as extract_pdf_text
 from app.utils.zerogpt_api import check_ai_with_gpt
 from werkzeug.utils import secure_filename
 from app.utils.storage import load_assignment_data, save_assignment_data
+from app.utils.storage import store_submission_history
+
 
 
 
@@ -335,8 +337,15 @@ Rubric:
                                pending_message="This submission requires instructor review. Your feedback is saved, and your score will be posted after approval.")
 
     log_gpt_interaction(assignment_title, prompt, feedback, score)
-    return render_template("feedback.html", score=score, feedback=feedback, rubric_total_points=rubric_total_points,
-                           user_roles=session.get("launch_data", {}).get("https://purl.imsglobal.org/spec/lti/claim/roles", []))
+    store_submission_history(submission_data)  # ✅ Correct place
+    return render_template(
+    "feedback.html",
+    score=score,
+    feedback=feedback,
+    rubric_total_points=rubric_total_points,
+    user_roles=session.get("launch_data", {}).get("https://purl.imsglobal.org/spec/lti/claim/roles", [])
+)
+
 
 @lti.route("/review-feedback", methods=["GET", "POST"])
 def review_feedback():

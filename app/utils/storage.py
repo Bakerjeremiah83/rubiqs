@@ -27,7 +27,7 @@ def load_all_pending_feedback():
                 all_data.append(json.load(f))
     return all_data
 
-ASSIGNMENT_DATA_FILE = "rubric_index.json"
+ASSIGNMENT_DATA_FILE = os.path.join("rubrics", "rubric_index.json")
 
 def load_assignment_data():
     if not os.path.exists(ASSIGNMENT_DATA_FILE):
@@ -38,3 +38,16 @@ def load_assignment_data():
 def save_assignment_data(data):
     with open(ASSIGNMENT_DATA_FILE, "w") as f:
         json.dump(data, f, indent=2)
+
+SUBMISSION_HISTORY_FILE = "all_submissions.json"
+
+def store_submission_history(submission):
+    if os.path.exists(SUBMISSION_HISTORY_FILE):
+        with open(SUBMISSION_HISTORY_FILE, "r") as f:
+            history = json.load(f)
+    else:
+        history = []
+
+    history.append(submission)
+    with open(SUBMISSION_HISTORY_FILE, "w") as f:
+        json.dump(history, f, indent=2)
