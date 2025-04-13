@@ -649,15 +649,13 @@ Feedback: <detailed, helpful feedback>
 
 @lti.route("/save-assignment", methods=["POST"])
 def save_assignment():
-    from werkzeug.utils import secure_filename
-
     assignment_title = request.form.get("assignment_title", "").strip()
     if not assignment_title:
         return "❌ Assignment title is required", 400
 
     grading_difficulty = request.form.get("grading_difficulty")
     grade_level = request.form.get("grade_level")
-    instructor_approval = request.form.get("instructor_approval") == "true"
+    instructor_approval = request.form.get("instructor_approval") == "true"   # ✅ ADD THIS LINE
     gospel_enabled = request.form.get("gospel_enabled") == "true"
     custom_ai = request.form.get("custom_ai", "")
 
@@ -810,6 +808,7 @@ def log_gpt_interaction(assignment_title, prompt, feedback, score=None):
     with open(log_path, "w") as f:
         json.dump(logs, f, indent=2)
 
+
 @lti.route("/test-store")
 def test_store():
     import uuid
@@ -855,48 +854,27 @@ def scan_ai_text():
 
 @lti.route("/instructor-review", methods=["GET", "POST"])
 def instructor_review():
-    from app.utils.storage import load_all_pending_feedback, store_pending_feedback
-    from datetime import datetime
-    from flask import request, redirect, render_template, session, url_for
-    import os
-    import json
-
     reviews = load_all_pending_feedback()
-    if not reviews:
-        return render_template("instructor_review.html", current_review=None)
-
-    current_review = reviews[0]
-    submission_id = current_review.get("submission_id", "")
+    submission_id = request.args.get("submission_id")
 
     if request.method == "POST":
-        # Update score and feedback
-        current_review["score"] = int(request.form.get("score"))
-        current_review["feedback"] = request.form.get("feedback")
-        current_review["timestamp"] = datetime.utcnow().isoformat()
-
-        if request.form.get("action") == "Approve and Post":
-            matched = next((r for r in reviews if r["submission_id"] == submission_id), None)
-            if matched:
-                reviews.remove(matched)
-            # Optionally post grade here using AGS if needed
-
-        # Save updated review list (or remove approved)
-        store_pending_feedback(submission_id, current_review)
-
+        submission_id = request.form.get("submission_id")
+        for review in reviews:
+            if review["submission_id"] == submission_id:
+                review["score"] = int(request.form.get("score"))
+                review["feedback"] = request.form.get("feedback")
+                review["timestamp"] = datetime.utcnow().isoformat()
+                store_pending_feedback(submission_id, review)
+                break
         return redirect(url_for("lti.instructor_review"))
+
+    current_review = None
+    if submission_id:
+        current_review = next((r for r in reviews if r["submission_id"] == submission_id), None)
+    elif reviews:
+        current_review = reviews[0]
 
     return render_template("instructor_review.html", current_review=current_review, reviews=reviews)
-
-    if request.method == "POST":
-        current_review["score"] = int(request.form.get("score"))
-        current_review["feedback"] = request.form.get("feedback")
-        current_review["timestamp"] = datetime.utcnow().isoformat()
-        store_pending_feedback(submission_id, current_review)
-        
-        return redirect(url_for("lti.instructor_review"))
-
-
-    return render_template("instructor_review.html", current_review=current_review)
 
 @lti.route("/instructor-review/save-notes", methods=["POST"])
 def save_notes():
