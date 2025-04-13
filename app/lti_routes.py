@@ -709,6 +709,7 @@ def save_assignment():
     print("✅ Successfully saved assignment:", assignment_title)
     print("📄 rubric_index.json path:", rubric_index_path)
     print("📑 Updated contents:", json.dumps(rubric_index, indent=2))
+    return redirect("/admin-dashboard")
 
 @lti.route("/admin-dashboard", methods=["GET", "POST"])
 def admin_dashboard():
