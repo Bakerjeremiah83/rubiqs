@@ -192,6 +192,7 @@ def launch():
         user_roles=decoded.get("https://purl.imsglobal.org/spec/lti/claim/roles", []),
         requires_persona=requires_persona
     )
+
 @lti.route("/student-test", methods=["GET"])
 def student_test_upload():
     # Simulate a student launch with mock data
@@ -648,21 +649,17 @@ Feedback: <detailed, helpful feedback>
 
 @lti.route("/save-assignment", methods=["POST"])
 def save_assignment():
-    import os
     from werkzeug.utils import secure_filename
-
-    rubric_index_path = os.path.join("rubrics", "rubric_index.json")
 
     assignment_title = request.form.get("assignment_title", "").strip()
     if not assignment_title:
         return "❌ Assignment title is required", 400
 
-    grade_level = request.form.get("grade_level")
     grading_difficulty = request.form.get("grading_difficulty")
-    requires_review = request.form.get("requires_review") == "true"
-    gospel_enabled = request.form.get("gospel_enabled") == "true"
+    grade_level = request.form.get("grade_level")
     instructor_approval = request.form.get("instructor_approval") == "true"
-    custom_ai = request.form.get("custom_ai")
+    gospel_enabled = request.form.get("gospel_enabled") == "true"
+    custom_ai = request.form.get("custom_ai", "")
 
     rubric_file = request.files.get("rubric_upload")
     additional_file = request.files.get("additional_files")
@@ -680,20 +677,11 @@ def save_assignment():
         additional_filename = secure_filename(additional_file.filename)
         additional_file.save(os.path.join(upload_dir, additional_filename))
 
-    # Load existing config
-    rubric_index = []
-    if os.path.exists(rubric_index_path):
-        try:
-            with open(rubric_index_path, "r") as f:
-                rubric_index = json.load(f)
-        except json.JSONDecodeError:
-            rubric_index = []
+    # ✅ Load from shared function
+    assignments = load_assignment_data()
 
-    # Remove any existing entry with the same assignment title
-    rubric_index = [entry for entry in rubric_index if entry.get("assignment_title") != assignment_title]
-
-    # Append updated assignment config
-    rubric_index.append({
+    # ✅ Update or insert
+    assignments[assignment_title] = {
         "assignment_title": assignment_title,
         "rubric_file": rubric_filename,
         "total_points": 100,
@@ -704,14 +692,12 @@ def save_assignment():
         "student_level": grade_level,
         "feedback_tone": "supportive",
         "ai_notes": custom_ai
-    })
+    }
 
-    # Save it
-    with open(rubric_index_path, "w") as f:
-        json.dump(rubric_index, f, indent=2)
+    # ✅ Save using shared function
+    save_assignment_data(assignments)
+
     print("✅ Successfully saved assignment:", assignment_title)
-    print("📄 rubric_index.json path:", rubric_index_path)
-    print("📑 Updated contents:", json.dumps(rubric_index, indent=2))
     return redirect("/admin-dashboard")
 
 @lti.route("/admin-dashboard", methods=["GET", "POST"])
