@@ -10,3 +10,7 @@ requests
 requests-oauthlib
 pdfminer.six
 gunicorn
+sqlalchemy
+python-dotenv
+psycopg2-binary
+
