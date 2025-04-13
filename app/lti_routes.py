@@ -708,7 +708,9 @@ def save_assignment():
     assignments = load_assignment_data()
 
     # ✅ ADD/UPDATE ENTRY
-    assignments[assignment_title] = {
+    assignments = [a for a in assignments if a.get("assignment_title") != assignment_title]
+
+    assignments.append({
         "assignment_title": assignment_title,
         "rubric_file": rubric_filename,
         "total_points": total_points,
@@ -719,7 +721,7 @@ def save_assignment():
         "student_level": grade_level,
         "feedback_tone": "supportive",
         "ai_notes": custom_ai
-    }
+    })
 
     # ✅ SAVE TO rubric_index.json
     save_assignment_data(assignments)
