@@ -36,6 +36,8 @@ def load_assignment_config(assignment_title):
     if os.path.exists(rubric_index_path):
         with open(rubric_index_path, "r") as f:
             configs = json.load(f)
+        print("🧪 Matching against assignment_title:", assignment_title)
+        print("📄 Available configs:", [c.get("assignment_title") for c in configs])
         for config in configs:
             if config["assignment_title"].strip().lower() == assignment_title.strip().lower():
                 return config
