@@ -280,7 +280,8 @@ def grade_docx():
     except Exception as e:
         return f"❌ Failed to load rubric file: {str(e)}", 500
 
-    prompt = f"""\nYou are a helpful AI grader.
+    prompt = f"""
+You are a helpful AI grader.
 
 Assignment Title: {assignment_title}
 Grading Difficulty: {grading_difficulty}
@@ -323,7 +324,7 @@ Rubric:
         "score": score,
         "feedback": feedback,
         "student_text": full_text,
-        "ai_check_result": None
+        "ai_check_result": ai_check_result
     }
 
     if assignment_config.get("instructor_approval"):
