@@ -252,10 +252,6 @@ def grade_docx():
             return f"❌ Failed to extract persona file: {str(e)}", 500
 
     launch_data = session.get("launch_data", {})
-    print("🧪 SESSION CONTENTS:", dict(session))
-    launch_data = session.get("launch_data", {})
-    print("🧪 LAUNCH DATA:", json.dumps(launch_data, indent=2))
-
     assignment_title = launch_data.get("https://purl.imsglobal.org/spec/lti/claim/resource_link", {}).get("title", "").strip()
     assignment_config = load_assignment_config(assignment_title)
 
@@ -340,6 +336,7 @@ Rubric:
     log_gpt_interaction(assignment_title, prompt, feedback, score)
     return render_template("feedback.html", score=score, feedback=feedback, rubric_total_points=rubric_total_points,
                            user_roles=session.get("launch_data", {}).get("https://purl.imsglobal.org/spec/lti/claim/roles", []))
+
 @lti.route("/review-feedback", methods=["GET", "POST"])
 def review_feedback():
     session["tool_role"] = "instructor"  # TEMP: force instructor role for local/demo
@@ -712,18 +709,6 @@ def save_assignment():
     print("✅ Successfully saved assignment:", assignment_title)
     print("📄 rubric_index.json path:", rubric_index_path)
     print("📑 Updated contents:", json.dumps(rubric_index, indent=2))
-
-    def load_assignment_config(assignment_title):
-        print("🧪 Matching against assignment_title:", assignment_title)
-        rubric_index_path = os.path.join("rubrics", "rubric_index.json")
-        if os.path.exists(rubric_index_path):
-            with open(rubric_index_path, "r") as f:
-                configs = json.load(f)
-            print("📄 Available configs:", [c.get("assignment_title") for c in configs])
-            for config in configs:
-                if config["assignment_title"].strip().lower() == assignment_title.strip().lower():
-                    return config
-        return None
 
 @lti.route("/admin-dashboard", methods=["GET", "POST"])
 def admin_dashboard():
