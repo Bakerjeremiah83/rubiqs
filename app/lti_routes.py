@@ -259,8 +259,15 @@ def grade_docx():
     if not assignment_config:
         return f"❌ No configuration found for assignment: {assignment_title}", 400
 
-    rubric_path = os.path.join("uploads", secure_filename(assignment_title), assignment_config.get("rubric_file", ""))
-    rubric_total_points = assignment_config.get("total_points", 100)
+    rubric_file = assignment_config.get("rubric_file", "")
+    assignment_folder = secure_filename(assignment_title)
+
+    rubric_path = os.path.join("uploads", assignment_folder, rubric_file)
+    if not os.path.exists(rubric_path):
+        fallback_path = os.path.join("rubrics", rubric_file)
+        if os.path.exists(fallback_path):
+            rubric_path = fallback_path
+
     grading_difficulty = assignment_config.get("grading_difficulty", "balanced")
     student_level = assignment_config.get("student_level", "college")
     feedback_tone = assignment_config.get("feedback_tone", "supportive")
@@ -271,13 +278,24 @@ def grade_docx():
             with open(rubric_path, "r") as f:
                 rubric_json = json.load(f)
             rubric_text = "\n".join([f"- {c['description']}" for c in rubric_json.get("criteria", [])])
+            rubric_total_points = get_total_points_from_rubric(rubric_json)
+
         elif rubric_path.endswith(".docx"):
             doc = Document(rubric_path)
             rubric_text = "\n".join([para.text for para in doc.paragraphs])
+            rubric_total_points = assignment_config.get("total_points")
+
         elif rubric_path.endswith(".pdf"):
             rubric_text = extract_pdf_text(rubric_path)
+            rubric_total_points = assignment_config.get("total_points")
+
         else:
             rubric_text = "(Rubric text could not be loaded.)"
+            return "❌ No total points found. Please upload a .json rubric or specify a total in the dashboard.", 400
+
+        if not rubric_total_points:
+            return "❌ This assignment does not have a total point value. Please update it in the dashboard.", 400
+
     except Exception as e:
         return f"❌ Failed to load rubric file: {str(e)}", 500
 
@@ -337,15 +355,14 @@ Rubric:
                                pending_message="This submission requires instructor review. Your feedback is saved, and your score will be posted after approval.")
 
     log_gpt_interaction(assignment_title, prompt, feedback, score)
-    store_submission_history(submission_data)  # ✅ Correct place
+    store_submission_history(submission_data)
     return render_template(
-    "feedback.html",
-    score=score,
-    feedback=feedback,
-    rubric_total_points=rubric_total_points,
-    user_roles=session.get("launch_data", {}).get("https://purl.imsglobal.org/spec/lti/claim/roles", [])
-)
-
+        "feedback.html",
+        score=score,
+        feedback=feedback,
+        rubric_total_points=rubric_total_points,
+        user_roles=session.get("launch_data", {}).get("https://purl.imsglobal.org/spec/lti/claim/roles", [])
+    )
 
 @lti.route("/review-feedback", methods=["GET", "POST"])
 def review_feedback():
