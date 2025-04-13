@@ -412,7 +412,7 @@ def review_feedback():
                     score_payload = {
                         "userId": student_id,
                         "scoreGiven": new_score,
-                        "scoreMaximum": 100,
+                        "scoreMaximum": assignment_config.get("total_points"),
                         "activityProgress": "Completed",
                         "gradingProgress": "FullyGraded",
                         "timestamp": datetime.utcnow().isoformat() + "Z"
@@ -462,7 +462,7 @@ def post_grade():
             score_payload = {
                 "userId": launch_data.get("sub"),
                 "scoreGiven": score,
-                "scoreMaximum": 100,
+                "scoreMaximum": assignment_config.get("total_points"),
                 "activityProgress": "Completed",
                 "gradingProgress": "FullyGraded",
                 "timestamp": datetime.utcnow().isoformat() + "Z"
@@ -507,7 +507,7 @@ def assignment_config():
         rubric_index.insert(0, {
             "assignment_title": "",
             "rubric_file": "",
-            "total_points": 100,
+            "total_points": None,
             "instructor_approval": False,
             "requires_persona": False,
             "faith_integration": False,
@@ -522,7 +522,10 @@ def assignment_config():
     if request.method == "POST":
         # 📥 Get form fields
         assignment_title = request.form.get("assignment_title", "").strip()
-        total_points = int(request.form.get("total_points", "100"))
+        total_points_raw = request.form.get("total_points", "").strip()
+        if not total_points_raw.isdigit():
+            return "❌ Please enter a numeric total point value in the dashboard.", 400
+        total_points = int(total_points_raw)
         instructor_approval = request.form.get("instructor_approval") == "on"
         requires_persona = request.form.get("requires_persona") == "on"
         faith_integration = request.form.get("faith_integration") == "on"
@@ -705,7 +708,7 @@ def save_assignment():
     assignments.append({
     "assignment_title": assignment_title,
     "rubric_file": rubric_filename,
-    "total_points": 100,
+    "total_points": int(request.form.get("total_points", "").strip()),
     "instructor_approval": instructor_approval,
     "requires_persona": False,
     "faith_integration": gospel_enabled,
@@ -780,7 +783,11 @@ def export_configs():
 def update_config():
     rubric_index_path = os.path.join("rubrics", "rubric_index.json")
     assignment_title = request.form.get("assignment_title")
-    total_points = int(request.form.get("total_points", 100))
+    total_points_raw = request.form.get("total_points", "").strip()
+    if not total_points_raw.isdigit():
+        return "❌ Please enter a valid number for total points.", 400
+    total_points = int(total_points_raw)
+
     ai_notes = request.form.get("ai_notes", "").strip()
     grading_difficulty = request.form.get("grading_difficulty", "balanced")
     student_level = request.form.get("student_level", "college")

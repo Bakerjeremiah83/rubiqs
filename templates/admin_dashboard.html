@@ -4,6 +4,21 @@
   <meta charset="UTF-8" />
   <title>Rubiqs | Admin Dashboard</title>
   <style>
+    .form-group.third {
+      flex: 1 1 32%;
+    }
+
+    .form-control {
+      width: 100%;
+      height: 42px;
+      padding: 0.6rem;
+      font-size: 1rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+
+    
     body {
       font-family: 'Segoe UI', Tahoma, sans-serif;
       background: linear-gradient(to right, #f1e2c4, #5ca198, #1f3a54);
@@ -90,9 +105,9 @@
     }
 
     input[type="text"],
+    input[type="file"],
     select,
-    textarea,
-    input[type="file"] {
+    textarea {
       width: 100%;
       padding: 0.6rem;
       font-size: 1rem;
@@ -207,7 +222,7 @@
         <label>Additional Files</label>
         <input type="file" name="additional_files" />
       </div>
-    </div>
+    </div>    
     <div class="row">
       <div class="form-group wide require-toggle" style="flex-direction: row; align-items: center;">
         <label style="margin-right: 1rem; white-space: nowrap;">Requires Instructor Review</label>
@@ -222,8 +237,12 @@
     </div>
     <div class="row">
       <div class="form-group third">
+        <label>Total Points</label>
+        <input type="number" name="total_points" placeholder="e.g. 60" class="form-control" />
+      </div>
+      <div class="form-group third">
         <label>Grade Level</label>
-        <select name="grade_level">
+        <select name="grade_level" class="form-control">
           <option value="">Select Level</option>
           <option>Middle School</option>
           <option>High School</option>
@@ -232,14 +251,14 @@
       </div>
       <div class="form-group third">
         <label>Grading Difficulty</label>
-        <select name="grading_difficulty">
+        <select name="grading_difficulty" class="form-control">
           <option value="">Select Difficulty</option>
           <option>Basic</option>
           <option>Intermediate</option>
           <option>Advanced</option>
         </select>
       </div>
-    </div>
+    </div>    
     <div class="row">
       <div class="form-group wide">
         <label>Custom AI Grading Instructions</label>
