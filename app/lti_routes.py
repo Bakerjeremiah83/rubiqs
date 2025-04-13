@@ -655,6 +655,7 @@ def save_assignment():
     grading_difficulty = request.form.get("grading_difficulty")
     requires_review = request.form.get("requires_review") == "true"
     gospel_enabled = request.form.get("gospel_enabled") == "true"
+    instructor_approval = request.form.get("instructor_approval") == "true"
     custom_ai = request.form.get("custom_ai")
 
     rubric_file = request.files.get("rubric_upload")
@@ -673,7 +674,7 @@ def save_assignment():
         additional_filename = secure_filename(additional_file.filename)
         additional_file.save(os.path.join(upload_dir, additional_filename))
 
-    # ✅ Load current index
+    # Load existing config
     rubric_index = []
     if os.path.exists(rubric_index_path):
         try:
@@ -682,18 +683,15 @@ def save_assignment():
         except json.JSONDecodeError:
             rubric_index = []
 
-    # ✅ Remove duplicates
-    rubric_index = [
-        entry for entry in rubric_index
-        if entry.get("assignment_title", "").strip().lower() != assignment_title.lower()
-    ]
+    # Remove any existing entry with the same assignment title
+    rubric_index = [entry for entry in rubric_index if entry.get("assignment_title") != assignment_title]
 
-    # ✅ Append new
+    # Append updated assignment config
     rubric_index.append({
         "assignment_title": assignment_title,
         "rubric_file": rubric_filename,
         "total_points": 100,
-        "instructor_approval": requires_review,
+        "instructor_approval": instructor_approval,
         "requires_persona": False,
         "faith_integration": gospel_enabled,
         "grading_difficulty": grading_difficulty,
@@ -702,18 +700,14 @@ def save_assignment():
         "ai_notes": custom_ai
     })
 
-    # ✅ Write back
+    # Save it
     with open(rubric_index_path, "w") as f:
         json.dump(rubric_index, f, indent=2)
-
     print("✅ Successfully saved assignment:", assignment_title)
-    print("📄 rubric_index.json path:", os.path.abspath(rubric_index_path))
+    print("📄 rubric_index.json path:", rubric_index_path)
     print("📑 Updated contents:", json.dumps(rubric_index, indent=2))
 
-    print("🧪 Matching against assignment_title:", assignment_title)
-    print("📄 Available configs:", [c.get("assignment_title") for c in rubric_index])
-    print("📄 Available configs:", [c.get("assignment_title") for c in rubric_index])
-    return render_template("admin_dashboard.html", rubric_index=rubric_index)  # ✅ Final return
+    return redirect("/admin-dashboard")
 
 @lti.route("/admin-dashboard", methods=["GET", "POST"])
 def admin_dashboard():
