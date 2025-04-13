@@ -1,53 +1,92 @@
+# File: app/storage.py
+
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy import create_engine
+from app.models import Assignment, PendingReview, SubmissionHistory
 import os
-import json
 
-PENDING_DIR = os.path.join("pending_feedback")
+# ✅ Load DB URL from .env
+from dotenv import load_dotenv
+load_dotenv()
 
-def store_pending_feedback(submission_id, data):
-    if not os.path.exists(PENDING_DIR):
-        os.makedirs(PENDING_DIR)
-    filepath = os.path.join(PENDING_DIR, f"{submission_id}.json")
-    with open(filepath, "w") as f:
-        json.dump(data, f, indent=2)
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-def load_pending_feedback(submission_id):
-    filepath = os.path.join(PENDING_DIR, f"{submission_id}.json")
-    if not os.path.exists(filepath):
-        return None
-    with open(filepath, "r") as f:
-        return json.load(f)
+# ✅ Set up database engine
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(bind=engine)
 
-def load_all_pending_feedback():
-    if not os.path.exists(PENDING_DIR):
-        return []
-    all_data = []
-    for fname in os.listdir(PENDING_DIR):
-        if fname.endswith(".json"):
-            with open(os.path.join(PENDING_DIR, fname), "r") as f:
-                all_data.append(json.load(f))
-    return all_data
 
-ASSIGNMENT_DATA_FILE = os.path.join("rubrics", "rubric_index.json")
-
-def load_assignment_data():
-    if not os.path.exists(ASSIGNMENT_DATA_FILE):
-        return []
-    with open(ASSIGNMENT_DATA_FILE, "r") as f:
-        return json.load(f)
+# ----------------------------
+# ✅ ASSIGNMENTS
+# ----------------------------
 
 def save_assignment_data(data):
-    with open(ASSIGNMENT_DATA_FILE, "w") as f:
-        json.dump(data, f, indent=2)
+    session = SessionLocal()
+    try:
+        for item in data:
+            existing = session.query(Assignment).filter_by(assignment_title=item["assignment_title"]).first()
+            if existing:
+                for key, value in item.items():
+                    setattr(existing, key, value)
+            else:
+                new_assignment = Assignment(**item)
+                session.add(new_assignment)
+        session.commit()
+    finally:
+        session.close()
 
-SUBMISSION_HISTORY_FILE = "all_submissions.json"
 
-def store_submission_history(submission):
-    if os.path.exists(SUBMISSION_HISTORY_FILE):
-        with open(SUBMISSION_HISTORY_FILE, "r") as f:
-            history = json.load(f)
-    else:
-        history = []
+def load_assignment_data():
+    session = SessionLocal()
+    try:
+        return {a.assignment_title: a.to_dict() for a in session.query(Assignment).all()}
+    finally:
+        session.close()
 
-    history.append(submission)
-    with open(SUBMISSION_HISTORY_FILE, "w") as f:
-        json.dump(history, f, indent=2)
+
+# ----------------------------
+# ✅ PENDING REVIEWS
+# ----------------------------
+
+def store_pending_feedback(submission_id, data):
+    session = SessionLocal()
+    try:
+        existing = session.query(PendingReview).filter_by(submission_id=submission_id).first()
+        if existing:
+            for key, value in data.items():
+                setattr(existing, key, value)
+        else:
+            session.add(PendingReview(**data))
+        session.commit()
+    finally:
+        session.close()
+
+
+def load_pending_feedback(submission_id):
+    session = SessionLocal()
+    try:
+        pending = session.query(PendingReview).filter_by(submission_id=submission_id).first()
+        return pending.to_dict() if pending else None
+    finally:
+        session.close()
+
+
+def load_all_pending_feedback():
+    session = SessionLocal()
+    try:
+        return [r.to_dict() for r in session.query(PendingReview).all()]
+    finally:
+        session.close()
+
+
+# ----------------------------
+# ✅ SUBMISSION HISTORY
+# ----------------------------
+
+def store_submission_history(data):
+    session = SessionLocal()
+    try:
+        session.add(SubmissionHistory(**data))
+        session.commit()
+    finally:
+        session.close()

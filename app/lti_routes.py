@@ -3,14 +3,16 @@ from flask import (
     render_template, send_file
 )
 
-from app.utils.storage import (
+from app.storage import (
+    load_assignment_data,
+    save_assignment_data,
     store_pending_feedback,
     load_pending_feedback,
-    load_all_pending_feedback
+    load_all_pending_feedback,
+    store_submission_history
 )
 
 # Removed duplicate import of check_ai_with_gpt
-
 
 import json
 import os
