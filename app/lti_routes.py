@@ -968,7 +968,7 @@ def scan_ai_text():
     except Exception as e:
         return jsonify({"error": f"AI scan failed: {str(e)}"}), 500
 
-@lti.route("/instructor-review", methods=["GET", "POST"])
+@lti.route("/instructor-review-button", methods=["GET", "POST"])
 def instructor_review():
     reviews = load_all_pending_feedback()
     print(f"🧪 Number of pending reviews found: {len(reviews)}")  # ✅ Add this
@@ -984,7 +984,7 @@ def instructor_review():
                 review["timestamp"] = datetime.utcnow().isoformat()
                 store_pending_feedback(submission_id, review)
                 break
-        return redirect(url_for("lti.instructor_review"))
+        return redirect(url_for("lti.instructor_review_button"))
 
     current_review = None
     if submission_id:
