@@ -16,9 +16,10 @@ def upload_to_supabase(file_storage, filename):
         content_type = content_type or "application/octet-stream"
 
         result = supabase.storage.from_("rubrics").upload(
-            path=filename,
-            file=file_storage,
-            file_options={"content-type": content_type}
+        path=filename,
+        file=file_storage,
+        file_options={"content-type": content_type}
+
         )
         public_url = supabase.storage.from_("rubrics").get_public_url(filename)
         return public_url
