@@ -30,6 +30,7 @@ from app.utils.zerogpt_api import check_ai_with_gpt
 from werkzeug.utils import secure_filename
 from app.supabase_client import upload_to_supabase
 from flask import url_for
+from app.storage import load_pending_feedback, store_pending_feedback
 
 
 
@@ -792,23 +793,19 @@ def accept_review():
     # Move to submission history
     store_submission_history(submission)
 
-    # TODO: Post to LMS here if desired...
-
-    # Remove from pending
-    from sqlalchemy.orm import Session
-    session = SessionLocal()
-    try:
-        session.query(PendingReview).filter_by(submission_id=submission_id).delete()
-        session.commit()
-    finally:
-        session.close()
+    # ✅ Remove from pending_reviews
+    delete_pending_feedback(submission_id)
 
     return redirect("/admin-dashboard")
+
 
 @lti.route("/instructor-review/save-notes", methods=["POST"])
 def instructor_save_notes():
     submission_id = request.form.get("submission_id")
     new_notes = request.form.get("notes", "")
+
+    if not submission_id:
+        return "❌ Submission ID is missing", 400
 
     existing = load_pending_feedback(submission_id)
     if not existing:
@@ -818,6 +815,7 @@ def instructor_save_notes():
     store_pending_feedback(submission_id, existing)
 
     return redirect("/admin-dashboard")
+
 
 @lti.route("/instructor-review", methods=["GET", "POST"])
 def instructor_review():
