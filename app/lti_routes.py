@@ -790,10 +790,20 @@ def accept_review():
     if not submission:
         return "❌ Submission not found", 404
 
-    # Move to submission history
-    store_submission_history(submission)
+    # ✅ Move to submission history
+    store_submission_history({
+        "submission_id": submission["submission_id"],
+        "student_id": submission["student_id"],
+        "assignment_title": submission["assignment_title"],
+        "timestamp": submission["timestamp"],
+        "score": submission["score"],
+        "feedback": submission["feedback"],
+        "student_text": submission["student_text"],
+        "ai_check_result": submission.get("ai_check_result"),
+        "notes": submission.get("notes", "")
+    })
 
-    # ✅ Remove from pending_reviews
+    # ✅ Delete from pending reviews
     delete_pending_feedback(submission_id)
 
     return redirect("/admin-dashboard")
@@ -952,26 +962,37 @@ from app.utils.zerogpt_api import check_ai_with_gpt
 
 @lti.route("/scan-ai", methods=["POST"])
 def scan_ai():
-    print("🔐 /scan-ai route hit")
-    print("🧪 SESSION CONTENTS:", dict(session))
-
-    if session.get("tool_role") != "instructor":
-        return jsonify({"error": "Unauthorized"}), 403
-
     data = request.get_json()
     text = data.get("text", "")
 
     if not text:
         return jsonify({"error": "No text provided"}), 400
 
-    # Simulate detection using ChatGPT
-    verdict = "Human-written" if "I" in text or "my" in text else "AI-generated"
-    ai_probability = 10 if verdict == "Human-written" else 95
-    reason = "Contains personal reflections and emotional nuance" if verdict == "Human-written" else "Lacks personal tone or variability"
+    try:
+        import openai
+        import os
+        openai.api_key = os.getenv("OPENAI_API_KEY")
 
-    return jsonify({
-        "result": f"VERDICT: {verdict}\nPROBABILITY ESTIMATE: {ai_probability}%\nREASON: {reason}"
-    })
+        prompt = f"""
+You are an AI writing detector. Analyze the following text and respond with a verdict:
+1. VERDICT: Is this AI-generated or human-written?
+2. PROBABILITY ESTIMATE: What percent likely is this AI?
+3. REASON: Justify your assessment briefly.
+
+Text:
+{text}
+"""
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.3
+        )
+
+        result = response["choices"][0]["message"]["content"]
+        return jsonify({"result": result})
+    
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @lti.route("/instructor-review-button", methods=["GET", "POST"])

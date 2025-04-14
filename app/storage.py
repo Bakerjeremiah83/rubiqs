@@ -110,3 +110,10 @@ def upload_to_supabase(file_path, filename, folder="rubrics"):
         print("❌ Supabase Upload Failed:", str(e))
         return None
 
+def delete_pending_feedback(submission_id):
+    session = SessionLocal()
+    try:
+        session.query(PendingReview).filter_by(submission_id=submission_id).delete()
+        session.commit()
+    finally:
+        session.close()
