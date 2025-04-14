@@ -969,7 +969,7 @@ def scan_ai_text():
         return jsonify({"error": f"AI scan failed: {str(e)}"}), 500
 
 @lti.route("/instructor-review-button", methods=["GET", "POST"])
-def instructor_review():
+def instructor_review_button():
     reviews = load_all_pending_feedback()
     print(f"🧪 Number of pending reviews found: {len(reviews)}")  # ✅ Add this
 
