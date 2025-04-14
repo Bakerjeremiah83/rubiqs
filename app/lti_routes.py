@@ -762,7 +762,7 @@ def save_assignment():
     save_assignment_data(assignments)
 
     print("✅ Successfully saved assignment:", assignment_title)
-    return redirect("/admin-dashboard")
+    return f"✅ Saved assignment: {assignment_title}"  # ← temporary
 
 from app.storage import load_assignment_data, load_all_pending_feedback
 

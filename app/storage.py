@@ -44,6 +44,22 @@ def load_assignment_data():
     finally:
         session.close()
 
+def save_assignment_data(data):
+    session = SessionLocal()
+    try:
+        print("🧪 Saving assignment data:", data)  # <--- ADD THIS
+        for item in data:
+            existing = session.query(Assignment).filter_by(assignment_title=item["assignment_title"]).first()
+            if existing:
+                for key, value in item.items():
+                    setattr(existing, key, value)
+            else:
+                new_assignment = Assignment(**item)
+                session.add(new_assignment)
+        session.commit()
+    finally:
+        session.close()
+
 
 # ----------------------------
 # ✅ PENDING REVIEWS
