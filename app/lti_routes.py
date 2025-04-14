@@ -805,7 +805,7 @@ def accept_review():
     return redirect("/admin-dashboard")
 
 @lti.route("/instructor-review/save-notes", methods=["POST"])
-def save_notes():
+def instructor_save_notes():
     submission_id = request.form.get("submission_id")
     new_notes = request.form.get("notes", "")
 
@@ -993,34 +993,3 @@ def instructor_review_button():
         current_review = reviews[0]
 
         return render_template("instructor_review.html", current_review=current_review, reviews=reviews)
-
-@lti.route("/instructor-review/save-notes", methods=["POST"])
-def save_notes():
-    submission_id = request.form.get("submission_id")
-    new_notes = request.form.get("notes", "").strip()
-
-    if not submission_id:
-        return "❌ Missing submission ID", 400
-
-    import os
-    import json
-    from app.utils.storage import load_pending_feedback, store_pending_feedback
-import uuid
-
-    # Load the existing submission file
-def save_notes():
-    submission_id = request.form.get("submission_id")
-    new_notes = request.form.get("notes", "").strip()
-
-    if not submission_id:
-        return "❌ Missing submission ID", 400
-
-    submission = load_pending_feedback(submission_id)
-    if not submission:
-        return f"❌ No submission found for ID {submission_id}", 404
-
-    # Update notes and save
-    submission["notes"] = new_notes
-    store_pending_feedback(submission_id, submission)
-
-    return redirect("/admin-dashboard")
