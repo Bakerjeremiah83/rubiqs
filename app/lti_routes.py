@@ -939,14 +939,6 @@ def instructor_review():
 
         return render_template("instructor_review.html", current_review=current_review, reviews=reviews)
 
-    current_review = None
-    if submission_id:
-        current_review = next((r for r in reviews if r["submission_id"] == submission_id), None)
-    elif reviews:
-        current_review = reviews[0]
-
-        return render_template("instructor_review.html", current_review=current_review, reviews=reviews)
-
 @lti.route("/instructor-review/save-notes", methods=["POST"])
 def save_notes():
     submission_id = request.form.get("submission_id")
