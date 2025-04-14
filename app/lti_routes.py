@@ -704,7 +704,10 @@ def save_assignment():
     rubric_url = ""
     if rubric_file and rubric_file.filename:
         rubric_filename = secure_filename(rubric_file.filename)
-        rubric_url = upload_to_supabase(rubric_file, rubric_filename)
+        rubric_path = os.path.join(upload_dir, rubric_filename)
+        rubric_file.save(rubric_path)
+        rubric_url = upload_to_supabase(rubric_path, rubric_filename)
+
 
 
     additional_filename = ""
