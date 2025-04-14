@@ -52,6 +52,7 @@ def load_assignment_data():
 def store_pending_feedback(submission_id, data):
     session = SessionLocal()
     try:
+        print("📤 Writing to pending_reviews DB:", submission_id)
         existing = session.query(PendingReview).filter_by(submission_id=submission_id).first()
         if existing:
             for key, value in data.items():
@@ -61,6 +62,7 @@ def store_pending_feedback(submission_id, data):
         session.commit()
     finally:
         session.close()
+
 
 
 def load_pending_feedback(submission_id):
@@ -91,6 +93,7 @@ def store_submission_history(data):
         session.commit()
     finally:
         session.close()
+        
 
 def upload_to_supabase(file_path, filename, folder="rubrics"):
     try:

@@ -353,6 +353,9 @@ Rubric:
         "ai_check_result": None
     }
 
+    print("🧪 Instructor Approval in Config:", assignment_config.get("instructor_approval"))
+    print("🧪 Storing pending submission:", submission_id)
+
     if assignment_config.get("instructor_approval"):
         store_pending_feedback(submission_id, submission_data)
         log_gpt_interaction(assignment_title, prompt, feedback, score)
@@ -741,6 +744,12 @@ def save_assignment():
     })
 
     print("🧪 Saving assignment with rubric_url:", rubric_url)
+    print("🧪 Assignment object before save:", {
+    "assignment_title": assignment_title,
+    "rubric_file": rubric_url,
+    "total_points": total_points
+})
+
     save_assignment_data(assignments)
 
     print("✅ Successfully saved assignment:", assignment_title)
