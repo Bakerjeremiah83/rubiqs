@@ -718,6 +718,13 @@ def save_assignment():
         # ✅ Then upload to Supabase using the saved file path (not the FileStorage object)
         rubric_url = upload_to_supabase(rubric_path, rubric_filename)
 
+        # If upload failed (likely due to duplicate), fallback to existing Supabase URL
+        if not rubric_url:
+            from app.supabase_client import supabase
+            filepath = f"rubrics/{rubric_filename}"
+            rubric_url = supabase.storage.from_("rubrics").get_public_url(filepath)
+            print("⚠️ Using existing Supabase rubric URL:", rubric_url)
+
 
     additional_filename = ""
     if additional_file and additional_file.filename:
