@@ -10,16 +10,15 @@ SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-def upload_to_supabase(file, filename):
+def upload_to_supabase(file_storage, filename):
     try:
         content_type, _ = mimetypes.guess_type(filename)
         content_type = content_type or "application/octet-stream"
 
         result = supabase.storage.from_("rubrics").upload(
             path=filename,
-            file=file,
-            file_options={"content-type": content_type},
-            upsert=True
+            file=file_storage,
+            file_options={"content-type": content_type}
         )
         public_url = supabase.storage.from_("rubrics").get_public_url(filename)
         return public_url
