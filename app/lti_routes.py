@@ -773,6 +773,8 @@ def save_assignment():
 
 from app.storage import load_assignment_data, load_all_pending_feedback
 
+from app.storage import load_submission_history  # ✅ Add this at the top
+
 @lti.route("/admin-dashboard", methods=["GET", "POST"])
 def admin_dashboard():
     session["tool_role"] = "instructor"  # TEMP for local testing
@@ -780,21 +782,20 @@ def admin_dashboard():
     if session.get("tool_role") != "instructor":
         return "❌ Access denied. Instructors only.", 403
 
-    # ✅ Load from database, not JSON files
     rubric_index = list(load_assignment_data().values())
     pending_feedback = load_all_pending_feedback()
+    submission_history = load_submission_history()  # ✅ Add this
 
     pending_count = len(pending_feedback)
     approved_count = sum(1 for r in rubric_index if r.get("instructor_approval"))
 
-    print("🧪 Pending feedback count:", pending_count)
-    print("🧪 Loaded rubric index entries:", len(rubric_index))
-
     return render_template("admin_dashboard.html",
                            rubric_index=rubric_index,
                            pending_feedback=pending_feedback,
+                           submission_history=submission_history,  # ✅ Add this
                            pending_count=pending_count,
                            approved_count=approved_count)
+
 
 @lti.route("/instructor-review/accept", methods=["POST"])
 def accept_review():

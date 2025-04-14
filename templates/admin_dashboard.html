@@ -397,21 +397,23 @@
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td style="border: 1px solid #ccc; padding: 0.75rem;">Emily Clark</td>
-            <td style="border: 1px solid #ccc; padding: 0.75rem;">Reflection 2</td>
-            <td style="border: 1px solid #ccc; padding: 0.75rem;">88%</td>
-            <td style="border: 1px solid #ccc; padding: 0.75rem;">2025-04-10</td>
-            <td style="border: 1px solid #ccc; padding: 0.75rem;">Auto-Posted</td>
-          </tr>
-          <tr>
-            <td style="border: 1px solid #ccc; padding: 0.75rem;">Jason Lee</td>
-            <td style="border: 1px solid #ccc; padding: 0.75rem;">USCIS Letter Draft</td>
-            <td style="border: 1px solid #ccc; padding: 0.75rem;">94%</td>
-            <td style="border: 1px solid #ccc; padding: 0.75rem;">2025-04-11</td>
-            <td style="border: 1px solid #ccc; padding: 0.75rem;">Instructor Reviewed</td>
-          </tr>
+          {% for submission in submission_history %}
+            <tr>
+              <td style="border: 1px solid #ccc; padding: 0.75rem;">{{ submission.student_id }}</td>
+              <td style="border: 1px solid #ccc; padding: 0.75rem;">{{ submission.assignment_title }}</td>
+              <td style="border: 1px solid #ccc; padding: 0.75rem;">{{ submission.score }}%</td>
+              <td style="border: 1px solid #ccc; padding: 0.75rem;">{{ submission.timestamp.split('T')[0] }}</td>
+              <td style="border: 1px solid #ccc; padding: 0.75rem;">Auto-Posted</td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="5" style="text-align: center; padding: 1rem; background: #f8f8f8; font-style: italic;">
+                You're all caught up!
+              </td>
+            </tr>
+          {% endfor %}
         </tbody>
+        
       </table>
     </div>
   </div>
