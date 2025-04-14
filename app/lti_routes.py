@@ -733,7 +733,7 @@ def save_assignment():
         "ai_notes": custom_ai
     })
 
-    # ✅ SAVE TO rubric_index.json
+    print("🧪 Saving assignment with rubric_url:", rubric_url)
     save_assignment_data(assignments)
 
     print("✅ Successfully saved assignment:", assignment_title)
