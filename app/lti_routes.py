@@ -755,33 +755,24 @@ def save_assignment():
     print("✅ Successfully saved assignment:", assignment_title)
     return redirect("/admin-dashboard")
 
+from app.storage import load_assignment_data, load_all_pending_feedback
+
 @lti.route("/admin-dashboard", methods=["GET", "POST"])
 def admin_dashboard():
     session["tool_role"] = "instructor"  # TEMP for local testing
 
-    rubric_index_path = os.path.join("rubrics", "rubric_index.json")
-    print("✅ File written. Re-opening to verify...")
-    with open(rubric_index_path, "r") as f:
-        confirm = json.load(f)
-    print("📑 File contents after save:", json.dumps(confirm, indent=2))
-
-    pending_path = os.path.join("rubrics", "pending_reviews.json")
-
     if session.get("tool_role") != "instructor":
         return "❌ Access denied. Instructors only.", 403
 
-    rubric_index = []
-    if os.path.exists(rubric_index_path):
-        with open(rubric_index_path, "r") as f:
-            rubric_index = json.load(f)
-
-    pending_feedback = []
-    if os.path.exists(pending_path):
-        with open(pending_path, "r") as f:
-            pending_feedback = json.load(f)
+    # ✅ Load from database, not JSON files
+    rubric_index = list(load_assignment_data().values())
+    pending_feedback = load_all_pending_feedback()
 
     pending_count = len(pending_feedback)
     approved_count = sum(1 for r in rubric_index if r.get("instructor_approval"))
+
+    print("🧪 Pending feedback count:", pending_count)
+    print("🧪 Loaded rubric index entries:", len(rubric_index))
 
     return render_template("admin_dashboard.html",
                            rubric_index=rubric_index,
