@@ -19,6 +19,7 @@ class Assignment(Base):
     student_level = Column(String)
     feedback_tone = Column(String)
     ai_notes = Column(Text)
+    notes = Column(Text)
 
     def to_dict(self):
         return {
@@ -31,7 +32,8 @@ class Assignment(Base):
             "grading_difficulty": self.grading_difficulty,
             "student_level": self.student_level,
             "feedback_tone": self.feedback_tone,
-            "ai_notes": self.ai_notes
+            "ai_notes": self.ai_notes,
+            "notes": self.notes
         }
 
 
