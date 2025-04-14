@@ -57,6 +57,10 @@ Session(app)
 
 # ✅ Register LTI routes
 from app.lti_routes import register_lti_routes
+from app.models import Base
+from app.storage import engine
+
+Base.metadata.create_all(bind=engine)  # ✅ Force sync schema once
 register_lti_routes(app)
 print("✅ LTI routes registered")
 
