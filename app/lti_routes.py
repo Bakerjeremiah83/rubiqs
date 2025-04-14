@@ -35,12 +35,9 @@ from werkzeug.utils import secure_filename
 
 
 def load_assignment_config(assignment_title):
-    rubric_index = load_assignment_data()  # This now returns a list ✅
-    print("🧪 Matching against assignment_title:", assignment_title)
-    print("📄 Available configs:", [c.get("assignment_title") for c in rubric_index])
-    for config in rubric_index:
-        if config.get("assignment_title", "").strip().lower() == assignment_title.strip().lower():
-            return config
+    rubric_index = load_assignment_data()
+    if assignment_title in rubric_index:
+        return rubric_index[assignment_title]
     return None
 
 
