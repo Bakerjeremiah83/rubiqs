@@ -12,7 +12,6 @@ from app.storage import (
     store_submission_history
 )
 
-# Removed duplicate import of check_ai_with_gpt
 
 import json
 import os
