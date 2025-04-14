@@ -217,6 +217,17 @@ def student_test_upload():
 
 @lti.route("/grade-docx", methods=["POST"])
 def grade_docx():
+
+    assignment_title = session.get("launch_data", {}).get(
+        "https://purl.imsglobal.org/spec/lti/claim/resource_link", {}
+    ).get("title", "").strip()
+
+    assignment_config = load_assignment_config(assignment_title)
+
+    print("🧪 Grading assignment:", assignment_title)
+    print("🧪 Assignment config loaded:", assignment_config)
+
+
     print("📥 /grade-docx hit")
 
     file = request.files.get("file")
