@@ -804,7 +804,7 @@ def accept_review():
 
     return redirect("/admin-dashboard")
 
-@lti.route("/instructor-review/save-instructor-notes", methods=["POST"])
+@lti.route("/instructor-review/save-notes", methods=["POST"])
 def instructor_save_notes():
     submission_id = request.form.get("submission_id")
     new_notes = request.form.get("notes", "")
