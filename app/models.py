@@ -75,6 +75,7 @@ class SubmissionHistory(Base):
     feedback = Column(Text)
     student_text = Column(Text)
     ai_check_result = Column(Text)
+    notes = Column(Text)
 
     def to_dict(self):
         return {
@@ -85,5 +86,6 @@ class SubmissionHistory(Base):
             "score": self.score,
             "feedback": self.feedback,
             "student_text": self.student_text,
-            "ai_check_result": self.ai_check_result
+            "ai_check_result": self.ai_check_result,
+            "notes": self.notes
         }
