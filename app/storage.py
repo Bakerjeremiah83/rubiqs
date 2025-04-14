@@ -3,6 +3,7 @@
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 from app.models import Assignment, PendingReview, SubmissionHistory
+from app.supabase_client import supabase
 import os
 
 # ✅ Load DB URL from .env
@@ -90,3 +91,10 @@ def store_submission_history(data):
         session.commit()
     finally:
         session.close()
+
+def upload_to_supabase(file_obj, filename, folder="rubrics"):
+    filepath = f"{folder}/{filename}"
+    response = supabase.storage.from_("rubrics").upload(filepath, file_obj, {"content-type": "application/octet-stream", "x-upsert": "true"})
+    if response.status_code != 200:
+        raise Exception(f"❌ Supabase upload failed: {response.text}")
+    return f"{os.getenv('SUPABASE_URL')}/storage/v1/object/public/{filepath}"

@@ -233,7 +233,6 @@ def grade_docx():
 
         ai_check_result = check_ai_with_gpt(full_text)
         print("🤖 AI Detection Result:", ai_check_result)
-
     except Exception as e:
         return f"❌ Failed to extract text: {str(e)}", 500
 
@@ -256,14 +255,23 @@ def grade_docx():
     if not assignment_config:
         return f"❌ No configuration found for assignment: {assignment_title}", 400
 
-    rubric_file = assignment_config.get("rubric_file", "")
-    assignment_folder = secure_filename(assignment_title)
+    # ✅ Download rubric from Supabase
+    import tempfile, requests
+    rubric_url = assignment_config.get("rubric_file", "")
+    rubric_path = None
 
-    rubric_path = os.path.join("uploads", assignment_folder, rubric_file)
-    if not os.path.exists(rubric_path):
-        fallback_path = os.path.join("rubrics", rubric_file)
-        if os.path.exists(fallback_path):
-            rubric_path = fallback_path
+    if rubric_url:
+        try:
+            file_ext = rubric_url.split(".")[-1]
+            temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=f".{file_ext}")
+            response = requests.get(rubric_url)
+            temp_file.write(response.content)
+            temp_file.close()
+            rubric_path = temp_file.name
+        except Exception as e:
+            return f"❌ Failed to download rubric from Supabase: {str(e)}", 500
+    else:
+        return "❌ No rubric file found for this assignment.", 400
 
     grading_difficulty = assignment_config.get("grading_difficulty", "balanced")
     student_level = assignment_config.get("student_level", "college")
@@ -327,7 +335,6 @@ Rubric:
         score = int(score_match.group(1)) if score_match else 0
         feedback_match = re.search(r"Feedback:\s*(.+)", output, re.DOTALL)
         feedback = feedback_match.group(1).strip() if feedback_match else output.strip()
-
     except openai.error.OpenAIError as e:
         return f"❌ GPT error: {str(e)}", 500
 
@@ -360,6 +367,7 @@ Rubric:
         rubric_total_points=rubric_total_points,
         user_roles=session.get("launch_data", {}).get("https://purl.imsglobal.org/spec/lti/claim/roles", [])
     )
+
 
 @lti.route("/review-feedback", methods=["GET", "POST"])
 def review_feedback():
@@ -691,9 +699,11 @@ def save_assignment():
     os.makedirs(upload_dir, exist_ok=True)
 
     rubric_filename = ""
+    rubric_url = ""
     if rubric_file and rubric_file.filename:
         rubric_filename = secure_filename(rubric_file.filename)
-        rubric_file.save(os.path.join(upload_dir, rubric_filename))
+        rubric_url = upload_to_supabase(rubric_file, rubric_filename)
+
 
     additional_filename = ""
     if additional_file and additional_file.filename:
@@ -708,7 +718,7 @@ def save_assignment():
 
     assignments.append({
         "assignment_title": assignment_title,
-        "rubric_file": rubric_filename,
+        "rubric_file": rubric_url,
         "total_points": total_points,
         "instructor_approval": instructor_approval,
         "requires_persona": False,
