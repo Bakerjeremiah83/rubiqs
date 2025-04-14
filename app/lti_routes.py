@@ -918,6 +918,8 @@ def instructor_review():
     reviews = load_all_pending_feedback()
     submission_id = request.args.get("submission_id")
     print("🧪 Number of pending reviews found:", len(reviews))
+    reviews = load_all_pending_feedback()
+
 
     if request.method == "POST":
         submission_id = request.form.get("submission_id")
