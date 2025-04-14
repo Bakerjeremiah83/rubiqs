@@ -780,6 +780,70 @@ def admin_dashboard():
                            pending_count=pending_count,
                            approved_count=approved_count)
 
+@lti.route("/instructor-review/accept", methods=["POST"])
+def accept_review():
+    submission_id = request.form.get("submission_id")
+    submission = load_pending_feedback(submission_id)
+
+    if not submission:
+        return "❌ Submission not found", 404
+
+    # Move to submission history
+    store_submission_history(submission)
+
+    # TODO: Post to LMS here if desired...
+
+    # Remove from pending
+    from sqlalchemy.orm import Session
+    session = SessionLocal()
+    try:
+        session.query(PendingReview).filter_by(submission_id=submission_id).delete()
+        session.commit()
+    finally:
+        session.close()
+
+    return redirect("/admin-dashboard")
+
+@lti.route("/instructor-review/save-notes", methods=["POST"])
+def save_notes():
+    submission_id = request.form.get("submission_id")
+    new_notes = request.form.get("notes", "")
+
+    existing = load_pending_feedback(submission_id)
+    if not existing:
+        return "❌ Submission not found", 404
+
+    existing["notes"] = new_notes
+    store_pending_feedback(submission_id, existing)
+
+    return redirect("/admin-dashboard")
+
+@lti.route("/instructor-review", methods=["GET", "POST"])
+def instructor_review():
+    reviews = load_all_pending_feedback()
+    print(f"🧪 Number of pending reviews found: {len(reviews)}")
+
+    submission_id = request.args.get("submission_id")
+
+    if request.method == "POST":
+        submission_id = request.form.get("submission_id")
+        for review in reviews:
+            if review["submission_id"] == submission_id:
+                review["score"] = int(request.form.get("score"))
+                review["feedback"] = request.form.get("feedback")
+                review["timestamp"] = datetime.utcnow().isoformat()
+                store_pending_feedback(submission_id, review)
+                break
+        return redirect(url_for("lti.instructor_review"))
+
+    current_review = None
+    if submission_id:
+        current_review = next((r for r in reviews if r["submission_id"] == submission_id), None)
+    elif reviews:
+        current_review = reviews[0]
+
+    return render_template("instructor_review.html", current_review=current_review, reviews=reviews)
+
 
 @lti.route("/export-configs", methods=["GET"])
 def export_configs():
