@@ -6,3 +6,4 @@ Rubiqs Grader is a secure, LTI 1.3-compliant AI-powered grading tool developed b
 
 © 2025 J. Baker Design. All rights reserved.  
 For licensing or product info, visit [jeremiahbakerdesign.com](https://jeremiahbakerdesign.com)
+# trigger rebuild
