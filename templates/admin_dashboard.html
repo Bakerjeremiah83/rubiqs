@@ -190,6 +190,24 @@
           <div style="font-size: 0.85rem; color: #aaa;">by J. Baker Design</div>
         </div>
       </div>
+
+      {% if request.args.get('success') %}
+        <div id="flash-message" style="position: relative; background: #e6f4ea; color: #256029; padding: 1rem 1.2rem; border-radius: 8px; margin-bottom: 1.5rem; border-left: 6px solid #2e7d32; font-size: 0.95rem; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);">
+          ✅ Assignment "<strong>{{ request.args.get('success') }}</strong>" was successfully saved.
+          <span style="position: absolute; top: 8px; right: 12px; cursor: pointer;" onclick="document.getElementById('flash-message').style.display='none'">✖</span>
+        </div>
+        <script>
+          setTimeout(() => {
+            const flash = document.getElementById('flash-message');
+            if (flash) flash.style.opacity = '0';
+          }, 4000);
+          setTimeout(() => {
+            const flash = document.getElementById('flash-message');
+            if (flash) flash.style.display = 'none';
+          }, 5000);
+        </script>
+      {% endif %}
+
       <h2 class="title">Rubiqs Mastery Dashboard</h2>
 
       <div class="tabs">
@@ -403,7 +421,13 @@
               <td style="border: 1px solid #ccc; padding: 0.75rem;">{{ submission.assignment_title }}</td>
               <td style="border: 1px solid #ccc; padding: 0.75rem;">{{ submission.score }}%</td>
               <td style="border: 1px solid #ccc; padding: 0.75rem;">{{ submission.timestamp.split('T')[0] }}</td>
-              <td style="border: 1px solid #ccc; padding: 0.75rem;">Auto-Posted</td>
+              <td style="border: 1px solid #ccc; padding: 0.75rem;">
+                {% if submission.notes %}
+                  Instructor Reviewed
+                {% else %}
+                  Auto-Posted
+                {% endif %}
+              </td>              
             </tr>
           {% else %}
             <tr>

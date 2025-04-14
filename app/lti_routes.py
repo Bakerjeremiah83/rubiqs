@@ -789,12 +789,15 @@ def admin_dashboard():
     pending_count = len(pending_feedback)
     approved_count = sum(1 for r in rubric_index if r.get("instructor_approval"))
 
+    submission_history = load_submission_history()
+
     return render_template("admin_dashboard.html",
-                           rubric_index=rubric_index,
-                           pending_feedback=pending_feedback,
-                           submission_history=submission_history,  # ✅ Add this
-                           pending_count=pending_count,
-                           approved_count=approved_count)
+                       rubric_index=rubric_index,
+                       pending_feedback=pending_feedback,
+                       submission_history=submission_history,
+                       pending_count=pending_count,
+                       approved_count=approved_count)
+
 
 
 @lti.route("/instructor-review/accept", methods=["POST"])
