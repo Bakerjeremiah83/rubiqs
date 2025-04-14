@@ -227,6 +227,8 @@ def grade_docx():
     print("🧪 Grading assignment:", assignment_title)
     print("🧪 Assignment config loaded:", assignment_config)
 
+    if not assignment_config or not assignment_config.get("rubric_file"):
+        return f"❌ Assignment setup incomplete. Missing configuration or rubric for: {assignment_title}", 400
 
     print("📥 /grade-docx hit")
 
@@ -262,13 +264,6 @@ def grade_docx():
                 reference_data = extract_pdf_text(BytesIO(persona_file.read()))
         except Exception as e:
             return f"❌ Failed to extract persona file: {str(e)}", 500
-
-    launch_data = session.get("launch_data", {})
-    assignment_title = launch_data.get("https://purl.imsglobal.org/spec/lti/claim/resource_link", {}).get("title", "").strip()
-    assignment_config = load_assignment_config(assignment_title)
-
-    if not assignment_config:
-        return f"❌ No configuration found for assignment: {assignment_title}", 400
 
     # ✅ Download rubric from Supabase
     import tempfile, requests
@@ -773,7 +768,8 @@ def save_assignment():
     save_assignment_data(assignments)
 
     print("✅ Successfully saved assignment:", assignment_title)
-    return f"✅ Saved assignment: {assignment_title}"  # ← temporary
+    return redirect(f"/admin-dashboard?success={assignment_title}")
+
 
 from app.storage import load_assignment_data, load_all_pending_feedback
 
