@@ -716,7 +716,9 @@ def save_assignment():
     assignments = load_assignment_data()
 
     # ✅ ADD/UPDATE ENTRY
-    assignments = [a for a in assignments if a.get("assignment_title") != assignment_title]
+    assignments = list(assignments.values())  # Convert dict to list of dicts first
+    assignments = [a for a in assignments if a["assignment_title"] != assignment_title]
+
 
     assignments.append({
         "assignment_title": assignment_title,
