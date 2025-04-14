@@ -702,11 +702,18 @@ def save_assignment():
 
     rubric_filename = ""
     rubric_url = ""
+
     if rubric_file and rubric_file.filename:
         rubric_filename = secure_filename(rubric_file.filename)
+
+        # ✅ Upload to Supabase first
+        rubric_url = upload_to_supabase(rubric_file, rubric_filename)
+
+        # ✅ Save locally if needed
         rubric_path = os.path.join(upload_dir, rubric_filename)
         rubric_file.save(rubric_path)
-        rubric_url = upload_to_supabase(rubric_path, rubric_filename)
+
+
 
 
 
