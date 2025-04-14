@@ -133,3 +133,10 @@ def delete_pending_feedback(submission_id):
         session.commit()
     finally:
         session.close()
+
+def load_submission_history():
+    session = SessionLocal()
+    try:
+        return [r.to_dict() for r in session.query(SubmissionHistory).all()]
+    finally:
+        session.close()
