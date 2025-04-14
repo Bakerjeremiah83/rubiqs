@@ -28,6 +28,8 @@ import re
 from pdfminer.high_level import extract_text as extract_pdf_text
 from app.utils.zerogpt_api import check_ai_with_gpt
 from werkzeug.utils import secure_filename
+from app.supabase_client import upload_to_supabase
+
 
 
 
