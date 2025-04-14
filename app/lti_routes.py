@@ -28,8 +28,6 @@ import re
 from pdfminer.high_level import extract_text as extract_pdf_text
 from app.utils.zerogpt_api import check_ai_with_gpt
 from werkzeug.utils import secure_filename
-from app.utils.storage import load_assignment_data, save_assignment_data
-from app.utils.storage import store_submission_history
 
 
 
