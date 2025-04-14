@@ -365,14 +365,31 @@ Rubric:
     print("🧪 Storing pending submission:", submission_id)
 
     if assignment_config.get("instructor_approval"):
+        print("🧪 FINAL DECISION: store_pending_feedback?", assignment_config.get("instructor_approval"))
+        print("🧪 SUBMISSION DATA TO STORE:", json.dumps(submission_data, indent=2))
+        
         store_pending_feedback(submission_id, submission_data)
         log_gpt_interaction(assignment_title, prompt, feedback, score)
         return render_template("feedback.html", score=score, feedback=feedback, rubric_total_points=rubric_total_points,
-                               user_roles=session.get("launch_data", {}).get("https://purl.imsglobal.org/spec/lti/claim/roles", []),
-                               pending_message="This submission requires instructor review. Your feedback is saved, and your score will be posted after approval.")
+                            user_roles=session.get("launch_data", {}).get("https://purl.imsglobal.org/spec/lti/claim/roles", []),
+                            pending_message="This submission requires instructor review. Your feedback is saved, and your score will be posted after approval.")
 
-    log_gpt_interaction(assignment_title, prompt, feedback, score)
+    else:
+        print("🧪 FINAL DECISION: store_submission_history (auto-post)")
+        print("🧪 SUBMISSION DATA TO STORE:", json.dumps(submission_data, indent=2))
+
+        log_gpt_interaction(assignment_title, prompt, feedback, score)
+        store_submission_history(submission_data)
+        return render_template(
+            "feedback.html",
+            score=score,
+            feedback=feedback,
+            rubric_total_points=rubric_total_points,
+            user_roles=session.get("launch_data", {}).get("https://purl.imsglobal.org/spec/lti/claim/roles", [])
+        )
+
     store_submission_history(submission_data)
+    
     return render_template(
         "feedback.html",
         score=score,
