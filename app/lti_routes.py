@@ -227,6 +227,7 @@ def grade_docx():
     print("🧪 ALL LOADED ASSIGNMENTS:", load_assignment_data())
 
     assignment_config = load_assignment_config(assignment_title)
+    print("🧪 SESSION CONTENTS:", session)
 
     print("🧪 Grading assignment:", assignment_title)
     print("🧪 Assignment config loaded:", assignment_config)
