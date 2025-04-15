@@ -224,6 +224,8 @@ def grade_docx():
         "https://purl.imsglobal.org/spec/lti/claim/resource_link", {}
     ).get("title", "").strip()
 
+    print("🧪 ALL LOADED ASSIGNMENTS:", load_assignment_data())
+
     assignment_config = load_assignment_config(assignment_title)
 
     print("🧪 Grading assignment:", assignment_title)
@@ -379,7 +381,6 @@ Rubric:
     else:
         print("🧪 FINAL DECISION: store_submission_history (auto-post)")
         print("🧪 SUBMISSION DATA TO STORE:", json.dumps(submission_data, indent=2))
-        
         print("🧪 HITTING store_submission_history() with:", json.dumps(submission_data, indent=2))
 
 
