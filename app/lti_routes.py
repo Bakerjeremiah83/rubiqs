@@ -303,16 +303,21 @@ def grade_docx():
         elif rubric_path.endswith(".docx"):
             doc = Document(rubric_path)
             rubric_text = "\n".join([para.text for para in doc.paragraphs])
-            rubric_total_points = assignment_config.get("total_points")
+            rubric_total_points = assignment_config.get("total_points") or 0
+            print("🧪 rubric_total_points from config (docx):", rubric_total_points)
+
 
         elif rubric_path.endswith(".pdf"):
             rubric_text = extract_pdf_text(rubric_path)
-            rubric_total_points = assignment_config.get("total_points")
+            rubric_total_points = assignment_config.get("total_points") or 0
+            print("🧪 rubric_total_points from config (pdf):", rubric_total_points)
+
 
         else:
             rubric_text = "(Rubric text could not be loaded.)"
             return "❌ No total points found. Please upload a .json rubric or specify a total in the dashboard.", 400
 
+        print("🧪 FINAL rubric_total_points value before grading:", rubric_total_points)
         print("🧪 TOTAL POINTS LOADED:", rubric_total_points)
         if not rubric_total_points:
             return "❌ This assignment does not have a total point value. Please update it in the dashboard.", 400
