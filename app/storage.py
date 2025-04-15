@@ -115,8 +115,6 @@ def store_submission_history(data):
     finally:
         session.close()
 
-        
-
 def upload_to_supabase(file_path, filename, folder="rubrics"):
     try:
         with open(file_path, "rb") as f:

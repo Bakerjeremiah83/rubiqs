@@ -379,6 +379,9 @@ Rubric:
     else:
         print("🧪 FINAL DECISION: store_submission_history (auto-post)")
         print("🧪 SUBMISSION DATA TO STORE:", json.dumps(submission_data, indent=2))
+        
+        print("🧪 HITTING store_submission_history() with:", json.dumps(submission_data, indent=2))
+
 
         log_gpt_interaction(assignment_title, prompt, feedback, score)
         store_submission_history(submission_data)
