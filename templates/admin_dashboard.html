@@ -314,19 +314,6 @@
 
 <!-- Gospel-Centered Tab Panel -->
 <div class="tab-panel" id="gospel">
-  <!-- Instructor Approval Toggle -->
-<div class="row">
-  <div class="form-group wide require-toggle" style="flex-direction: row; align-items: center;">
-    <label style="margin-right: 1rem; white-space: nowrap;">Instructor Approval Required?</label>
-    <div style="display: flex; gap: 1rem; margin-right: 1rem;">
-      <div class="toggle-option" onclick="toggleApproval(this)">YES</div>
-      <div class="toggle-option" onclick="toggleApproval(this)">NO</div>
-    </div>
-    <div class="instruction-note" style="flex: 1;">
-      If enabled, submissions for this assignment will appear in the Instructor Review panel before grades are posted.
-    </div>
-  </div>
-</div>
   <div class="row">
     <div class="form-group wide">
       <label>Gospel-Centered Themes or Principles to Emphasize</label>
@@ -533,7 +520,7 @@
 
     document.getElementById('saveButton').disabled = false;
   }
-  
+
 </script>
 {% if request.args.get('success') %}
   <div id="flash-message" style="background: #dff0d8; color: #3c763d; padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem; border-left: 5px solid #3c763d;">
