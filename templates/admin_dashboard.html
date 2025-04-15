@@ -298,13 +298,11 @@
       </div>
     </div>
 
-    <!-- Hidden inputs to capture toggle state -->
+   <!-- Hidden inputs to capture toggle state -->
     <input type="hidden" name="requires_review" id="requiresReviewValue" />
     <input type="hidden" name="gospel_enabled" id="gospelEnabledValue" />
+    <input type="hidden" name="instructor_approval" id="instructorApprovalValue" value="false" />
 
-    <!-- Actual checkbox structure used for instructor approval -->
-    <input type="hidden" name="instructor_approval" value="false" />
-    <input type="checkbox" id="instructorApprovalCheckbox" name="instructor_approval" value="true" style="display: none;" checked />
 
     <div id="saveButtonWrapper">
       <button type="submit" class="submit" id="saveButton" disabled>Save Assignment</button>
