@@ -301,7 +301,10 @@
     <!-- Hidden inputs to capture toggle state -->
     <input type="hidden" name="requires_review" id="requiresReviewValue" />
     <input type="hidden" name="gospel_enabled" id="gospelEnabledValue" />
-    <input type="hidden" name="instructor_approval" id="instructorApprovalValue" />
+
+    <!-- Actual checkbox structure used for instructor approval -->
+    <input type="hidden" name="instructor_approval" value="false" />
+    <input type="checkbox" id="instructorApprovalCheckbox" name="instructor_approval" value="true" style="display: none;" checked />
 
     <div id="saveButtonWrapper">
       <button type="submit" class="submit" id="saveButton" disabled>Save Assignment</button>
@@ -520,14 +523,17 @@
     }
 
     function toggleApproval(selected) {
-      const options = selected.parentElement.querySelectorAll('.toggle-option');
-      options.forEach(opt => opt.classList.remove('active'));
-      selected.classList.add('active');
+    const options = selected.parentElement.querySelectorAll('.toggle-option');
+    options.forEach(opt => opt.classList.remove('active'));
+    selected.classList.add('active');
 
-      document.getElementById('instructorApprovalValue').value = selected.textContent.trim() === 'YES';
-      document.getElementById('saveButton').disabled = false;
-    }
+    // Update the real hidden checkbox value based on toggle
+    const isChecked = selected.textContent.trim() === 'YES';
+    document.getElementById('instructorApprovalCheckbox').checked = isChecked;
 
+    document.getElementById('saveButton').disabled = false;
+  }
+  
 </script>
 {% if request.args.get('success') %}
   <div id="flash-message" style="background: #dff0d8; color: #3c763d; padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem; border-left: 5px solid #3c763d;">
