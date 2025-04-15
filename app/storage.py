@@ -5,6 +5,8 @@ from sqlalchemy import create_engine
 from app.models import Assignment, PendingReview, SubmissionHistory
 from app.supabase_client import supabase
 import os
+import json
+
 
 # ✅ Load DB URL from .env
 from dotenv import load_dotenv
