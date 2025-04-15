@@ -31,6 +31,8 @@ from werkzeug.utils import secure_filename
 from app.supabase_client import upload_to_supabase
 from flask import url_for
 from app.storage import load_pending_feedback, store_pending_feedback
+from app.storage import load_submission_history
+
 
 
 
@@ -387,17 +389,6 @@ Rubric:
             rubric_total_points=rubric_total_points,
             user_roles=session.get("launch_data", {}).get("https://purl.imsglobal.org/spec/lti/claim/roles", [])
         )
-
-    store_submission_history(submission_data)
-    
-    return render_template(
-        "feedback.html",
-        score=score,
-        feedback=feedback,
-        rubric_total_points=rubric_total_points,
-        user_roles=session.get("launch_data", {}).get("https://purl.imsglobal.org/spec/lti/claim/roles", [])
-    )
-
 
 @lti.route("/review-feedback", methods=["GET", "POST"])
 def review_feedback():
@@ -801,19 +792,18 @@ def admin_dashboard():
 
     rubric_index = list(load_assignment_data().values())
     pending_feedback = load_all_pending_feedback()
-    submission_history = load_submission_history()  # ✅ Add this
+    submission_history = load_submission_history()  # ✅ ADD THIS LINE
 
     pending_count = len(pending_feedback)
     approved_count = sum(1 for r in rubric_index if r.get("instructor_approval"))
 
-    submission_history = load_submission_history()
-
     return render_template("admin_dashboard.html",
-                       rubric_index=rubric_index,
-                       pending_feedback=pending_feedback,
-                       submission_history=submission_history,
-                       pending_count=pending_count,
-                       approved_count=approved_count)
+                           rubric_index=rubric_index,
+                           pending_feedback=pending_feedback,
+                           submission_history=submission_history,  # ✅ ADD THIS TOO
+                           pending_count=pending_count,
+                           approved_count=approved_count)
+
 
 
 
