@@ -312,6 +312,7 @@ def grade_docx():
             rubric_text = "(Rubric text could not be loaded.)"
             return "❌ No total points found. Please upload a .json rubric or specify a total in the dashboard.", 400
 
+        print("🧪 TOTAL POINTS LOADED:", rubric_total_points)
         if not rubric_total_points:
             return "❌ This assignment does not have a total point value. Please update it in the dashboard.", 400
 
