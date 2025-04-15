@@ -366,6 +366,7 @@ Rubric:
     }
 
     print("🧪 Instructor Approval in Config:", assignment_config.get("instructor_approval"))
+    print("🧪 TYPE CHECK:", type(assignment_config.get("instructor_approval")))
     print("🧪 Storing pending submission:", submission_id)
 
     if assignment_config.get("instructor_approval"):
@@ -713,6 +714,7 @@ def save_assignment():
     grade_level = request.form.get("grade_level")
     total_points = int(request.form.get("total_points", "0"))  # ✅ Must pull from dashboard input
     instructor_approval = request.form.get("instructor_approval") == "true"
+    print("🧪 FINAL instructor_approval value received:", instructor_approval)
     gospel_enabled = request.form.get("gospel_enabled") == "true"
     custom_ai = request.form.get("custom_ai", "")
 

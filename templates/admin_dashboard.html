@@ -301,10 +301,7 @@
    <!-- Hidden inputs to capture toggle state -->
     <input type="hidden" name="requires_review" id="requiresReviewValue" />
     <input type="hidden" name="gospel_enabled" id="gospelEnabledValue" />
-    <input type="hidden" name="instructor_approval" value="false" />
-    <input type="checkbox" id="instructorApprovalCheckbox" name="instructor_approval" value="true" style="display: none;" />
-
-
+    <input type="hidden" name="instructor_approval" id="instructorApprovalValue" value="false" />
 
     <div id="saveButtonWrapper">
       <button type="submit" class="submit" id="saveButton" disabled>Save Assignment</button>
@@ -486,7 +483,7 @@
       selected.classList.add('active');
 
       // Set the hidden value for requires_review
-      document.getElementById('requiresReviewValue').value = selected.textContent.trim() === 'YES';
+      document.getElementById('instructorApprovalValue').value = selected.textContent.trim() === 'YES';
 
       document.getElementById('saveButton').disabled = false;
 } 
@@ -510,16 +507,16 @@
     }
 
     function toggleApproval(selected) {
-    const options = selected.parentElement.querySelectorAll('.toggle-option');
-    options.forEach(opt => opt.classList.remove('active'));
-    selected.classList.add('active');
+      const options = selected.parentElement.querySelectorAll('.toggle-option');
+      options.forEach(opt => opt.classList.remove('active'));
+      selected.classList.add('active');
 
-    // Update the real hidden checkbox value based on toggle
-    const isChecked = selected.textContent.trim() === 'YES';
-    document.getElementById('instructorApprovalCheckbox').checked = isChecked;
+      // ✅ Corrected: update the actual hidden input field
+      const isChecked = selected.textContent.trim() === 'YES';
+      document.getElementById('instructorApprovalValue').value = isChecked;
 
-    document.getElementById('saveButton').disabled = false;
-  }
+      document.getElementById('saveButton').disabled = false;
+    }
 
 </script>
 {% if request.args.get('success') %}
