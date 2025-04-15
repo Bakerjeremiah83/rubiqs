@@ -103,12 +103,18 @@ def load_all_pending_feedback():
 # ----------------------------
 
 def store_submission_history(data):
+    from pprint import pprint
     session = SessionLocal()
     try:
+        print("🧪 Writing to submission_history:", json.dumps(data, indent=2))
         session.add(SubmissionHistory(**data))
         session.commit()
+        print("✅ Submission saved to Supabase")
+    except Exception as e:
+        print("❌ ERROR saving to submission_history:", str(e))
     finally:
         session.close()
+
         
 
 def upload_to_supabase(file_path, filename, folder="rubrics"):
