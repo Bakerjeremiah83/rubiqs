@@ -214,7 +214,6 @@
         <button class="tab-button active" onclick="showTab('setup')">Assignment Setup</button>
         <button class="tab-button" onclick="showTab('gospel')">Gospel-Centered</button>
         <button class="tab-button" onclick="showTab('instructor')">Instructor Review</button>
-        <button class="tab-button" onclick="showTab('reviews')">Submission History</button>
         <button class="tab-button" onclick="showTab('logs')">Activity Logs</button>
       </div>
 
@@ -367,7 +366,7 @@
               </div>
             </td>
             <td style="border: 1px solid #ccc; padding: 0.75rem;">
-              <form action="/instructor-review/save-instructor-notes" method="post">
+              <form action="/instructor-review/save-notes" method="post">
                 <input type="hidden" name="submission_id" value="{{ submission.submission_id }}">
                 <textarea name="notes" rows="2" style="width: 100%; font-size: 0.9rem; border-radius: 6px; border: 1px solid #ccc;">{{ submission.notes or '' }}</textarea>
                 <button type="submit" style="margin-top: 0.5rem; font-size: 0.8rem; background: #888; color: white; border: none; padding: 0.3rem 0.6rem; border-radius: 12px;">Save</button>
@@ -384,51 +383,6 @@
       </table>
     </div>
   </div>  
-
-<!-- Submission History Tab Panel -->
-<div class="tab-panel" id="reviews">
-  <div class="row">
-    <div class="form-group wide">
-      <label>Submission History</label>
-      <p>This table includes all assignments that have been submitted, whether instructor-reviewed or auto-graded.</p>
-      <table style="width:100%; border-collapse: collapse; font-size: 0.95rem;">
-        <thead style="background-color: #f1f1f1;">
-          <tr>
-            <th style="border: 1px solid #ccc; padding: 0.75rem;">Student</th>
-            <th style="border: 1px solid #ccc; padding: 0.75rem;">Assignment</th>
-            <th style="border: 1px solid #ccc; padding: 0.75rem;">Score</th>
-            <th style="border: 1px solid #ccc; padding: 0.75rem;">Submitted</th>
-            <th style="border: 1px solid #ccc; padding: 0.75rem;">Review Type</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for submission in submission_history %}
-            <tr>
-              <td style="border: 1px solid #ccc; padding: 0.75rem;">{{ submission.student_id }}</td>
-              <td style="border: 1px solid #ccc; padding: 0.75rem;">{{ submission.assignment_title }}</td>
-              <td style="border: 1px solid #ccc; padding: 0.75rem;">{{ submission.score }}%</td>
-              <td style="border: 1px solid #ccc; padding: 0.75rem;">{{ submission.timestamp.split('T')[0] }}</td>
-              <td style="border: 1px solid #ccc; padding: 0.75rem;">
-                {% if submission.notes %}
-                  Instructor Reviewed
-                {% else %}
-                  Auto-Posted
-                {% endif %}
-              </td>              
-            </tr>
-          {% else %}
-            <tr>
-              <td colspan="5" style="text-align: center; padding: 1rem; background: #f8f8f8; font-style: italic;">
-                You're all caught up!
-              </td>
-            </tr>
-          {% endfor %}
-        </tbody>
-        
-      </table>
-    </div>
-  </div>
-</div>
 
 <!-- Activity Logs Tab Panel -->
 <div class="tab-panel" id="logs">

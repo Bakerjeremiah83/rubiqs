@@ -1,6 +1,6 @@
 from flask import (
     request, jsonify, redirect, Blueprint, session,
-    render_template, send_file
+    render_template, send_file, flash, url_for
 )
 
 from app.storage import (
@@ -9,51 +9,39 @@ from app.storage import (
     store_pending_feedback,
     load_pending_feedback,
     load_all_pending_feedback,
-    store_submission_history
+    store_submission_history,
+    load_submission_history
 )
 
-
-import json
 import os
+import json
 import jwt
-from jwt.algorithms import RSAAlgorithm  # Ensure this is used for decoding JWTs
-import requests
+from jwt.algorithms import RSAAlgorithm
 from jwt.exceptions import InvalidTokenError
-from docx import Document
-from io import BytesIO
-import openai
-from datetime import datetime  # Already imported; ensure no duplicates
 from requests_oauthlib import OAuth1Session
+import requests
 import re
+import openai
+from io import BytesIO
+from docx import Document
 from pdfminer.high_level import extract_text as extract_pdf_text
-from app.utils.zerogpt_api import check_ai_with_gpt
+from datetime import datetime
 from werkzeug.utils import secure_filename
+from dotenv import load_dotenv
+from supabase import create_client
+
 from app.supabase_client import upload_to_supabase
-from flask import url_for
-from app.storage import load_pending_feedback, store_pending_feedback
-from app.storage import load_submission_history
+from app.utils.zerogpt_api import check_ai_with_gpt
 
+# ✅ Load environment and initialize Supabase client
+load_dotenv()
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-
-
-
-
-
-
-def load_assignment_config(assignment_title):
-    rubric_index = load_assignment_data()
-    if assignment_title in rubric_index:
-        return rubric_index[assignment_title]
-    return None
-
-
-def get_total_points_from_rubric(rubric):
-    return sum(
-        max(level["score"] for level in criterion["levels"])
-        for criterion in rubric.get("criteria", [])
-    )
-
+# ✅ Define the LTI blueprint
 lti = Blueprint('lti', __name__)
+
 
 @lti.route("/login", methods=["POST"])
 def login():
@@ -796,6 +784,7 @@ from app.storage import load_assignment_data, load_all_pending_feedback
 
 from app.storage import load_submission_history  # ✅ Add this at the top
 
+
 @lti.route("/admin-dashboard", methods=["GET", "POST"])
 def admin_dashboard():
     session["tool_role"] = "instructor"  # TEMP for local testing
@@ -804,8 +793,17 @@ def admin_dashboard():
         return "❌ Access denied. Instructors only.", 403
 
     rubric_index = list(load_assignment_data().values())
-    pending_feedback = load_all_pending_feedback()
-    submission_history = load_submission_history()  # ✅ ADD THIS LINE
+
+    # ✅ Supabase: Pull pending submissions
+    response = supabase.table("submissions").select("*").eq("pending", True).execute()
+
+    if response.error:
+        flash("❌ Error loading submissions from Supabase", "danger")
+        pending_feedback = []
+    else:
+        pending_feedback = response.data or []
+
+    submission_history = load_submission_history()  # still local for now
 
     pending_count = len(pending_feedback)
     approved_count = sum(1 for r in rubric_index if r.get("instructor_approval"))
@@ -813,7 +811,7 @@ def admin_dashboard():
     return render_template("admin_dashboard.html",
                            rubric_index=rubric_index,
                            pending_feedback=pending_feedback,
-                           submission_history=submission_history,  # ✅ ADD THIS TOO
+                           submission_history=submission_history,
                            pending_count=pending_count,
                            approved_count=approved_count)
 
@@ -823,26 +821,17 @@ def admin_dashboard():
 @lti.route("/instructor-review/accept", methods=["POST"])
 def accept_review():
     submission_id = request.form.get("submission_id")
-    submission = load_pending_feedback(submission_id)
+    if not submission_id:
+        return "❌ Submission ID missing", 400
 
-    if not submission:
-        return "❌ Submission not found", 404
+    # ✅ Update Supabase
+    response = supabase.table("submissions").update({
+        "pending": False,
+        "reviewed": True
+    }).eq("submission_id", submission_id).execute()
 
-    # ✅ Move to submission history
-    store_submission_history({
-        "submission_id": submission["submission_id"],
-        "student_id": submission["student_id"],
-        "assignment_title": submission["assignment_title"],
-        "timestamp": submission["timestamp"],
-        "score": submission["score"],
-        "feedback": submission["feedback"],
-        "student_text": submission["student_text"],
-        "ai_check_result": submission.get("ai_check_result"),
-        "notes": submission.get("notes", "")
-    })
-
-    # ✅ Delete from pending reviews
-    delete_pending_feedback(submission_id)
+    if response.error:
+        return f"❌ Supabase error: {response.error.message}", 500
 
     return redirect("/admin-dashboard")
 
@@ -853,16 +842,17 @@ def instructor_save_notes():
     new_notes = request.form.get("notes", "")
 
     if not submission_id:
-        return "❌ Submission ID is missing", 400
+        return "❌ Submission ID missing", 400
 
-    existing = load_pending_feedback(submission_id)
-    if not existing:
-        return "❌ Submission not found", 404
+    response = supabase.table("submissions").update({
+        "instructor_notes": new_notes
+    }).eq("submission_id", submission_id).execute()
 
-    existing["notes"] = new_notes
-    store_pending_feedback(submission_id, existing)
+    if response.error:
+        return f"❌ Supabase error: {response.error.message}", 500
 
     return redirect("/admin-dashboard")
+
 
 
 @lti.route("/instructor-review", methods=["GET", "POST"])
