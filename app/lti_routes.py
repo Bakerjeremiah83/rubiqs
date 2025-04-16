@@ -794,16 +794,15 @@ def admin_dashboard():
 
     rubric_index = list(load_assignment_data().values())
 
-    # ✅ Supabase: Pull pending submissions
-    response = supabase.table("submissions").select("*").eq("pending", True).execute()
-
-    if response.error:
-        flash("❌ Error loading submissions from Supabase", "danger")
-        pending_feedback = []
-    else:
+    try:
+        response = supabase.table("submissions").select("*").eq("pending", True).execute()
         pending_feedback = response.data or []
+    except Exception as e:
+        print("❌ Supabase fetch error:", e)
+        flash("❌ Error loading pending submissions.", "danger")
+        pending_feedback = []
 
-    submission_history = load_submission_history()  # still local for now
+    submission_history = load_submission_history()
 
     pending_count = len(pending_feedback)
     approved_count = sum(1 for r in rubric_index if r.get("instructor_approval"))
@@ -814,8 +813,6 @@ def admin_dashboard():
                            submission_history=submission_history,
                            pending_count=pending_count,
                            approved_count=approved_count)
-
-
 
 
 @lti.route("/instructor-review/accept", methods=["POST"])
