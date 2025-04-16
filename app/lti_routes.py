@@ -281,12 +281,16 @@ def grade_docx():
     if rubric_url:
         try:
             print("🧪 Rubric URL to download:", rubric_url)
+
             file_ext = rubric_url.split(".")[-1]
             temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=f".{file_ext}")
             response = requests.get(rubric_url)
 
             print("🧪 Rubric download HTTP status:", response.status_code)
-            print("🧪 Downloaded rubric size:", len(response.content))
+            print("🧪 Rubric content size:", len(response.content))
+
+            if response.status_code != 200 or len(response.content) == 0:
+                return f"❌ Failed to download rubric from Supabase. Status {response.status_code}", 500
 
             temp_file.write(response.content)
             temp_file.close()
@@ -296,9 +300,10 @@ def grade_docx():
             print("🧪 File exists on disk?", os.path.exists(rubric_path))
 
         except Exception as e:
-            return f"❌ Failed to download rubric from Supabase: {str(e)}", 500
+            return f"❌ Exception while downloading rubric: {str(e)}", 500
     else:
         return "❌ No rubric file found for this assignment.", 400
+
 
     grading_difficulty = assignment_config.get("grading_difficulty", "balanced")
     student_level = assignment_config.get("student_level", "college")
