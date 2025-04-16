@@ -39,6 +39,8 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
+FERPA_SAFE_MODE = os.getenv("FERPA_SAFE_MODE", "false").lower() == "true"
+
 # ✅ Define the LTI blueprint
 lti = Blueprint('lti', __name__)
 
@@ -109,6 +111,8 @@ def launch():
 
     # ✅ DEBUG: Print unverified JWT ISS
     try:
+        pass  # Add your logic here
+        pass  # Replace this with the actual logic
         unverified = jwt.decode(jwt_token, options={"verify_signature": False})
         print("🔍 UNVERIFIED JWT ISS:", unverified.get("iss"))
         print("🔍 PLATFORM_ISS from .env:", os.getenv("PLATFORM_ISS"))
@@ -213,6 +217,8 @@ def student_test_upload():
 
 @lti.route("/grade-docx", methods=["POST"])
 def grade_docx():
+
+    print(f"🔐 FERPA_SAFE_MODE: {FERPA_SAFE_MODE}")
 
     assignment_title = session.get("launch_data", {}).get(
         "https://purl.imsglobal.org/spec/lti/claim/resource_link", {}
@@ -371,30 +377,64 @@ Rubric:
     print("🧪 Storing pending submission:", submission_id)
 
     if assignment_config.get("instructor_approval"):
-        print("🧪 FINAL DECISION: store_pending_feedback?", assignment_config.get("instructor_approval"))
-        print("🧪 SUBMISSION DATA TO STORE:", json.dumps(submission_data, indent=2))
-        
-        store_pending_feedback(submission_id, submission_data)
+        print("🧪 Instructor review required: saving temporarily")
+    
+        supabase.table("submissions").insert({
+            "submission_id": submission_id,
+            "student_id": submission_data["student_id"],
+            "assignment_title": assignment_title,
+            "timestamp": submission_data["timestamp"],
+            "score": score,
+            "feedback": feedback,
+            "student_text": full_text,
+            "ai_check_result": None,
+            "instructor_notes": "",
+            "pending": True,
+            "reviewed": False
+        }).execute()
+
         log_gpt_interaction(assignment_title, prompt, feedback, score)
-        return render_template("feedback.html", score=score, feedback=feedback, rubric_total_points=rubric_total_points,
-                            user_roles=session.get("launch_data", {}).get("https://purl.imsglobal.org/spec/lti/claim/roles", []),
-                            pending_message="This submission requires instructor review. Your feedback is saved, and your score will be posted after approval.")
 
-    else:
-        print("🧪 FINAL DECISION: store_submission_history (auto-post)")
-        print("🧪 SUBMISSION DATA TO STORE:", json.dumps(submission_data, indent=2))
-        print("🧪 HITTING store_submission_history() with:", json.dumps(submission_data, indent=2))
-
-
-        log_gpt_interaction(assignment_title, prompt, feedback, score)
-        store_submission_history(submission_data)
         return render_template(
             "feedback.html",
             score=score,
             feedback=feedback,
             rubric_total_points=rubric_total_points,
-            user_roles=session.get("launch_data", {}).get("https://purl.imsglobal.org/spec/lti/claim/roles", [])
+            user_roles=session.get("launch_data", {}).get("https://purl.imsglobal.org/spec/lti/claim/roles", []),
+            pending_message="This submission requires instructor review. Your feedback is saved, and your score will be posted after approval."
         )
+
+    else:
+        print("🧪 Instructor review not required: auto-posting to LMS")
+
+        # 🔒 Post directly to LMS using AGS (you must have this function defined elsewhere)
+        post_grade_to_lms(session, score, feedback)
+
+        log_gpt_interaction(assignment_title, prompt, feedback, score)
+
+        if FERPA_SAFE_MODE:
+            print("🔐 FERPA_SAFE_MODE is ON — not storing submission")
+
+            return render_template(
+                "feedback.html",
+                score=score,
+                feedback=feedback,
+                rubric_total_points=rubric_total_points,
+                user_roles=session.get("launch_data", {}).get("https://purl.imsglobal.org/spec/lti/claim/roles", [])
+            )
+        else:
+            print("🧪 DEV MODE — storing submission history")
+
+            store_submission_history(submission_data)
+
+            return render_template(
+                "feedback.html",
+                score=score,
+                feedback=feedback,
+                rubric_total_points=rubric_total_points,
+                user_roles=session.get("launch_data", {}).get("https://purl.imsglobal.org/spec/lti/claim/roles", [])
+            )
+
 
 @lti.route("/review-feedback", methods=["GET", "POST"])
 def review_feedback():
@@ -1051,3 +1091,47 @@ def instructor_review_button():
         current_review = reviews[0]
 
         return render_template("instructor_review.html", current_review=current_review, reviews=reviews)
+
+def post_grade_to_lms(session, score, feedback):
+    try:
+        launch_data = session.get("launch_data", {})
+        ags_claim = launch_data.get("https://purl.imsglobal.org/spec/lti-ags/claim/endpoint")
+
+        if not ags_claim or "lineitem" not in ags_claim:
+            print("⚠️ AGS info missing — cannot post grade.")
+            return
+
+        lineitem_url = ags_claim["lineitem"].split("?")[0] + "/scores"
+        private_key_path = os.path.join("app", "keys", "private_key.pem")
+        with open(private_key_path, "r") as f:
+            private_key = f.read()
+
+        oauth = OAuth1Session(
+            client_key=os.getenv("CLIENT_ID"),
+            signature_method="RSA-SHA1",
+            rsa_key=private_key,
+            signature_type="auth_header"
+        )
+
+        score_payload = {
+            "userId": launch_data.get("sub"),
+            "scoreGiven": score,
+            "scoreMaximum": 100,  # Optional: You can customize this later
+            "activityProgress": "Completed",
+            "gradingProgress": "FullyGraded",
+            "timestamp": datetime.utcnow().isoformat() + "Z"
+        }
+
+        response = oauth.post(
+            lineitem_url,
+            json=score_payload,
+            headers={"Content-Type": "application/vnd.ims.lis.v1.score+json"}
+        )
+
+        if response.status_code >= 200 and response.status_code < 300:
+            print("✅ Grade posted to LMS.")
+        else:
+            print("⚠️ AGS post failed:", response.text)
+
+    except Exception as e:
+        print("❌ Error in post_grade_to_lms():", str(e))
