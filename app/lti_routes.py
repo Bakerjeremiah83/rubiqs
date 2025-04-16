@@ -324,8 +324,12 @@ def grade_docx():
 
         print("🧪 FINAL rubric_total_points value before grading:", rubric_total_points)
         print("🧪 TOTAL POINTS LOADED:", rubric_total_points)
-        if not rubric_total_points:
-            return "❌ This assignment does not have a total point value. Please update it in the dashboard.", 400
+        try:
+            rubric_total_points = int(rubric_total_points)
+            if rubric_total_points <= 0:
+                raise ValueError
+        except (ValueError, TypeError):
+            return "❌ This assignment does not have a valid total point value. Please update it in the dashboard.", 400
 
     except Exception as e:
         return f"❌ Failed to load rubric file: {str(e)}", 500
