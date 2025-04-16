@@ -313,15 +313,21 @@ def grade_docx():
             rubric_text = "(Rubric text could not be loaded.)"
             return "❌ No total points found. Please upload a .json rubric or specify a total in the dashboard.", 400
 
-        # ✅ Safe and final type cast + validation
+        # ✅ Log it in raw form to verify
+        print("🧪 Raw rubric_total_points from config:", rubric_total_points)
+
+        if rubric_total_points is None:
+            return "❌ This assignment does not have a total point value set. Please edit it in the dashboard.", 400
+
         try:
-            rubric_total_points = int(rubric_total_points)
+            rubric_total_points = int(str(rubric_total_points).strip())
             if rubric_total_points <= 0:
                 raise ValueError
-        except (ValueError, TypeError):
-            return "❌ This assignment does not have a valid total point value. Please update it in the dashboard.", 400
+        except Exception as e:
+            print("❌ Failed to cast rubric_total_points:", e)
+            return "❌ This assignment has an invalid total point value. Please fix it in the dashboard.", 400
 
-        print("🧪 FINAL rubric_total_points value before grading:", rubric_total_points)
+        print("✅ rubric_total_points confirmed as:", rubric_total_points)
 
     except Exception as e:
         return f"❌ Failed to load rubric file: {str(e)}", 500
