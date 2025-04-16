@@ -753,9 +753,8 @@ def save_assignment():
 
     grading_difficulty = request.form.get("grading_difficulty")
     grade_level = request.form.get("grade_level")
-    total_points = int(request.form.get("total_points", "0"))  # ✅ Must pull from dashboard input
+    total_points = int(request.form.get("total_points", "0"))
     instructor_approval = request.form.get("instructor_approval") == "true"
-    print("🧪 FINAL instructor_approval value received:", instructor_approval)
     gospel_enabled = request.form.get("gospel_enabled") == "true"
     custom_ai = request.form.get("custom_ai", "")
 
@@ -766,43 +765,42 @@ def save_assignment():
     upload_dir = os.path.join("uploads", secure_filename(assignment_title))
     os.makedirs(upload_dir, exist_ok=True)
 
-    rubric_filename = ""
     rubric_url = ""
-
     if rubric_file and rubric_file.filename:
         rubric_filename = secure_filename(rubric_file.filename)
-
-        # ✅ Save the file locally first
         rubric_path = os.path.join(upload_dir, rubric_filename)
         rubric_file.save(rubric_path)
 
-        # ✅ Then upload to Supabase using the saved file path (not the FileStorage object)
         rubric_url = upload_to_supabase(rubric_path, rubric_filename)
-
-        # If upload failed (likely due to duplicate), fallback to existing Supabase URL
         if not rubric_url:
             from app.supabase_client import supabase
             filepath = f"rubrics/{rubric_filename}"
             rubric_url = supabase.storage.from_("rubrics").get_public_url(filepath)
             print("⚠️ Using existing Supabase rubric URL:", rubric_url)
 
-
-    additional_filename = ""
+    additional_url = ""
     if additional_file and additional_file.filename:
         additional_filename = secure_filename(additional_file.filename)
-        additional_file.save(os.path.join(upload_dir, additional_filename))
+        additional_path = os.path.join(upload_dir, additional_filename)
+        additional_file.save(additional_path)
 
-    # ✅ LOAD EXISTING DATA
+        additional_url = upload_to_supabase(additional_path, additional_filename)
+        if not additional_url:
+            from app.supabase_client import supabase
+            filepath = f"attachments/{additional_filename}"
+            additional_url = supabase.storage.from_("attachments").get_public_url(filepath)
+            print("⚠️ Using existing Supabase attachment URL:", additional_url)
+
+    # ✅ Load existing data
     assignments = load_assignment_data()
-
-    # ✅ ADD/UPDATE ENTRY
-    assignments = list(assignments.values())  # Convert dict to list of dicts first
+    assignments = list(assignments.values())
     assignments = [a for a in assignments if a["assignment_title"] != assignment_title]
 
-
+    # ✅ Add or update assignment
     assignments.append({
         "assignment_title": assignment_title,
         "rubric_file": rubric_url,
+        "additional_file": additional_url,
         "total_points": total_points,
         "instructor_approval": instructor_approval,
         "requires_persona": False,
@@ -813,22 +811,14 @@ def save_assignment():
         "ai_notes": custom_ai
     })
 
-    print("🧪 Saving assignment with rubric_url:", rubric_url)
-    print("🧪 Assignment object before save:", {
-    "assignment_title": assignment_title,
-    "rubric_file": rubric_url,
-    "total_points": total_points
-})
+    print("🧪 Saving assignment:", assignment_title)
+    print("🧪 Rubric URL:", rubric_url)
+    print("🧪 Additional file URL:", additional_url)
 
     save_assignment_data(assignments)
 
     print("✅ Successfully saved assignment:", assignment_title)
     return redirect(f"/admin-dashboard?success={assignment_title}")
-
-
-from app.storage import load_assignment_data, load_all_pending_feedback
-
-from app.storage import load_submission_history  # ✅ Add this at the top
 
 
 @lti.route("/admin-dashboard", methods=["GET", "POST"])
