@@ -282,8 +282,9 @@ def grade_docx():
         try:
             print("🧪 Rubric URL to download:", rubric_url)
 
-            file_ext = rubric_url.split(".")[-1]
-            temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=f".{file_ext}")
+            file_ext = rubric_url.split("?")[0].split(".")[-1]
+            clean_filename = rubric_url.split("/")[-1].split("?")[0]
+            temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=f"_{clean_filename}")
             response = requests.get(rubric_url)
 
             print("🧪 Rubric download HTTP status:", response.status_code)
@@ -801,6 +802,7 @@ def save_assignment():
         rubric_file.save(rubric_path)
 
         rubric_url = upload_to_supabase(rubric_path, rubric_filename)
+        rubric_url = rubric_url.rstrip("?")
         if not rubric_url:
             from app.supabase_client import supabase
             filepath = f"rubrics/{rubric_filename}"
