@@ -42,6 +42,12 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 # ✅ Define the LTI blueprint
 lti = Blueprint('lti', __name__)
 
+def load_assignment_config(assignment_title):
+    rubric_index = load_assignment_data()
+    if assignment_title in rubric_index:
+        return rubric_index[assignment_title]
+    return None
+
 
 @lti.route("/login", methods=["POST"])
 def login():
