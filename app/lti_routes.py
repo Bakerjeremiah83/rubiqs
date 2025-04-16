@@ -314,6 +314,7 @@ def grade_docx():
             return "❌ No total points found. Please upload a .json rubric or specify a total in the dashboard.", 400
 
         # 📌 Debug output just before validation
+        
         print("📌 DEBUG assignment_config:", assignment_config)
         print("📌 DEBUG rubric_text[:200]:", rubric_text[:200])
         print("📌 DEBUG (before cast) rubric_total_points =", rubric_total_points)
