@@ -236,6 +236,9 @@ def grade_docx():
         return f"❌ Assignment setup incomplete. Missing configuration or rubric for: {assignment_title}", 400
 
     print("📥 /grade-docx hit")
+    print("🧪 Confirming: about to fetch rubric from Supabase.")
+    rubric_url = assignment_config.get("rubric_file", "")
+    print("🧪 Rubric URL to download:", rubric_url)
 
     file = request.files.get("file")
     persona_file = request.files.get("persona")
@@ -277,12 +280,21 @@ def grade_docx():
 
     if rubric_url:
         try:
+            print("🧪 Rubric URL to download:", rubric_url)
             file_ext = rubric_url.split(".")[-1]
             temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=f".{file_ext}")
             response = requests.get(rubric_url)
+
+            print("🧪 Rubric download HTTP status:", response.status_code)
+            print("🧪 Downloaded rubric size:", len(response.content))
+
             temp_file.write(response.content)
             temp_file.close()
+
             rubric_path = temp_file.name
+            print("🧪 Local rubric saved at:", rubric_path)
+            print("🧪 File exists on disk?", os.path.exists(rubric_path))
+
         except Exception as e:
             return f"❌ Failed to download rubric from Supabase: {str(e)}", 500
     else:
@@ -314,7 +326,7 @@ def grade_docx():
             return "❌ No total points found. Please upload a .json rubric or specify a total in the dashboard.", 400
 
         # 📌 Debug output just before validation
-        
+
         print("📌 DEBUG assignment_config:", assignment_config)
         print("📌 DEBUG rubric_text[:200]:", rubric_text[:200])
         print("📌 DEBUG (before cast) rubric_total_points =", rubric_total_points)
