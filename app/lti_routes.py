@@ -303,17 +303,17 @@ def grade_docx():
         elif rubric_path.endswith(".docx"):
             doc = Document(rubric_path)
             rubric_text = "\n".join([para.text for para in doc.paragraphs])
-            rubric_total_points = assignment_config.get("total_points", 0)
+            rubric_total_points = assignment_config.get("total_points")
 
         elif rubric_path.endswith(".pdf"):
             rubric_text = extract_pdf_text(rubric_path)
-            rubric_total_points = assignment_config.get("total_points", 0)
+            rubric_total_points = assignment_config.get("total_points")
 
         else:
             rubric_text = "(Rubric text could not be loaded.)"
             return "❌ No total points found. Please upload a .json rubric or specify a total in the dashboard.", 400
 
-        # ✅ Safe cast and validation (shared by all formats)
+        # ✅ Safe and final type cast + validation
         try:
             rubric_total_points = int(rubric_total_points)
             if rubric_total_points <= 0:
@@ -325,6 +325,7 @@ def grade_docx():
 
     except Exception as e:
         return f"❌ Failed to load rubric file: {str(e)}", 500
+
 
     prompt = f"""
 You are a helpful AI grader.
