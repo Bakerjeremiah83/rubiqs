@@ -890,20 +890,32 @@ def instructor_save_notes():
 
 @lti.route("/instructor-review", methods=["GET", "POST"])
 def instructor_review():
-    reviews = load_all_pending_feedback()
+    response = supabase.table("submissions").select("*").eq("pending", True).execute()
+    reviews = response.data or []
+
     print(f"🧪 Number of pending reviews found: {len(reviews)}")
 
     submission_id = request.args.get("submission_id")
 
     if request.method == "POST":
         submission_id = request.form.get("submission_id")
-        for review in reviews:
-            if review["submission_id"] == submission_id:
-                review["score"] = int(request.form.get("score"))
-                review["feedback"] = request.form.get("feedback")
-                review["timestamp"] = datetime.utcnow().isoformat()
-                store_pending_feedback(submission_id, review)
-                break
+        updated_score = int(request.form.get("score"))
+        updated_feedback = request.form.get("feedback")
+
+        supabase.table("submissions").update({
+            "score": updated_score,
+            "feedback": updated_feedback,
+            "timestamp": datetime.utcnow().isoformat(),
+            "reviewed": True,
+            "pending": False
+        }).eq("submission_id", submission_id).execute()
+
+        supabase.table("submissions").update({
+            "score": updated_score,
+            "feedback": updated_feedback,
+            "timestamp": datetime.utcnow().isoformat()
+        }).eq("submission_id", submission_id).execute()
+
         return redirect(url_for("lti.instructor_review"))
 
     current_review = None
@@ -1058,20 +1070,24 @@ Text:
 
 @lti.route("/instructor-review-button", methods=["GET", "POST"])
 def instructor_review_button():
-    reviews = load_all_pending_feedback()
+    response = supabase.table("submissions").select("*").eq("pending", True).execute()
+    reviews = response.data or []
+
     print(f"🧪 Number of pending reviews found: {len(reviews)}")  # ✅ Add this
 
     submission_id = request.args.get("submission_id")
 
     if request.method == "POST":
         submission_id = request.form.get("submission_id")
-        for review in reviews:
-            if review["submission_id"] == submission_id:
-                review["score"] = int(request.form.get("score"))
-                review["feedback"] = request.form.get("feedback")
-                review["timestamp"] = datetime.utcnow().isoformat()
-                store_pending_feedback(submission_id, review)
-                break
+        updated_score = int(request.form.get("score"))
+        updated_feedback = request.form.get("feedback")
+
+        supabase.table("submissions").update({
+            "score": updated_score,
+            "feedback": updated_feedback,
+            "timestamp": datetime.utcnow().isoformat()
+        }).eq("submission_id", submission_id).execute()
+
         return redirect(url_for("lti.instructor_review_button"))
 
     current_review = None

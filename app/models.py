@@ -11,6 +11,7 @@ class Assignment(Base):
     id = Column(Integer, primary_key=True, index=True)
     assignment_title = Column(String, unique=True)
     rubric_file = Column(String)
+    additional_file = Column(String)
     total_points = Column(Integer)
     instructor_approval = Column(Boolean)
     requires_persona = Column(Boolean)
@@ -25,6 +26,7 @@ class Assignment(Base):
         return {
             "assignment_title": self.assignment_title,
             "rubric_file": self.rubric_file,
+            "additional_file": self.additional_file,
             "total_points": self.total_points,
             "instructor_approval": self.instructor_approval,
             "requires_persona": self.requires_persona,
