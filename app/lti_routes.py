@@ -303,13 +303,18 @@ def grade_docx():
         elif rubric_path.endswith(".docx"):
             doc = Document(rubric_path)
             rubric_text = "\n".join([para.text for para in doc.paragraphs])
-            rubric_total_points = assignment_config.get("total_points") or 0
+            try:
+                rubric_total_points = int(assignment_config.get("total_points", 0))
+            except (ValueError, TypeError):
+                rubric_total_points = 0
             print("🧪 rubric_total_points from config (docx):", rubric_total_points)
-
 
         elif rubric_path.endswith(".pdf"):
             rubric_text = extract_pdf_text(rubric_path)
-            rubric_total_points = assignment_config.get("total_points") or 0
+            try:
+                rubric_total_points = int(assignment_config.get("total_points", 0))
+            except (ValueError, TypeError):
+                rubric_total_points = 0
             print("🧪 rubric_total_points from config (pdf):", rubric_total_points)
 
 
