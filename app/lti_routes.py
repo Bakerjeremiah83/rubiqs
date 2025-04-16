@@ -303,33 +303,25 @@ def grade_docx():
         elif rubric_path.endswith(".docx"):
             doc = Document(rubric_path)
             rubric_text = "\n".join([para.text for para in doc.paragraphs])
-            try:
-                rubric_total_points = int(assignment_config.get("total_points", 0))
-            except (ValueError, TypeError):
-                rubric_total_points = 0
-            print("🧪 rubric_total_points from config (docx):", rubric_total_points)
+            rubric_total_points = assignment_config.get("total_points", 0)
 
         elif rubric_path.endswith(".pdf"):
             rubric_text = extract_pdf_text(rubric_path)
-            try:
-                rubric_total_points = int(assignment_config.get("total_points", 0))
-            except (ValueError, TypeError):
-                rubric_total_points = 0
-            print("🧪 rubric_total_points from config (pdf):", rubric_total_points)
-
+            rubric_total_points = assignment_config.get("total_points", 0)
 
         else:
             rubric_text = "(Rubric text could not be loaded.)"
             return "❌ No total points found. Please upload a .json rubric or specify a total in the dashboard.", 400
 
-        print("🧪 FINAL rubric_total_points value before grading:", rubric_total_points)
-        print("🧪 TOTAL POINTS LOADED:", rubric_total_points)
+        # ✅ Safe cast and validation (shared by all formats)
         try:
             rubric_total_points = int(rubric_total_points)
             if rubric_total_points <= 0:
                 raise ValueError
         except (ValueError, TypeError):
             return "❌ This assignment does not have a valid total point value. Please update it in the dashboard.", 400
+
+        print("🧪 FINAL rubric_total_points value before grading:", rubric_total_points)
 
     except Exception as e:
         return f"❌ Failed to load rubric file: {str(e)}", 500
