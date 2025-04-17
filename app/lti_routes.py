@@ -33,6 +33,11 @@ from supabase import create_client
 from app.supabase_client import upload_to_supabase
 from app.utils.zerogpt_api import check_ai_with_gpt
 
+from app.models import AssignmentConfig
+from app.database import db
+
+
+
 # ✅ Load environment and initialize Supabase client
 load_dotenv()
 SUPABASE_URL = os.getenv("SUPABASE_URL")
@@ -1172,3 +1177,19 @@ def post_grade_to_lms(session, score, feedback):
 
     except Exception as e:
         print("❌ Error in post_grade_to_lms():", str(e))
+
+
+
+@lti.route("/edit-assignment/<int:assignment_id>", methods=["GET"])
+def edit_assignment(assignment_id):
+    assignment = db.session.get(AssignmentConfig, assignment_id)
+    if not assignment:
+        return "Assignment not found", 404
+
+    return render_template("edit_assignment.html", assignment=assignment)
+
+
+@lti.route("/view-assignments")
+def view_assignments():
+    assignments = db.session.query(AssignmentConfig).all()
+    return render_template("view_assignments.html", assignments=assignments)

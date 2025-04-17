@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="max-w-2xl mx-auto bg-white shadow-md rounded-2xl p-6 mt-6">
+  <h1 class="text-2xl font-bold text-gray-800 mb-6">✏️ Edit Assignment</h1>
+
+  <form method="post" class="space-y-4">
+
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Assignment Title</label>
+      <input type="text" name="title" value="{{ assignment.title }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 shadow-sm focus:ring focus:ring-blue-100"/>
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Total Points</label>
+      <input type="number" name="total_points" value="{{ assignment.total_points }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 shadow-sm focus:ring focus:ring-blue-100"/>
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">AI Grading Instructions</label>
+      <textarea name="ai_notes" rows="4" class="w-full border border-gray-300 rounded-lg px-3 py-2 shadow-sm focus:ring focus:ring-blue-100">{{ assignment.ai_notes }}</textarea>
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Student Level</label>
+      <select name="student_level" class="w-full border border-gray-300 rounded-lg px-3 py-2 shadow-sm focus:ring focus:ring-blue-100">
+        <option value="middle_school" {% if assignment.student_level == 'middle_school' %}selected{% endif %}>Middle School</option>
+        <option value="high_school" {% if assignment.student_level == 'high_school' %}selected{% endif %}>High School</option>
+        <option value="college" {% if assignment.student_level == 'college' %}selected{% endif %}>College</option>
+      </select>
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Grading Difficulty</label>
+      <select name="grading_difficulty" class="w-full border border-gray-300 rounded-lg px-3 py-2 shadow-sm focus:ring focus:ring-blue-100">
+        <option value="easy" {% if assignment.grading_difficulty == 'easy' %}selected{% endif %}>Easy</option>
+        <option value="medium" {% if assignment.grading_difficulty == 'medium' %}selected{% endif %}>Medium</option>
+        <option value="hard" {% if assignment.grading_difficulty == 'hard' %}selected{% endif %}>Hard</option>
+      </select>
+    </div>
+
+    <div class="flex items-center space-x-2">
+      <input type="checkbox" name="faith_integration" {% if assignment.faith_integration %}checked{% endif %} class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+      <label class="text-sm text-gray-700">Enable Faith Integration</label>
+    </div>
+
+    <div class="pt-4">
+      <button type="submit" class="w-full bg-gray-300 text-white font-semibold py-2 px-4 rounded-lg cursor-not-allowed" disabled>
+        Save Changes (Coming Soon)
+      </button>
+    </div>
+  </form>
+
+  <div class="mt-6 text-right">
+    <a href="/view-assignments" class="text-blue-600 hover:underline text-sm">&larr; Back to Assignment List</a>
+  </div>
+</div>
+
+{% endblock %}
