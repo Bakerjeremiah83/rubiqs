@@ -1180,14 +1180,41 @@ def post_grade_to_lms(session, score, feedback):
 
 
 
-@lti.route("/edit-assignment/<int:assignment_id>", methods=["GET"])
+from app.models import Assignment
+from app.database import SessionLocal
+
+@lti.route("/edit-assignment/<int:assignment_id>", methods=["GET", "POST"])
 def edit_assignment(assignment_id):
-    assignment = db.session.get(AssignmentConfig, assignment_id)
+    session = SessionLocal()
+    assignment = session.query(Assignment).filter_by(id=assignment_id).first()
+
     if not assignment:
         return "Assignment not found", 404
 
-    return render_template("edit_assignment.html", assignment=assignment)
+    if request.method == "POST":
+        assignment.assignment_title = request.form["title"]
+        assignment.total_points = request.form.get("total_points", type=int)
+        assignment.ai_notes = request.form["ai_notes"]
+        assignment.student_level = request.form["student_level"]
+        assignment.grading_difficulty = request.form["grading_difficulty"]
+        assignment.faith_integration = "faith_integration" in request.form
 
+        # Upload rubric file if a new one was provided
+        if "rubric_file" in request.files:
+            file = request.files["rubric_file"]
+            if file and file.filename:
+                rubric_url = upload_to_supabase(file)
+                assignment.rubric_file = rubric_url
+
+        try:
+            session.commit()
+            flash("Assignment updated successfully!", "success")
+            return redirect(url_for("lti.view_assignments"))
+        except Exception as e:
+            session.rollback()
+            flash("Error saving changes.", "danger")
+
+    return render_template("edit_assignment.html", assignment=assignment)
 
 @lti.route("/view-assignments")
 def view_assignments():

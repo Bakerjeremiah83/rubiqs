@@ -1,45 +1,130 @@
-{% extends "base.html" %}
-{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>View Assignments | Rubiqs</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: linear-gradient(to right, #f1e2c4, #5ca198, #1f3a54);
+      color: #1f3a54;
+      margin: 0;
+      padding: 2rem;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+    }
 
-<div class="max-w-4xl mx-auto bg-white shadow-md rounded-2xl p-6 mt-6">
-  <h1 class="text-2xl font-bold text-gray-800 mb-6">📄 Existing Assignments</h1>
+    .card {
+      background: white;
+      padding: 2rem;
+      width: 100%;
+      max-width: 1000px;
+      border-radius: 12px;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+    }
 
-  {% if assignments %}
-    <table class="min-w-full border border-gray-200 rounded overflow-hidden">
-      <thead class="bg-gray-100 text-left text-sm font-semibold text-gray-700">
-        <tr>
-          <th class="py-3 px-4 border-b">Title</th>
-          <th class="py-3 px-4 border-b">Points</th>
-          <th class="py-3 px-4 border-b">Student Level</th>
-          <th class="py-3 px-4 border-b">Faith Integration</th>
-          <th class="py-3 px-4 border-b">Edit</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for assignment in assignments %}
-          <tr class="hover:bg-gray-50 text-sm">
-            <td class="py-2 px-4 border-b">{{ assignment.title }}</td>
-            <td class="py-2 px-4 border-b">{{ assignment.total_points }}</td>
-            <td class="py-2 px-4 border-b capitalize">{{ assignment.student_level }}</td>
-            <td class="py-2 px-4 border-b">
-              {% if assignment.faith_integration %}✅{% else %}❌{% endif %}
-            </td>
-            <td class="py-2 px-4 border-b">
-              <a href="/edit-assignment/{{ assignment.id }}">
-                <button class="bg-blue-600 hover:bg-blue-700 text-white py-1 px-3 rounded text-sm shadow-sm">Edit</button>
-              </a>
-            </td>
+    h2.title {
+      text-align: center;
+      font-size: 1.75rem;
+      font-weight: bold;
+      margin-bottom: 1.5rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95rem;
+    }
+
+    thead {
+      background-color: #f5f5f5;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 0.75rem;
+      border-bottom: 1px solid #ddd;
+    }
+
+    tr:hover {
+      background-color: #f9f9f9;
+    }
+
+    .submit {
+      background: #1f3a54;
+      color: white;
+      padding: 0.5rem 1rem;
+      font-size: 0.85rem;
+      font-weight: bold;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    .submit:hover {
+      background: #142835;
+    }
+
+    .instruction-note {
+      font-size: 0.85rem;
+      color: #555;
+    }
+
+    a {
+      color: #1f3a54;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .back-link {
+      text-align: center;
+      margin-top: 2rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2 class="title">📄 Existing Assignments</h2>
+
+    {% if assignments %}
+      <table>
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Points</th>
+            <th>Student Level</th>
+            <th>Faith Integration</th>
+            <th>Edit</th>
           </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  {% else %}
-    <p class="text-gray-600 text-sm">No assignments found yet.</p>
-  {% endif %}
+        </thead>
+        <tbody>
+          {% for assignment in assignments %}
+            <tr>
+              <td>{{ assignment.assignment_title }}</td>
+              <td>{{ assignment.total_points }}</td>
+              <td>{{ assignment.student_level|capitalize }}</td>
+              <td>{% if assignment.faith_integration %}✅{% else %}❌{% endif %}</td>
+              <td>
+                <a href="/edit-assignment/{{ assignment.id }}">
+                  <button class="submit">Edit</button>
+                </a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="instruction-note">No assignments found yet.</p>
+    {% endif %}
 
-  <div class="mt-6">
-    <a href="/admin-dashboard" class="text-blue-600 hover:underline text-sm">&larr; Back to Dashboard</a>
+    <div class="back-link">
+      <a href="/admin-dashboard">&larr; Back to Dashboard</a>
+    </div>
   </div>
-</div>
-
-{% endblock %}
+</body>
+</html>
