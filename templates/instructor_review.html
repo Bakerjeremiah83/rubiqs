@@ -107,7 +107,7 @@
       scanBtn.addEventListener("click", async () => {
         const text = scanBtn.dataset.studentText;
         const resultDiv = document.getElementById("ai-result");
-        resultDiv.innerText = "⏳ Scanning with ZeroGPT...";
+        resultDiv.innerText = "⏳ Checking for AI-generated content...";
 
         try {
           const response = await fetch("/scan-ai", {

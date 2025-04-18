@@ -708,6 +708,7 @@ def test_grader():
         if not selected_config:
             return "❌ No config found for that assignment.", 400
 
+        # Load rubric
         rubric_text = ""
         rubric_path = os.path.join("rubrics", selected_config.get("rubric_file", ""))
         try:
@@ -723,6 +724,7 @@ def test_grader():
         except:
             rubric_text = "(Unable to load rubric.)"
 
+        # Build GPT prompt
         prompt = f"""
 You are a helpful AI grader.
 
@@ -735,19 +737,29 @@ Total Points: {selected_config.get("total_points")}
 Rubric:
 {rubric_text}
 """
+
         if selected_config.get("ai_notes"):
-            prompt += f"\nInstructor Notes:\n{selected_config['ai_notes']}\n"
+            prompt += f"""
+
+Instructor Notes:
+{selected_config['ai_notes']}
+"""
 
         prompt += f"""
+
 Student Submission:
 ---
-{submission_text}
+The following is the student's full submission. Please preserve paragraph formatting, line breaks, and indentation when analyzing or quoting their writing.
+
+\"\"\"{submission_text}\"\"\"
 ---
 
 Return your response in this format:
 
 Score: <number from 0 to {selected_config.get("total_points")}>
-Feedback: <detailed, helpful feedback>
+Feedback: <detailed, helpful feedback in paragraph form>
+
+(Note: A future version of this tool may request table-based feedback. If no such instruction is present, return standard narrative feedback only.)
 """
 
         gpt_prompt = prompt.strip()
@@ -761,12 +773,15 @@ Feedback: <detailed, helpful feedback>
                 max_tokens=1000
             )
             output = response["choices"][0]["message"]["content"]
+
             score_match = re.search(r"Score:\s*(\d{1,3})", output)
             gpt_score = int(score_match.group(1)) if score_match else None
+
             feedback_match = re.search(r"Feedback:\s*(.+)", output, re.DOTALL)
             gpt_feedback = feedback_match.group(1).strip() if feedback_match else output.strip()
 
             log_gpt_interaction(assignment_title, gpt_prompt, gpt_feedback, gpt_score)
+
         except Exception as e:
             gpt_feedback = f"❌ GPT error: {str(e)}"
 
@@ -1082,14 +1097,27 @@ def scan_ai():
         openai.api_key = os.getenv("OPENAI_API_KEY")
 
         prompt = f"""
-You are an AI writing detector. Analyze the following text and respond with a verdict:
-1. VERDICT: Is this AI-generated or human-written?
-2. PROBABILITY ESTIMATE: What percent likely is this AI?
-3. REASON: Justify your assessment briefly.
+You are an expert in AI-authorship detection. Your task is to analyze the following student submission and determine the likelihood that it was written using an AI tool (such as ChatGPT, Claude, or Gemini).
 
-Text:
+Be on the lookout for the following signs of AI-generated writing:
+- Overly polished and generic phrasing
+- Repetitive sentence structures or overly formal transitions
+- Lack of personal anecdotes, emotional reflection, or specific experience
+- Idealized writing with no personal struggle or ambiguity
+- Balanced arguments without emotional conviction or imperfection
+- Fluency that feels too even, with little variation in sentence length
+
+Please respond with the following structure:
+1. SCORE: Estimate a percentage likelihood from 0% (definitely human) to 100% (definitely AI-generated).
+2. REASONING: Explain why you assigned this score.
+3. EVIDENCE: Quote specific portions of the student's writing that influenced your judgment.
+
+Text to analyze:
+\"\"\"
 {text}
+\"\"\"
 """
+
         response = openai.ChatCompletion.create(
             model="gpt-4",
             messages=[{"role": "user", "content": prompt}],
