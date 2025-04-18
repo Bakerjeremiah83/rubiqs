@@ -33,7 +33,7 @@ from supabase import create_client
 from app.supabase_client import upload_to_supabase
 from app.utils.zerogpt_api import check_ai_with_gpt
 
-from app.models import AssignmentConfig
+from app.models import Assignment
 from app.database import db
 
 
@@ -1218,5 +1218,5 @@ def edit_assignment(assignment_id):
 
 @lti.route("/view-assignments")
 def view_assignments():
-    assignments = db.session.query(AssignmentConfig).all()
+    assignments = db.session.query(Assignment).all()
     return render_template("view_assignments.html", assignments=assignments)
