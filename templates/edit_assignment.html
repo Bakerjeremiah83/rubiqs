@@ -97,7 +97,11 @@
     .wide {
       flex: 1 1 100%;
     }
-  
+
+    .form-group.quarter {
+      flex: 1 1 23%;
+    }
+
     label {
       font-weight: bold;
       margin-bottom: 0.3rem;
@@ -181,11 +185,20 @@
 </head>
 <body>
   <div class="card">
-    <h2 class="title">✏️ Edit Assignment</h2>
+    <div class="brand-header">
+      <div style="display: flex; align-items: center; margin-bottom: 2rem;">
+        <img src="/static/rubiqs-logo.png" alt="Rubiqs Logo" class="logo" />
+        <div>
+          <h1 style="margin: 0; font-size: 1.5rem; color: #1f3a54;">Rubiqs</h1>
+          <div style="font-size: 1rem; color: #7f8c8d;">AI-Powered Mastery</div>
+          <div style="font-size: 0.85rem; color: #aaa;">by J. Baker Design</div>
+        </div>
+      </div>
+    <h2 class="title">Edit Assignment</h2>
 
     <form method="post" enctype="multipart/form-data">
+
       <div class="row">
-        
         <div class="form-group third">
           <label for="rubric_file">Rubric File</label>
           {% if assignment.rubric_file %}
@@ -202,22 +215,19 @@
           <input type="file" name="additional_file" id="additional_file" />
         </div>
 
-        <div class="form-group wide">
+        <div class="form-group third">
           <label for="title">Assignment Title</label>
           <input type="text" name="title" id="title" value="{{ assignment.assignment_title }}" />
         </div>
+      </div>
 
-        <div class="form-group third">
+      <div class="row">
+        <div class="form-group quarter">
           <label for="total_points">Total Points</label>
-          <input type="number" name="total_points" id="total_points" value="{{ assignment.total_points }}" />
+          <input type="number" name="total_points" id="total_points" value="{{ assignment.total_points }}" class="form-control" />
         </div>
 
-        <div class="form-group wide">
-          <label for="ai_notes">AI Grading Instructions</label>
-          <textarea name="ai_notes" id="ai_notes" rows="4">{{ assignment.ai_notes }}</textarea>
-        </div>
-
-        <div class="form-group third">
+        <div class="form-group quarter">
           <label for="student_level">Student Level</label>
           <select name="student_level" id="student_level">
             <option value="middle_school" {% if assignment.student_level == 'middle_school' %}selected{% endif %}>Middle School</option>
@@ -226,7 +236,7 @@
           </select>
         </div>
 
-        <div class="form-group third">
+        <div class="form-group quarter">
           <label for="grading_difficulty">Grading Difficulty</label>
           <select name="grading_difficulty" id="grading_difficulty">
             <option value="easy" {% if assignment.grading_difficulty == 'easy' %}selected{% endif %}>Easy</option>
@@ -235,20 +245,29 @@
           </select>
         </div>
 
-        <div class="form-group third">
-          <label>Faith Integration</label>
-          <div class="require-toggle">
-            <div class="toggle-option {% if assignment.faith_integration %}active{% endif %}">
-              <input type="checkbox" name="faith_integration" {% if assignment.faith_integration %}checked{% endif %} />
-              <span>{% if assignment.faith_integration %}Enabled{% else %}Disabled{% endif %}</span>
-            </div>
+        <div class="form-group quarter">
+          <label for="faith_integration">Faith Integration</label>
+          <div class="require-toggle" style="flex-direction: row; justify-content: flex-start;">
+            <label class="toggle-option {% if assignment.faith_integration %}active{% endif %}">
+              <input type="radio" name="faith_integration" value="true" {% if assignment.faith_integration %}checked{% endif %}> Yes
+            </label>
+            <label class="toggle-option {% if not assignment.faith_integration %}active{% endif %}">
+              <input type="radio" name="faith_integration" value="false" {% if not assignment.faith_integration %}checked{% endif %}> No
+            </label>
           </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="form-group wide">
+          <label for="ai_notes">AI Grading Instructions</label>
+          <textarea name="ai_notes" id="ai_notes" rows="4">{{ assignment.ai_notes }}</textarea>
         </div>
       </div>
 
       <button type="submit" class="submit">💾 Save Changes</button>
     </form>
-
   </div>
 </body>
 </html>
+

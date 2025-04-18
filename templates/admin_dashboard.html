@@ -86,11 +86,11 @@
       margin-bottom: 1rem;
     }
 
-    .form-group {
-      flex: 1 1 48%;
+    .form-group.third {
+      flex: 1 1 32%;
     }
 
-    .form-group.third {
+    .form-group {
       flex: 1 1 48%;
     }
 
@@ -257,28 +257,30 @@
     </div>
     <div class="row">
       <div class="form-group third">
-        <label>Total Points</label>
-        <input type="number" name="total_points" placeholder="e.g. 60" class="form-control" />
+        <label for="total_points">Total Points</label>
+        <input type="number" name="total_points" id="total_points" placeholder="e.g. 60" class="form-control" />
       </div>
+    
       <div class="form-group third">
-        <label>Grade Level</label>
-        <select name="grade_level" class="form-control">
+        <label for="grade_level">Grade Level</label>
+        <select name="grade_level" id="grade_level" class="form-control">
           <option value="">Select Level</option>
-          <option>Middle School</option>
-          <option>High School</option>
-          <option>College</option>
+          <option value="middle_school">Middle School</option>
+          <option value="high_school">High School</option>
+          <option value="college">College</option>
         </select>
       </div>
+    
       <div class="form-group third">
-        <label>Grading Difficulty</label>
-        <select name="grading_difficulty" class="form-control">
+        <label for="grading_difficulty">Grading Difficulty</label>
+        <select name="grading_difficulty" id="grading_difficulty" class="form-control">
           <option value="">Select Difficulty</option>
-          <option>Basic</option>
-          <option>Intermediate</option>
-          <option>Advanced</option>
+          <option value="easy">Easy</option>
+          <option value="medium">Medium</option>
+          <option value="hard">Hard</option>
         </select>
       </div>
-    </div>    
+    </div>          
     <div class="row">
       <div class="form-group wide">
         <label>Custom AI Grading Instructions</label>
