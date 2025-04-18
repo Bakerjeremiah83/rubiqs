@@ -34,7 +34,6 @@ from app.supabase_client import upload_to_supabase
 from app.utils.zerogpt_api import check_ai_with_gpt
 
 from app.models import Assignment
-from app.database import db
 
 
 
