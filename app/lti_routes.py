@@ -1217,5 +1217,6 @@ def edit_assignment(assignment_id):
 
 @lti.route("/view-assignments")
 def view_assignments():
-    assignments = db.session.query(Assignment).all()
+    session = SessionLocal()
+    assignments = session.query(Assignment).all()
     return render_template("view_assignments.html", assignments=assignments)
