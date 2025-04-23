@@ -105,6 +105,16 @@
       <p><strong>Assignment:</strong> {{ current_review.assignment_title }}</p>
       <p><strong>Submitted:</strong> {{ current_review.timestamp }}</p>
 
+      {% if current_review.student_text %}
+        <div style="margin-top: 1rem;">
+          <h3 style="margin-bottom: 0.5rem;">Student Submission</h3>
+          <div style="white-space: pre-wrap; font-family: Georgia, serif; font-size: 1rem; line-height: 1.6; background: #f9f9f9; padding: 1rem; border-radius: 8px;">
+            {{ current_review.student_text }}
+          </div>
+        </div>
+      {% endif %}
+
+
       <!-- Score Input -->
       <label for="score">Score</label>
       <input type="number" name="score" value="{{ current_review.score }}" min="0" max="100" required>
