@@ -207,6 +207,14 @@
           <input type="file" name="rubric_file" id="rubric_file" />
         </div>
 
+        {% if assignment.rubric_filename %}
+          <div style="margin-top: 0.5rem;">
+            <span>{{ assignment.rubric_filename }}</span>
+            <button type="button" class="submit-button" onclick="deleteFile('{{ assignment.assignment_id }}', 'rubric')">❌ Remove</button>
+          </div>
+        {% endif %}
+
+
         <div class="form-group third">
           <label for="additional_file">Additional File</label>
           {% if assignment.additional_file %}
@@ -214,6 +222,14 @@
           {% endif %}
           <input type="file" name="additional_file" id="additional_file" />
         </div>
+
+        {% if assignment.additional_filename %}
+          <div style="margin-top: 0.5rem;">
+            <span>{{ assignment.additional_filename }}</span>
+            <button type="button" class="submit-button" onclick="deleteFile('{{ assignment.assignment_id }}', 'additional')">❌ Remove</button>
+          </div>
+        {% endif %}
+
 
         <div class="form-group third">
           <label for="title">Assignment Title</label>
@@ -268,6 +284,37 @@
       <button type="submit" class="submit">💾 Save Changes</button>
     </form>
   </div>
+
+  <script>
+    function deleteFile(assignmentId, fileType) {
+      if (!confirm("Are you sure you want to remove this file?")) return;
+  
+      fetch('/notes/delete-file', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          assignment_id: assignmentId,
+          file_type: fileType
+        })
+      })
+      .then(res => {
+        if (!res.ok) throw new Error("Failed to delete file.");
+        return res.json();
+      })
+      .then(data => {
+        if (data.success) {
+          alert("File deleted.");
+          location.reload(); // Reload the page to update the view
+        } else {
+          alert("Could not delete the file.");
+        }
+      })
+      .catch(err => {
+        alert("Error: " + err.message);
+      });
+    }
+  </script>
+  
 </body>
 </html>
 

@@ -1248,3 +1248,36 @@ def view_assignments():
     session = SessionLocal()
     assignments = session.query(Assignment).all()
     return render_template("view_assignments.html", assignments=assignments)
+
+@grader_bp.route('/delete-file', methods=['POST'])
+def delete_file():
+    data = request.get_json()
+    assignment_id = data.get('assignment_id')
+    file_type = data.get('file_type')  # 'rubric' or 'additional'
+
+    if not assignment_id or file_type not in ['rubric', 'additional']:
+        return jsonify({'success': False, 'error': 'Missing data'}), 400
+
+    from storage import ASSIGNMENTS_FILE
+    if not os.path.exists(ASSIGNMENTS_FILE):
+        return jsonify({'success': False, 'error': 'Assignment file not found'}), 404
+
+    with open(ASSIGNMENTS_FILE, "r") as f:
+        assignments = json.load(f)
+
+    updated = False
+    for assignment in assignments:
+        if assignment.get('assignment_id') == assignment_id:
+            if file_type == 'rubric':
+                assignment['rubric_filename'] = ""
+            elif file_type == 'additional':
+                assignment['additional_filename'] = ""
+            updated = True
+            break
+
+    if updated:
+        with open(ASSIGNMENTS_FILE, "w") as f:
+            json.dump(assignments, f, indent=2)
+        return jsonify({'success': True})
+    else:
+        return jsonify({'success': False, 'error': 'Assignment not found'}), 404
