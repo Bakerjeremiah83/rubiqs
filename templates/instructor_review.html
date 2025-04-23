@@ -57,12 +57,16 @@
       <p><strong>Student ID:</strong> {{ current_review.student_id }}</p>
       <p><strong>Assignment:</strong> {{ current_review.assignment_title }}</p>
       <p><strong>Submitted:</strong> {{ current_review.timestamp }}</p>
-      <p><strong>Submission:</strong> {{ current_review.student_text }}</p>
+      <p><strong>Submission:</strong></p>
+      <div style="white-space: pre-wrap; background: #f9f9f9; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; line-height: 1.6;">
+        {{ current_review.student_text | e }}
+      </div>
+
 
       <form method="POST">
         <label for="score">Score</label>
         <input type="number" name="score" value="{{ current_review.score }}" min="0" max="100" required>
-
+      
         {% if not current_review.ai_check_result %}
           <button type="button"
                   id="scan-ai-btn"
@@ -78,16 +82,33 @@
             <strong>AI Probability:</strong> {{ current_review.ai_check_result.ai_probability }}%
           </div>
         {% endif %}
-
-        <label for="feedback">Feedback</label>
-        <textarea name="feedback" rows="6" required>{{ current_review.feedback }}</textarea>
-
+      
+        <div style="max-width: 900px; margin: 0 auto; margin-bottom: 1.5rem;">
+          <label for="feedback" style="font-weight: bold; font-size: 1rem; margin-bottom: 0.5rem; display: block;">
+            Feedback
+          </label>
+          <textarea
+            name="feedback"
+            rows="10"
+            required
+            style="
+              width: 100%;
+              font-size: 1rem;
+              padding: 1rem;
+              border-radius: 8px;
+              box-sizing: border-box;
+              line-height: 1.6;
+            "
+          >{{ current_review.feedback }}</textarea>
+        </div>
+      
         <div class="button-group">
           <input class="btn" type="submit" name="action" value="Approve and Post">
           <button type="reset" class="btn" style="background-color: #888;">Reset</button>
           <button type="button" class="btn" onclick="window.location.href='/admin-dashboard'">Cancel</button>
         </div>
       </form>
+      
 
       <!-- ✅ Back to Dashboard Button -->
       <div class="button-group" style="margin-top: 2rem;">
