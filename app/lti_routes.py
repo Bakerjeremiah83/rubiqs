@@ -1249,7 +1249,7 @@ def view_assignments():
     assignments = session.query(Assignment).all()
     return render_template("view_assignments.html", assignments=assignments)
 
-@grader_bp.route('/delete-file', methods=['POST'])
+@lti.route('/delete-file', methods=['POST'])
 def delete_file():
     data = request.get_json()
     assignment_id = data.get('assignment_id')
