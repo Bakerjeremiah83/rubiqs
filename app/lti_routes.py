@@ -656,7 +656,7 @@ def assignment_config():
                     "grading_difficulty": grading_difficulty,
                     "student_level": student_level,
                     "feedback_tone": feedback_tone,
-                    "ai_notes": ai_notes
+                    "ai_notes": ai_notes,
                     "delay_posting": delay_posting,
 
                 })
@@ -674,7 +674,7 @@ def assignment_config():
                 "grading_difficulty": grading_difficulty,
                 "student_level": student_level,
                 "feedback_tone": feedback_tone,
-                "ai_notes": ai_notes
+                "ai_notes": ai_notes,
                 "delay_posting": delay_posting,
 
             })
