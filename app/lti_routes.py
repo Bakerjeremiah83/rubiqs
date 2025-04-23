@@ -890,6 +890,14 @@ def admin_dashboard():
 
     submission_history = load_submission_history()
 
+    # ✅ Load activity logs
+    log_path = os.path.join(os.path.dirname(__file__), "..", "logs", "activity_log.json")
+    if os.path.exists(log_path):
+        with open(log_path, "r") as f:
+            activity_logs = json.load(f)
+    else:
+        activity_logs = []
+
     pending_count = len(pending_feedback)
     approved_count = sum(1 for r in rubric_index if r.get("instructor_approval"))
 
@@ -898,7 +906,9 @@ def admin_dashboard():
                            pending_feedback=pending_feedback,
                            submission_history=submission_history,
                            pending_count=pending_count,
-                           approved_count=approved_count)
+                           approved_count=approved_count,
+                           activity_logs=activity_logs)  # ✅ Pass logs to template
+
 
 
 @lti.route("/instructor-review/accept", methods=["POST"])
@@ -913,7 +923,7 @@ def accept_review():
         "reviewed": True
     }).eq("submission_id", submission_id).execute()
 
-    if not response or response.status_code >= 400:
+    if hasattr(response, 'error') and response.error:
         print("LTI submission error:", response.status_code, response.text)
         return f"❌ Supabase error: {response.error.message}", 500
 
@@ -932,10 +942,11 @@ def instructor_save_notes():
         "instructor_notes": new_notes
     }).eq("submission_id", submission_id).execute()
 
-    if response.error:
+    if hasattr(response, 'error') and response.error:
         return f"❌ Supabase error: {response.error.message}", 500
 
     return redirect("/admin-dashboard")
+
 
 
 
@@ -1011,7 +1022,9 @@ def update_config():
     ai_notes = request.form.get("ai_notes", "").strip()
     grading_difficulty = request.form.get("grading_difficulty", "balanced")
     student_level = request.form.get("student_level", "college")
-    faith_integration = request.form.get("faith_integration") == "on"
+    faith_raw = request.form.get("faith_integration", "false")
+    faith_integration = True if faith_raw.lower() == "true" else False
+
 
     if not os.path.exists(rubric_index_path):
         return "Config file missing", 404
@@ -1225,7 +1238,13 @@ def edit_assignment(assignment_id):
         assignment.ai_notes = request.form["ai_notes"]
         assignment.student_level = request.form["student_level"]
         assignment.grading_difficulty = request.form["grading_difficulty"]
-        assignment.faith_integration = "faith_integration" in request.form
+
+        faith_raw = request.form.get("faith_integration", "false")
+        faith_integration = True if faith_raw.lower() == "true" else False
+        assignment.faith_integration = faith_integration
+
+
+
 
         # Upload rubric file if a new one was provided
         if "rubric_file" in request.files:
@@ -1282,3 +1301,28 @@ def delete_file():
         return jsonify({'success': True})
     else:
         return jsonify({'success': False, 'error': 'Assignment not found'}), 404
+
+@lti.route('/delete-assignment', methods=['POST'])
+def delete_assignment():
+    data = request.get_json()
+    assignment_id = data.get('assignment_id')
+
+    if not assignment_id:
+        return jsonify({'success': False, 'error': 'Missing assignment ID'}), 400
+
+    from storage import ASSIGNMENTS_FILE
+    if not os.path.exists(ASSIGNMENTS_FILE):
+        return jsonify({'success': False, 'error': 'Assignment file not found'}), 404
+
+    # Load current assignments
+    with open(ASSIGNMENTS_FILE, "r") as f:
+        assignments = json.load(f)
+
+    # Remove the matching assignment
+    new_assignments = [a for a in assignments if a.get('assignment_id') != assignment_id]
+
+    # Save updated list
+    with open(ASSIGNMENTS_FILE, "w") as f:
+        json.dump(new_assignments, f, indent=2)
+
+    return jsonify({'success': True})
