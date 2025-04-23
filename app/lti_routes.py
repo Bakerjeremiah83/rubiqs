@@ -632,6 +632,8 @@ def assignment_config():
         student_level = request.form.get("student_level", "college")
         feedback_tone = request.form.get("feedback_tone", "").strip()
         ai_notes = request.form.get("ai_notes", "").strip()
+        delay_posting = request.form.get("delay_posting", "immediate")
+
 
         rubric_file = request.files.get("rubric_file")
         saved_rubric_filename = None
@@ -655,6 +657,8 @@ def assignment_config():
                     "student_level": student_level,
                     "feedback_tone": feedback_tone,
                     "ai_notes": ai_notes
+                    "delay_posting": delay_posting,
+
                 })
                 updated = True
                 break
@@ -671,6 +675,8 @@ def assignment_config():
                 "student_level": student_level,
                 "feedback_tone": feedback_tone,
                 "ai_notes": ai_notes
+                "delay_posting": delay_posting,
+
             })
 
         with open(rubric_index_path, "w") as f:
@@ -1028,6 +1034,8 @@ def update_config():
     student_level = request.form.get("student_level", "college")
     faith_raw = request.form.get("faith_integration", "false")
     faith_integration = True if faith_raw.lower() == "true" else False
+    delay_posting = int(request.form.get("delay_posting", 0))
+
 
 
     if not os.path.exists(rubric_index_path):
@@ -1231,6 +1239,7 @@ from app.database import SessionLocal
 @lti.route("/edit-assignment/<int:assignment_id>", methods=["GET", "POST"])
 def edit_assignment(assignment_id):
     session = SessionLocal()
+    
     assignment = session.query(Assignment).filter_by(id=assignment_id).first()
 
     if not assignment:
@@ -1246,6 +1255,8 @@ def edit_assignment(assignment_id):
         faith_raw = request.form.get("faith_integration", "false")
         faith_integration = True if faith_raw.lower() == "true" else False
         assignment.faith_integration = faith_integration
+        assignment["delay_posting"] = int(request.form.get("delay_posting", 0))
+
 
 
 

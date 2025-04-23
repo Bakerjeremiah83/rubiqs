@@ -290,17 +290,39 @@
 
     <!-- Gospel-Centered Option Toggle -->
     <div class="row">
-      <div class="form-group wide require-toggle" style="flex-direction: row; align-items: center;">
-        <label style="margin-right: 1rem; white-space: nowrap;">Enable Gospel-Centered Feedback?</label>
-        <div style="display: flex; gap: 1rem; margin-right: 1rem;">
-          <div class="toggle-option" onclick="selectGospelOption(this, true)">YES</div>
-          <div class="toggle-option" onclick="selectGospelOption(this, false)">NO</div>
+      <!-- Gospel-Centered Toggle -->
+      <div class="form-group quarter">
+        <label for="faith_integration">Enable Gospel-Centered Feedback?</label>
+        <div class="require-toggle" style="flex-direction: row; justify-content: flex-start;">
+          <label class="toggle-option {% if assignment.faith_integration %}active{% endif %}">
+            <input type="radio" name="faith_integration" value="true" {% if assignment.faith_integration %}checked{% endif %}> YES
+          </label>
+          <label class="toggle-option {% if not assignment.faith_integration %}active{% endif %}">
+            <input type="radio" name="faith_integration" value="false" {% if not assignment.faith_integration %}checked{% endif %}> NO
+          </label>
         </div>
-        <div class="instruction-note" style="flex: 1;">
-          If enabled, gospel-centered themes and scriptures will be incorporated into AI feedback. You will be taken to the Gospel-Centered tab to review or edit those settings.
-        </div>
+        <small style="font-size: 0.85rem; color: #555; display: block; margin-top: 0.5rem;">
+          If enabled, gospel-centered themes and scriptures will be incorporated into AI feedback. You’ll be taken to the Gospel-Centered tab to review or edit those settings.
+        </small>
+      </div>
+    
+      <!-- Delay Posting Dropdown -->
+      <div class="form-group quarter">
+        <label for="delay_posting">Delay Posting</label>
+        <select name="delay_posting" id="delay_posting" class="form-control">
+          <option value="0" {% if assignment.delay_posting == 0 %}selected{% endif %}>Immediately</option>
+          <option value="12" {% if assignment.delay_posting == 12 %}selected{% endif %}>12 hours</option>
+          <option value="24" {% if assignment.delay_posting == 24 %}selected{% endif %}>24 hours</option>
+          <option value="36" {% if assignment.delay_posting == 36 %}selected{% endif %}>36 hours</option>
+          <option value="48" {% if assignment.delay_posting == 48 %}selected{% endif %}>48 hours</option>
+        </select>
+        <small style="font-size: 0.85rem; color: #555; display: block; margin-top: 0.5rem;">
+          Choose how long to delay the grade and feedback after submission. Helps reduce perceived bias from instant grading.
+        </small>
       </div>
     </div>
+    
+    
 
    <!-- Hidden inputs to capture toggle state -->
     <input type="hidden" name="requires_review" id="requiresReviewValue" />
