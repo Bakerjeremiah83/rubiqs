@@ -108,84 +108,77 @@ def launch():
     print("🚀 /launch hit")
 
     jwt_token = request.form.get("id_token")
-    print("🌍 DEBUG - PLATFORM_ISS =", os.getenv("PLATFORM_ISS"))
-
     if not jwt_token:
         return "❌ Error: No id_token (JWT) received in launch request.", 400
 
-    # ✅ DEBUG: Print unverified JWT ISS
+    print("🌍 DEBUG - PLATFORM_ISS =", os.getenv("PLATFORM_ISS"))
+
+    # Decode JWT without verifying (for debugging/platform info)
     try:
-        pass  # Add your logic here
-        pass  # Replace this with the actual logic
         unverified = jwt.decode(jwt_token, options={"verify_signature": False})
         print("🔍 UNVERIFIED JWT ISS:", unverified.get("iss"))
-        print("🔍 PLATFORM_ISS from .env:", os.getenv("PLATFORM_ISS"))
     except Exception as e:
         print("❌ Failed to decode unverified JWT:", str(e))
+        return "❌ Unable to decode token.", 400
 
+    # Fetch public key
     jwks_url = f"{os.getenv('PLATFORM_ISS')}/mod/lti/certs.php"
-
     try:
         jwks_response = requests.get(jwks_url)
         jwks_response.raise_for_status()
         jwks = jwks_response.json()
-        unverified_header = jwt.get_unverified_header(jwt_token)
-        kid = unverified_header.get("kid")
-        public_key = None
-        for key in jwks.get("keys", []):
-            if key.get("kid") == kid:
-                public_key = jwt.algorithms.RSAAlgorithm.from_jwk(json.dumps(key))
-                break
-
+        kid = jwt.get_unverified_header(jwt_token).get("kid")
+        public_key = next(
+            (jwt.algorithms.RSAAlgorithm.from_jwk(json.dumps(k)) for k in jwks.get("keys", []) if k.get("kid") == kid),
+            None
+        )
         if not public_key:
             return "❌ No matching public key found in JWKS", 400
     except requests.RequestException as e:
         return f"❌ Could not fetch JWKS: {str(e)}", 400
 
-    # ✅ DEBUG: Print before decoding with validation
-    print("🧪 JWT HEADERS:", jwt.get_unverified_header(jwt_token))
-    print("🧪 JWT PAYLOAD:", unverified)
-    print("🧪 CLIENT_IDS from .env:", os.getenv("CLIENT_IDS"))
-
+    # Verify token signature and claims
     try:
-        aud = jwt.decode(
-            jwt_token,
-            key=public_key,
-            algorithms=["RS256"],
-            options={"verify_aud": False},
-            issuer=os.getenv("PLATFORM_ISS")
-        ).get("aud")
-
-        client_ids = os.getenv("CLIENT_IDS", "")
-        valid_client_ids = [id.strip() for id in client_ids.split(",") if id.strip()]
+        aud = jwt.decode(jwt_token, public_key, algorithms=["RS256"], options={"verify_aud": False}).get("aud")
+        valid_client_ids = [cid.strip() for cid in os.getenv("CLIENT_IDS", "").split(",")]
         if aud not in valid_client_ids:
-            return f"❌ JWT validation error: Audience '{aud}' not allowed.", 403
+            return f"❌ Invalid client ID: {aud}", 403
 
-        decoded = jwt.decode(
-            jwt_token,
-            key=public_key,
-            algorithms=["RS256"],
-            audience=aud,
-            issuer=os.getenv("PLATFORM_ISS")
-        )
-
-        print("JWT Issuer:", decoded.get("iss"))
-        print("Expected Issuer (PLATFORM_ISS):", os.getenv("PLATFORM_ISS"))
+        decoded = jwt.decode(jwt_token, public_key, algorithms=["RS256"], audience=aud, issuer=os.getenv("PLATFORM_ISS"))
         print("✅ JWT verified")
         print(json.dumps(decoded, indent=2))
-
-        session["launch_data"] = json.loads(json.dumps(decoded))
+        session["launch_data"] = decoded
         session["tool_role"] = "student"
 
-    except (InvalidTokenError, KeyError) as e:
-        return f"❌ Invalid JWT signature or missing key: {str(e)}", 400
+    except Exception as e:
+        return f"❌ Invalid JWT: {str(e)}", 400
 
-    # ✅ Continue with render_template and persona logic
-    requires_persona = False
-    assignment_title = decoded.get(
-        "https://purl.imsglobal.org/spec/lti/claim/resource_link", {}
-    ).get("title", "").strip()
+    # ✅ Detect platform
+    iss = decoded.get("iss", "")
+    if "instructure.com" in iss:
+        session["platform"] = "canvas"
+    elif "moodle" in iss:
+        session["platform"] = "moodle"
+    else:
+        session["platform"] = "unknown"
 
+    # ✅ Store student info and AGS values
+    session["student_id"] = decoded.get("sub")
+
+    ags_claim = decoded.get("https://purl.imsglobal.org/spec/lti-ags/claim/endpoint", {})
+    if ags_claim:
+        session["lineitem_url"] = ags_claim.get("lineitem")
+        print("🧠 AGS lineitem URL stored.")
+
+    # Optional: capture token_url for future AGS access token
+    custom_claims = decoded.get("https://purl.imsglobal.org/spec/lti/claim/custom", {})
+    token_url = custom_claims.get("token_url")
+    if token_url:
+        session["token_url"] = token_url
+        print("🔐 Token URL captured (for future AGS use).")
+
+    # ✅ Load assignment config for launch UI
+    assignment_title = decoded.get("https://purl.imsglobal.org/spec/lti/claim/resource_link", {}).get("title", "").strip()
     assignment_config = load_assignment_config(assignment_title)
     requires_persona = assignment_config.get("requires_persona", False) if assignment_config else False
 
@@ -917,14 +910,22 @@ def accept_review():
     if not submission_id:
         return "❌ Submission ID missing", 400
 
-    # ✅ Update Supabase
+    # ✅ Check if Canvas AGS is supported
+    if session.get("platform") == "canvas" and session.get("lineitem_url") and session.get("ags_token"):
+        print("🧠 Ready for AGS push (Canvas), but skipping implementation for now.")
+        # Future: post score/feedback to Canvas here
+
+    else:
+        print("ℹ️ AGS skipped: no token or lineitem_url in session.")
+
+    # ✅ Update Supabase to mark as reviewed
     response = supabase.table("submissions").update({
         "pending": False,
         "reviewed": True
     }).eq("submission_id", submission_id).execute()
 
     if hasattr(response, 'error') and response.error:
-        print("LTI submission error:", response.status_code, response.text)
+        print("❌ Supabase error:", response.error.message)
         return f"❌ Supabase error: {response.error.message}", 500
 
     return redirect("/admin-dashboard")
@@ -987,6 +988,29 @@ def instructor_review():
         current_review = reviews[0]
 
     return render_template("instructor_review.html", current_review=current_review, reviews=reviews)
+
+@lti.route("/instructor-review/save-notes", methods=["POST"])
+def instructor_save_notes():
+    submission_id = request.form.get("submission_id")
+    new_notes = request.form.get("notes", "")
+
+    if not submission_id:
+        return "❌ Submission ID missing", 400
+
+    # Save notes to Supabase
+    response = supabase.table("submissions").update({
+        "instructor_notes": new_notes
+    }).eq("submission_id", submission_id).execute()
+
+    if hasattr(response, 'error') and response.error:
+        return f"❌ Supabase error: {response.error.message}", 500
+
+    # ✅ Optionally log activity
+    from app.utils.logging import log_activity
+    log_activity("Saved instructor notes", user="instructor", details=submission_id)
+
+    return redirect("/admin-dashboard")
+
 
 
 @lti.route("/export-configs", methods=["GET"])
@@ -1326,3 +1350,15 @@ def delete_assignment():
         json.dump(new_assignments, f, indent=2)
 
     return jsonify({'success': True})
+
+@lti.route("/dev/add-notes-column")
+def add_notes_column():
+    try:
+        supabase.rpc("alter_table_add_column", {
+            "table_name": "submissions",
+            "column_name": "instructor_notes",
+            "column_type": "text"
+        }).execute()
+        return "✅ instructor_notes column added (or already exists)"
+    except Exception as e:
+        return f"❌ Error: {str(e)}"

@@ -108,7 +108,31 @@
           <button type="button" class="btn" onclick="window.location.href='/admin-dashboard'">Cancel</button>
         </div>
       </form>
-      
+      <hr style="margin: 2rem auto; max-width: 900px;">
+
+      <!-- 🔽 Instructor Notes Save Form -->
+<form method="POST" action="/instructor-review/save-notes">
+  <input type="hidden" name="submission_id" value="{{ current_review.submission_id }}">
+
+  <div style="max-width: 900px; margin: 2rem auto;">
+    <label for="notes" style="font-weight: bold; font-size: 1rem; display: block; margin-bottom: 0.5rem;">
+      Instructor Notes (Internal)
+    </label>
+    <textarea
+      name="notes"
+      rows="6"
+      style="
+        width: 100%;
+        font-size: 1rem;
+        padding: 1rem;
+        border-radius: 8px;
+        box-sizing: border-box;
+        line-height: 1.6;
+      "
+    >{{ current_review.instructor_notes }}</textarea>
+    <button type="submit" class="btn" style="margin-top: 1rem;">💾 Save Notes</button>
+  </div>
+</form>
 
       <!-- ✅ Back to Dashboard Button -->
       <div class="button-group" style="margin-top: 2rem;">
