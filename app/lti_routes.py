@@ -913,7 +913,8 @@ def accept_review():
         "reviewed": True
     }).eq("submission_id", submission_id).execute()
 
-    if response.error:
+    if not response or response.status_code >= 400:
+        print("LTI submission error:", response.status_code, response.text)
         return f"❌ Supabase error: {response.error.message}", 500
 
     return redirect("/admin-dashboard")
