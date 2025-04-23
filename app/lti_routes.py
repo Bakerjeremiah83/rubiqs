@@ -931,26 +931,6 @@ def accept_review():
     return redirect("/admin-dashboard")
 
 
-@lti.route("/instructor-review/save-notes", methods=["POST"])
-def instructor_save_notes():
-    submission_id = request.form.get("submission_id")
-    new_notes = request.form.get("notes", "")
-
-    if not submission_id:
-        return "❌ Submission ID missing", 400
-
-    response = supabase.table("submissions").update({
-        "instructor_notes": new_notes
-    }).eq("submission_id", submission_id).execute()
-
-    if hasattr(response, 'error') and response.error:
-        return f"❌ Supabase error: {response.error.message}", 500
-
-    return redirect("/admin-dashboard")
-
-
-
-
 @lti.route("/instructor-review", methods=["GET", "POST"])
 def instructor_review():
     response = supabase.table("submissions").select("*").eq("pending", True).execute()
