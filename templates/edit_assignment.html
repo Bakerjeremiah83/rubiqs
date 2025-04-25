@@ -202,33 +202,39 @@
         <label for="rubric_file">Rubric File</label>
       
         {% if assignment.rubric_file %}
-          <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <span class="instruction-note">
-              {{ assignment.rubric_file.split('/')[-1] }}
-            </span>
-            <a class="instruction-note" href="{{ assignment.rubric_file }}" target="_blank">View</a>
-            <p>Assignment ID: {{ assignment.assignment_id }}</p>
-            <button type="button" class="submit-button" style="padding: 0.25rem 0.75rem;" onclick="deleteFile('{{ assignment.assignment_id }}', 'rubric')">❌ Remove</button>
-          </div>
-        {% endif %}
-      
-        <input type="file" name="rubric_file" id="rubric_file" />
-      </div>
+  <div style="display: flex; align-items: center; gap: 0.5rem;">
+    <span class="instruction-note">
+      {{ assignment.rubric_file.split('/')[-1] }}
+    </span>
+    <a class="instruction-note" href="{{ assignment.rubric_file }}" target="_blank">View</a>
+    
+    <button type="button" class="submit-button" style="padding: 0.25rem 0.75rem;" 
+      onclick="deleteFile('{{ assignment.id }}', 'rubric')">
+      ❌ Remove
+    </button>
+  </div>
+{% endif %}
+<input type="file" name="rubric_file" id="rubric_file" />
+</div>
 
+<div class="form-group third">
+  <label for="additional_file">Additional File</label>
 
-        <div class="form-group third">
-          <label for="additional_file">Additional File</label>
-        
-          {% if assignment.additional_file %}
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-              <span class="instruction-note">
-                {{ assignment.additional_file.split('/')[-1] }}
-              </span>
-              <a class="instruction-note" href="{{ assignment.additional_file }}" target="_blank">View</a>
-              
-              <button type="button" class="submit-button" style="padding: 0.25rem 0.75rem;" onclick="deleteFile('{{ assignment.assignment_id }}', 'additional')">❌ Remove</button>
-            </div>
-          {% endif %}
+  {% if assignment.additional_file %}
+    <div style="display: flex; align-items: center; gap: 0.5rem;">
+      <span class="instruction-note">
+        {{ assignment.additional_file.split('/')[-1] }}
+      </span>
+      <a class="instruction-note" href="{{ assignment.additional_file }}" target="_blank">View</a>
+
+      <button type="button" class="submit-button" style="padding: 0.25rem 0.75rem;"
+        onclick="deleteFile('{{ assignment.id }}', 'additional')">
+        ❌ Remove
+      </button>
+    </div>
+  {% endif %}
+</div>
+
         
           <input type="file" name="additional_file" id="additional_file" />
         </div>

@@ -1332,9 +1332,6 @@ def edit_assignment(assignment_id):
         assignment["delay_posting"] = int(request.form.get("delay_posting", 0))
 
 
-
-
-
         # Upload rubric file if a new one was provided
         if "rubric_file" in request.files:
             file = request.files["rubric_file"]
