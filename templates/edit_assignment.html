@@ -294,6 +294,8 @@
 
   <script>
     function deleteFile(assignmentId, fileType) {
+      console.log("🧪 deleteFile called with:", assignmentId, fileType);
+      
       if (!confirm("Are you sure you want to remove this file?")) return;
   
       fetch('/delete-file', {
