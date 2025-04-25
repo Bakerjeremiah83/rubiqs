@@ -1374,22 +1374,42 @@ def delete_file():
     with open(ASSIGNMENTS_FILE, "r") as f:
         assignments = json.load(f)
 
+    from supabase import create_client
+    import os
+
+    url = os.getenv("SUPABASE_URL")
+    key = os.getenv("SUPABASE_KEY")
+    supabase = create_client(url, key)
+
     updated = False
+    deleted_filename = ""
+
     for assignment in assignments:
         if assignment.get('assignment_id') == assignment_id:
             if file_type == 'rubric':
+                deleted_filename = assignment.get('rubric_filename')
                 assignment['rubric_filename'] = ""
             elif file_type == 'additional':
+                deleted_filename = assignment.get('additional_filename')
                 assignment['additional_filename'] = ""
             updated = True
             break
 
     if updated:
+        # Try deleting the file from Supabase storage
+        try:
+            if deleted_filename:
+                res = supabase.storage.from_('rubrics').remove([deleted_filename])
+                # Optional: log res
+        except Exception as e:
+            return jsonify({'success': False, 'error': f'Supabase delete failed: {str(e)}'}), 500
+
         with open(ASSIGNMENTS_FILE, "w") as f:
             json.dump(assignments, f, indent=2)
         return jsonify({'success': True})
     else:
         return jsonify({'success': False, 'error': 'Assignment not found'}), 404
+
 
 
 @lti.route("/dev/add-notes-column")
