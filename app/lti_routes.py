@@ -1358,81 +1358,56 @@ def view_assignments():
 @lti.route('/delete-file', methods=['POST'])
 def delete_file():
     import os
-    import json
     from flask import request, jsonify
     from supabase import create_client
+    from app.db import SessionLocal
+    from app.models import Assignment  # adjust if your model is in a different file
 
     data = request.get_json()
-    assignment_id = data.get('assignment_id')
-    file_type = data.get('file_type')
+    assignment_id = data.get("assignment_id")
+    file_type = data.get("file_type")
 
-    print(f"➡️ Received request to delete file. Assignment ID: {assignment_id}, File Type: {file_type}")
+    print(f"➡️ Received request to delete file. Assignment ID: {assignment_id}, Type: {file_type}")
 
-    if not assignment_id or file_type not in ['rubric', 'additional']:
-        print("❌ Missing assignment_id or file_type.")
-        return jsonify({'success': False, 'error': 'Missing data'}), 400
+    if not assignment_id or file_type not in ["rubric", "additional"]:
+        return jsonify({"success": False, "error": "Missing data"}), 400
 
-    from storage import ASSIGNMENTS_FILE
-    if not os.path.exists(ASSIGNMENTS_FILE):
-        print("❌ ASSIGNMENTS_FILE does not exist.")
-        return jsonify({'success': False, 'error': 'Assignment file not found'}), 404
+    # DB setup
+    session = SessionLocal()
+    assignment = session.query(Assignment).filter_by(id=assignment_id).first()
 
-    try:
-        with open(ASSIGNMENTS_FILE, "r") as f:
-            assignments = json.load(f)
-    except Exception as e:
-        print(f"❌ Failed to load assignments JSON: {e}")
-        return jsonify({'success': False, 'error': 'Could not read assignments file'}), 500
+    if not assignment:
+        return jsonify({"success": False, "error": "Assignment not found"}), 404
 
     # Supabase setup
-    url = os.getenv("SUPABASE_URL")
-    key = os.getenv("SUPABASE_KEY")
-    supabase = create_client(url, key)
-
-    updated = False
+    supabase = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
     deleted_filename = ""
 
-    for assignment in assignments:
-        if assignment.get('assignment_id') == assignment_id:
-            if file_type == 'rubric':
-                deleted_filename = assignment.get('rubric_filename', '')
-                assignment['rubric_filename'] = ""
-            elif file_type == 'additional':
-                deleted_filename = assignment.get('additional_filename', '')
-                assignment['additional_filename'] = ""
-            updated = True
-            break
-
-    if not updated:
-        print("❌ Assignment not found in JSON.")
-        return jsonify({'success': False, 'error': 'Assignment not found'}), 404
-
-    # Try deleting the file from Supabase
     try:
-        # Strip any leading slashes
-        deleted_filename = deleted_filename.lstrip('/')
-        print(f"🗑️ Deleting from Supabase: {deleted_filename}")
+        if file_type == "rubric":
+            deleted_filename = assignment.rubric_file.split("/")[-1] if assignment.rubric_file else ""
+            assignment.rubric_file = None
+        elif file_type == "additional":
+            deleted_filename = assignment.additional_file.split("/")[-1] if assignment.additional_file else ""
+            assignment.additional_file = None
 
+        # Try removing from Supabase
         if deleted_filename:
-            res = supabase.storage.from_('rubrics').remove([deleted_filename])
+            deleted_filename = deleted_filename.lstrip("/")
+            print(f"🗑️ Deleting file from Supabase: {deleted_filename}")
+            res = supabase.storage.from_("rubrics").remove([deleted_filename])
             print(f"✅ Supabase delete response: {res}")
-
-        else:
-            print("⚠️ No filename to delete from Supabase.")
+        
+        session.commit()
+        return jsonify({"success": True})
+    
     except Exception as e:
-        print(f"❌ Supabase deletion failed: {e}")
-        return jsonify({'success': False, 'error': f'Supabase delete failed: {str(e)}'}), 500
+        session.rollback()
+        print(f"❌ Error deleting file: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
 
-    try:
-        with open(ASSIGNMENTS_FILE, "w") as f:
-            json.dump(assignments, f, indent=2)
-        print("✅ Updated assignments file.")
-    except Exception as e:
-        print(f"❌ Failed to save assignments file: {e}")
-        return jsonify({'success': False, 'error': 'Failed to update assignments file'}), 500
-
-    return jsonify({'success': True})
-
+    finally:
+        session.close()
 
 
 @lti.route("/dev/add-notes-column")

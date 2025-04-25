@@ -184,67 +184,45 @@
   </style>
 </head>
 <body>
-  <div class="card">
-    <div class="brand-header">
-      <div style="display: flex; align-items: center; margin-bottom: 2rem;">
-        <img src="/static/rubiqs-logo.png" alt="Rubiqs Logo" class="logo" />
-        <div>
-          <h1 style="margin: 0; font-size: 1.5rem; color: #1f3a54;">Rubiqs</h1>
-          <div style="font-size: 1rem; color: #7f8c8d;">AI-Powered Mastery</div>
-          <div style="font-size: 0.85rem; color: #aaa;">by J. Baker Design</div>
-        </div>
-      </div>
-    <h2 class="title">Manage Assignments</h2>
+  <form method="post" enctype="multipart/form-data">
 
-    <form method="post" enctype="multipart/form-data">
-
+    <div class="row">
       <div class="form-group third">
         <label for="rubric_file">Rubric File</label>
-      
         {% if assignment.rubric_file %}
-  <div style="display: flex; align-items: center; gap: 0.5rem;">
-    <span class="instruction-note">
-      {{ assignment.rubric_file.split('/')[-1] }}
-    </span>
-    <a class="instruction-note" href="{{ assignment.rubric_file }}" target="_blank">View</a>
-    
-    <button type="button" class="submit-button" style="padding: 0.25rem 0.75rem;" 
-      onclick="deleteFile('{{ assignment.id }}', 'rubric')">
-      ❌ Remove
-    </button>
-  </div>
-{% endif %}
-<input type="file" name="rubric_file" id="rubric_file" />
-</div>
-
-<div class="form-group third">
-  <label for="additional_file">Additional File</label>
-
-  {% if assignment.additional_file %}
-    <div style="display: flex; align-items: center; gap: 0.5rem;">
-      <span class="instruction-note">
-        {{ assignment.additional_file.split('/')[-1] }}
-      </span>
-      <a class="instruction-note" href="{{ assignment.additional_file }}" target="_blank">View</a>
-
-      <button type="button" class="submit-button" style="padding: 0.25rem 0.75rem;"
-        onclick="deleteFile('{{ assignment.id }}', 'additional')">
-        ❌ Remove
-      </button>
-    </div>
-  {% endif %}
-</div>
-
-        
-          <input type="file" name="additional_file" id="additional_file" />
-        </div>
-
-
-        <div class="form-group third">
-          <label for="title">Assignment Title</label>
-          <input type="text" name="title" id="title" value="{{ assignment.assignment_title }}" />
-        </div>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span class="instruction-note">
+              {{ assignment.rubric_file.split('/')[-1] }}
+            </span>
+            <a class="instruction-note" href="{{ assignment.rubric_file }}" target="_blank">View</a>
+            <button type="button" class="submit-button" style="padding: 0.25rem 0.75rem;"
+              onclick="deleteFile('{{ assignment.id }}', 'rubric')">❌ Remove</button>
+          </div>
+        {% endif %}
+        <input type="file" name="rubric_file" id="rubric_file" />
       </div>
+  
+      <div class="form-group third">
+        <label for="additional_file">Additional File</label>
+        {% if assignment.additional_file %}
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span class="instruction-note">
+              {{ assignment.additional_file.split('/')[-1] }}
+            </span>
+            <a class="instruction-note" href="{{ assignment.additional_file }}" target="_blank">View</a>
+            <button type="button" class="submit-button" style="padding: 0.25rem 0.75rem;"
+              onclick="deleteFile('{{ assignment.id }}', 'additional')">❌ Remove</button>
+          </div>
+        {% endif %}
+        <input type="file" name="additional_file" id="additional_file" />
+      </div>
+  
+      <div class="form-group third">
+        <label for="title">Assignment Title</label>
+        <input type="text" name="title" id="title" value="{{ assignment.assignment_title }}" />
+      </div>
+    </div>
+  
 
       <div class="row">
         <div class="form-group quarter">
