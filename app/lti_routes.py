@@ -1317,30 +1317,6 @@ def delete_file():
     else:
         return jsonify({'success': False, 'error': 'Assignment not found'}), 404
 
-@lti.route('/delete-assignment', methods=['POST'])
-def delete_assignment():
-    data = request.get_json()
-    assignment_id = data.get('assignment_id')
-
-    if not assignment_id:
-        return jsonify({'success': False, 'error': 'Missing assignment ID'}), 400
-
-    from storage import ASSIGNMENTS_FILE
-    if not os.path.exists(ASSIGNMENTS_FILE):
-        return jsonify({'success': False, 'error': 'Assignment file not found'}), 404
-
-    # Load current assignments
-    with open(ASSIGNMENTS_FILE, "r") as f:
-        assignments = json.load(f)
-
-    # Remove the matching assignment
-    new_assignments = [a for a in assignments if a.get('assignment_id') != assignment_id]
-
-    # Save updated list
-    with open(ASSIGNMENTS_FILE, "w") as f:
-        json.dump(new_assignments, f, indent=2)
-
-    return jsonify({'success': True})
 
 @lti.route("/dev/add-notes-column")
 def add_notes_column():
@@ -1353,3 +1329,21 @@ def add_notes_column():
         return "✅ instructor_notes column added (or already exists)"
     except Exception as e:
         return f"❌ Error: {str(e)}"
+
+@lti.route("/delete-assignment", methods=["POST"])
+def delete_assignment():
+    assignment_id = request.json.get("assignment_id")
+
+    if not assignment_id:
+        return jsonify({"error": "Missing assignment ID"}), 400
+
+    try:
+        response = supabase.table("assignments").delete().eq("assignment_id", assignment_id).execute()
+
+        if hasattr(response, "error") and response.error:
+            return jsonify({"error": response.error.message}), 500
+
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
