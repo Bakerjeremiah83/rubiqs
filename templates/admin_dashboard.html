@@ -396,6 +396,17 @@
                 <input type="hidden" name="submission_id" value="{{ submission.submission_id }}">
                 <textarea name="notes" rows="2" style="width: 100%; font-size: 0.9rem; border-radius: 6px; border: 1px solid #ccc;">{{ submission.notes or '' }}</textarea>
                 <button type="submit" style="margin-top: 0.5rem; font-size: 0.8rem; background: #888; color: white; border: none; padding: 0.3rem 0.6rem; border-radius: 12px;">Save</button>
+                <div class="row" style="margin-top: 2rem;">
+                  <div class="form-group wide">
+                    <a href="/release-pending" class="submit-button" style="background-color: #4b887f;">
+                      🚀 Release All Due Feedback
+                    </a>
+                    <p class="instruction-note" style="margin-top: 0.5rem;">
+                      This will release any feedback and grades that have passed their delay window.
+                    </p>
+                  </div>
+                </div>
+                
               </form>
             </td>
           </tr>

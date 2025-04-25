@@ -1,31 +1,29 @@
 from flask import Flask
 from flask_session import Session
+from flask_session.sessions import FileSystemSessionInterface
 from dotenv import load_dotenv
 import os
-from flask_session.sessions import FileSystemSessionInterface
-from itsdangerous import want_bytes  # ✅ Optional patch for legacy byte handling
 
-# ✅ Load environment variables
+# ✅ Load environment variables early
 load_dotenv()
 
-# ✅ Explicitly set template folder so Flask can find templates from root
-import os
+# ✅ Set paths
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
+# ✅ Create Flask app
 app = Flask(__name__,
             static_folder=os.path.join(project_root, "static"),
             template_folder=os.path.join(project_root, "templates"))
 
 # ✅ Session config
-app.secret_key = os.getenv("SECRET_KEY", "defaultsecret")
+app.secret_key = os.getenv("FLASK_SECRET", "dev-key")
 app.config["SESSION_TYPE"] = "filesystem"
 app.config["SESSION_FILE_DIR"] = "./.flask_session"
 app.config["SESSION_COOKIE_NAME"] = "lti_session"
 app.config["SESSION_PERMANENT"] = False
-app.config["SESSION_USE_SIGNER"] = False  # Disable signing to avoid byte encoding issues
+app.config["SESSION_USE_SIGNER"] = False
 app.config["SESSION_COOKIE_SAMESITE"] = "None"
 app.config["SESSION_COOKIE_SECURE"] = True
-
 
 # ✅ Custom SafeSessionInterface
 class SafeSessionInterface(FileSystemSessionInterface):
@@ -44,18 +42,16 @@ class SafeSessionInterface(FileSystemSessionInterface):
             path="/"
         )
 
-# ✅ Attach the safe session handler
+# ✅ Attach session interface + init
 app.session_interface = SafeSessionInterface(
     cache_dir=app.config["SESSION_FILE_DIR"],
     threshold=500,
     mode=0o600,
     key_prefix=""
 )
-
-# ✅ Initialize session
 Session(app)
 
-# ✅ Register LTI routes
+# ✅ Register LTI routes and DB models
 from app.lti_routes import register_lti_routes
 from app.models import Base
 from app.storage import engine
@@ -63,14 +59,15 @@ from app.storage import engine
 register_lti_routes(app)
 print("✅ LTI routes registered")
 
+# ✅ Quick test routes
 @app.route("/")
 def index():
     return "🚀 LTI tool is live!"
 
-# ✅ Test route to confirm Flask is running
 @app.route("/test")
 def test():
-    return "✅ Flask is live and routing works!"
+    return "✅ Flask is running and routes are active!"
 
+# ✅ Start the app only if run directly
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5050, FLASK_DEBUG=1)
+    app.run(host="0.0.0.0", port=5050, debug=True)

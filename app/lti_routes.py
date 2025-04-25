@@ -706,6 +706,46 @@ def test_grader():
 
         if not selected_config:
             return "❌ No config found for that assignment.", 400
+        
+        # ✅ Check if grading should be delayed
+        # ✅ Check if grading should be delayed
+        delay_setting = selected_config.get("delay_posting", "immediate")
+
+        delay_map = {
+            "immediate": 0,
+            "12h": 12,
+            "24h": 24,
+            "36h": 36,
+            "48h": 48
+        }
+
+        delay_hours = delay_map.get(delay_setting, 0)
+
+        if delay_hours > 0:
+            from datetime import datetime, timedelta
+            from app.storage import store_pending_feedback  # Ensure this import is valid
+
+            release_time = datetime.utcnow() + timedelta(hours=delay_hours)
+
+            store_pending_feedback(
+                assignment_title=assignment_title,
+                student_id="test_user",  # Replace with real student ID later
+                feedback="(To be generated at release time)",
+                score=None,
+                release_time=release_time.isoformat()
+            )
+
+            gpt_feedback = f"⏳ Feedback for '{assignment_title}' will be generated after {delay_hours} hour(s)."
+            gpt_score = None
+
+            return render_template(
+                "test_grader.html",
+                rubric_index=rubric_index,
+                selected_config=selected_config,
+                gpt_prompt="",
+                gpt_feedback=gpt_feedback,
+                gpt_score=gpt_score
+            )
 
         # Load rubric
         rubric_text = ""
@@ -1347,5 +1387,58 @@ def delete_assignment():
         return jsonify({"success": True})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@lti.route("/release-pending", methods=["GET"])
+def release_pending_feedback():
+    from datetime import datetime
+    print("🔍 Running /release-pending route...")
+
+    try:
+        now = datetime.utcnow().isoformat()
+
+        # 1. Get all pending entries where release_time has passed
+        response = supabase.table("submissions") \
+            .select("*") \
+            .eq("pending", True) \
+            .lt("release_time", now) \
+            .execute()
+
+        print("📦 Supabase response:", response)
+
+        pending = response.data or []
+        print(f"📝 {len(pending)} entries eligible for release.")
+
+        released = 0
+
+        for entry in pending:
+            assignment_id = entry.get("assignment_id")
+            student_id = entry.get("student_id")
+            score = entry.get("score")
+            feedback = entry.get("feedback")
+            submission_id = entry.get("submission_id")
+
+            if not all([assignment_id, student_id, score, feedback, submission_id]):
+                print(f"⚠️ Skipping incomplete submission: {submission_id}")
+                continue
+
+            # ✅ Mark as no longer pending
+            update_response = supabase.table("submissions").update({
+                "pending": False,
+                "reviewed": True,
+                "released_at": now
+            }).eq("submission_id", submission_id).execute()
+
+            if hasattr(update_response, "error") and update_response.error:
+                print(f"❌ Error updating Supabase: {update_response.error.message}")
+                continue
+
+            released += 1
+
+        return f"✅ Released {released} delayed submissions.", 200
+
+    except Exception as e:
+        print("❌ Error releasing pending feedback:", str(e))
+        return "Error during release process", 500
 
 
