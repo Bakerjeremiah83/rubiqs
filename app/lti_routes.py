@@ -1360,23 +1360,34 @@ def view_assignments():
 
 @lti.route('/delete-file', methods=['POST'])
 def delete_file():
+    import os
+    import json
+    from flask import request, jsonify
+    from supabase import create_client
+
     data = request.get_json()
     assignment_id = data.get('assignment_id')
-    file_type = data.get('file_type')  # 'rubric' or 'additional'
+    file_type = data.get('file_type')
+
+    print(f"➡️ Received request to delete file. Assignment ID: {assignment_id}, File Type: {file_type}")
 
     if not assignment_id or file_type not in ['rubric', 'additional']:
+        print("❌ Missing assignment_id or file_type.")
         return jsonify({'success': False, 'error': 'Missing data'}), 400
 
     from storage import ASSIGNMENTS_FILE
     if not os.path.exists(ASSIGNMENTS_FILE):
+        print("❌ ASSIGNMENTS_FILE does not exist.")
         return jsonify({'success': False, 'error': 'Assignment file not found'}), 404
 
-    with open(ASSIGNMENTS_FILE, "r") as f:
-        assignments = json.load(f)
+    try:
+        with open(ASSIGNMENTS_FILE, "r") as f:
+            assignments = json.load(f)
+    except Exception as e:
+        print(f"❌ Failed to load assignments JSON: {e}")
+        return jsonify({'success': False, 'error': 'Could not read assignments file'}), 500
 
-    from supabase import create_client
-    import os
-
+    # Supabase setup
     url = os.getenv("SUPABASE_URL")
     key = os.getenv("SUPABASE_KEY")
     supabase = create_client(url, key)
@@ -1387,28 +1398,39 @@ def delete_file():
     for assignment in assignments:
         if assignment.get('assignment_id') == assignment_id:
             if file_type == 'rubric':
-                deleted_filename = assignment.get('rubric_filename')
+                deleted_filename = assignment.get('rubric_filename', '')
                 assignment['rubric_filename'] = ""
             elif file_type == 'additional':
-                deleted_filename = assignment.get('additional_filename')
+                deleted_filename = assignment.get('additional_filename', '')
                 assignment['additional_filename'] = ""
             updated = True
             break
 
-    if updated:
-        # Try deleting the file from Supabase storage
-        try:
-            if deleted_filename:
-                res = supabase.storage.from_('rubrics').remove([deleted_filename])
-                # Optional: log res
-        except Exception as e:
-            return jsonify({'success': False, 'error': f'Supabase delete failed: {str(e)}'}), 500
+    if not updated:
+        print("❌ Assignment not found in JSON.")
+        return jsonify({'success': False, 'error': 'Assignment not found'}), 404
 
+    # Try deleting the file from Supabase
+    try:
+        print(f"🗑️ Attempting to delete file: {deleted_filename}")
+        if deleted_filename:
+            res = supabase.storage.from_('rubrics').remove([deleted_filename])
+            print(f"✅ Supabase delete response: {res}")
+        else:
+            print("⚠️ No filename to delete from Supabase.")
+    except Exception as e:
+        print(f"❌ Supabase deletion failed: {e}")
+        return jsonify({'success': False, 'error': f'Supabase delete failed: {str(e)}'}), 500
+
+    try:
         with open(ASSIGNMENTS_FILE, "w") as f:
             json.dump(assignments, f, indent=2)
-        return jsonify({'success': True})
-    else:
-        return jsonify({'success': False, 'error': 'Assignment not found'}), 404
+        print("✅ Updated assignments file.")
+    except Exception as e:
+        print(f"❌ Failed to save assignments file: {e}")
+        return jsonify({'success': False, 'error': 'Failed to update assignments file'}), 500
+
+    return jsonify({'success': True})
 
 
 
