@@ -207,7 +207,7 @@
               {{ assignment.rubric_file.split('/')[-1] }}
             </span>
             <a class="instruction-note" href="{{ assignment.rubric_file }}" target="_blank">View</a>
-            
+            <p>Assignment ID: {{ assignment.assignment_id }}</p>
             <button type="button" class="submit-button" style="padding: 0.25rem 0.75rem;" onclick="deleteFile('{{ assignment.assignment_id }}', 'rubric')">❌ Remove</button>
           </div>
         {% endif %}
@@ -295,7 +295,7 @@
   <script>
     function deleteFile(assignmentId, fileType) {
       console.log("🧪 deleteFile called with:", assignmentId, fileType);
-      
+
       if (!confirm("Are you sure you want to remove this file?")) return;
   
       fetch('/delete-file', {
