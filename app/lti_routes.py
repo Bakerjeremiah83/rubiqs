@@ -432,16 +432,53 @@ Rubric:
         )
 
     else:
-        print("🧪 Instructor review not required: auto-posting to LMS")
+        delay_setting = assignment_config.get("delay_posting", "immediate")
+        delay_map = {
+            "immediate": 0,
+            "12h": 12,
+            "24h": 24,
+            "36h": 36,
+            "48h": 48
+        }
+        delay_hours = delay_map.get(delay_setting, 0)
 
-        # 🔒 Post directly to LMS using AGS (you must have this function defined elsewhere)
+        if delay_hours > 0:
+            from datetime import timedelta
+
+            release_time = datetime.utcnow() + timedelta(hours=delay_hours)
+
+            supabase.table("submissions").insert({
+                "submission_id": submission_id,
+                "student_id": submission_data["student_id"],
+                "assignment_title": assignment_title,
+                "timestamp": submission_data["timestamp"],
+                "score": score,
+                "feedback": feedback,
+                "student_text": full_text,
+                "ai_check_result": None,
+                "instructor_notes": "",
+                "pending": True,
+                "reviewed": False,
+                "release_time": release_time.isoformat()
+            }).execute()
+
+            log_gpt_interaction(assignment_title, prompt, feedback, score)
+
+            return render_template(
+                "feedback.html",
+                score=score,
+                feedback=feedback,
+                rubric_total_points=rubric_total_points,
+                user_roles=session.get("launch_data", {}).get("https://purl.imsglobal.org/spec/lti/claim/roles", []),
+                pending_message=f"This submission will be released after a delay of {delay_hours} hour(s)."
+            )
+
+        # ✅ Immediate grading if no delay
         post_grade_to_lms(session, score, feedback)
 
         log_gpt_interaction(assignment_title, prompt, feedback, score)
 
         if FERPA_SAFE_MODE:
-            print("🔐 FERPA_SAFE_MODE is ON — not storing submission")
-
             return render_template(
                 "feedback.html",
                 score=score,
@@ -450,10 +487,7 @@ Rubric:
                 user_roles=session.get("launch_data", {}).get("https://purl.imsglobal.org/spec/lti/claim/roles", [])
             )
         else:
-            print("🧪 DEV MODE — storing submission history")
-
             store_submission_history(submission_data)
-
             return render_template(
                 "feedback.html",
                 score=score,
