@@ -124,7 +124,7 @@
               <td>{{ assignment.student_level|capitalize }}</td>
               <td>{% if assignment.faith_integration %}✅{% else %}❌{% endif %}</td>
               <td style="display: flex; gap: 0.5rem;">
-                <a href="/edit-assignment/{{ assignment.assignment_id }}" class="submit-button">Edit</a>
+                <a href="/edit-assignment/{{ assignment.id }}" class="submit-button">Edit</a>
                 <button onclick="confirmDeleteAssignment('{{ assignment.id }}')" class="submit-button" style="background-color: #d9534f;">🗑</button>
               </td>
             </tr>
