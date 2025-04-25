@@ -1306,9 +1306,8 @@ def post_grade_to_lms(session, score, feedback):
         print("❌ Error in post_grade_to_lms():", str(e))
 
 
-
-from app.models import Assignment
 from app.database import SessionLocal
+from app.models import Assignment
 
 @lti.route("/edit-assignment/<int:assignment_id>", methods=["GET", "POST"])
 def edit_assignment(assignment_id):
@@ -1360,8 +1359,9 @@ def delete_file():
     import os
     from flask import request, jsonify
     from supabase import create_client
-    from db import SessionLocal
-    from app.models import Assignment  # adjust if your model is in a different file
+    from .db import SessionLocal
+    from .models import Assignment
+
 
     data = request.get_json()
     assignment_id = data.get("assignment_id")
