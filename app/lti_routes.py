@@ -1412,10 +1412,14 @@ def delete_file():
 
     # Try deleting the file from Supabase
     try:
-        print(f"🗑️ Attempting to delete file: {deleted_filename}")
+        # Strip any leading slashes
+        deleted_filename = deleted_filename.lstrip('/')
+        print(f"🗑️ Deleting from Supabase: {deleted_filename}")
+
         if deleted_filename:
             res = supabase.storage.from_('rubrics').remove([deleted_filename])
             print(f"✅ Supabase delete response: {res}")
+
         else:
             print("⚠️ No filename to delete from Supabase.")
     except Exception as e:
