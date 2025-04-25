@@ -184,8 +184,10 @@
   </style>
 </head>
 <body>
-  <form method="post" enctype="multipart/form-data">
+  <div class="card">
+    <h2 class="title">Manage Assignments</h2>
 
+    <form method="post" enctype="multipart/form-data">
     <div class="row">
       <div class="form-group third">
         <label for="rubric_file">Rubric File</label>
@@ -223,58 +225,57 @@
       </div>
     </div>
   
-
-      <div class="row">
-        <div class="form-group quarter">
-          <label for="total_points">Total Points</label>
-          <input type="number" name="total_points" id="total_points" value="{{ assignment.total_points }}" class="form-control" />
-        </div>
-
-        <div class="form-group quarter">
-          <label for="student_level">Student Level</label>
-          <select name="student_level" id="student_level">
-            <option value="middle_school" {% if assignment.student_level == 'middle_school' %}selected{% endif %}>Middle School</option>
-            <option value="high_school" {% if assignment.student_level == 'high_school' %}selected{% endif %}>High School</option>
-            <option value="college" {% if assignment.student_level == 'college' %}selected{% endif %}>College</option>
-          </select>
-        </div>
-
-        <div class="form-group quarter">
-          <label for="grading_difficulty">Grading Difficulty</label>
-          <select name="grading_difficulty" id="grading_difficulty">
-            <option value="easy" {% if assignment.grading_difficulty == 'easy' %}selected{% endif %}>Easy</option>
-            <option value="medium" {% if assignment.grading_difficulty == 'medium' %}selected{% endif %}>Medium</option>
-            <option value="hard" {% if assignment.grading_difficulty == 'hard' %}selected{% endif %}>Hard</option>
-          </select>
-        </div>
-
-        <div class="form-group quarter">
-          <label for="faith_integration">Faith Integration</label>
-          <div class="require-toggle" style="flex-direction: row; justify-content: flex-start;">
-            <label class="toggle-option {% if assignment.faith_integration %}active{% endif %}">
-              <input type="radio" name="faith_integration" value="true" {% if assignment.faith_integration %}checked{% endif %}> Yes
-            </label>
-            <label class="toggle-option {% if not assignment.faith_integration %}active{% endif %}">
-              <input type="radio" name="faith_integration" value="false" {% if not assignment.faith_integration %}checked{% endif %}> No
-            </label>
-          </div>
+    <div class="row">
+      <div class="form-group quarter">
+        <label for="total_points">Total Points</label>
+        <input type="number" name="total_points" id="total_points" value="{{ assignment.total_points }}" class="form-control" />
+      </div>
+  
+      <div class="form-group quarter">
+        <label for="student_level">Student Level</label>
+        <select name="student_level" id="student_level">
+          <option value="middle_school" {% if assignment.student_level == 'middle_school' %}selected{% endif %}>Middle School</option>
+          <option value="high_school" {% if assignment.student_level == 'high_school' %}selected{% endif %}>High School</option>
+          <option value="college" {% if assignment.student_level == 'college' %}selected{% endif %}>College</option>
+        </select>
+      </div>
+  
+      <div class="form-group quarter">
+        <label for="grading_difficulty">Grading Difficulty</label>
+        <select name="grading_difficulty" id="grading_difficulty">
+          <option value="easy" {% if assignment.grading_difficulty == 'easy' %}selected{% endif %}>Easy</option>
+          <option value="medium" {% if assignment.grading_difficulty == 'medium' %}selected{% endif %}>Medium</option>
+          <option value="hard" {% if assignment.grading_difficulty == 'hard' %}selected{% endif %}>Hard</option>
+        </select>
+      </div>
+  
+      <div class="form-group quarter">
+        <label for="faith_integration">Faith Integration</label>
+        <div class="require-toggle" style="flex-direction: row; justify-content: flex-start;">
+          <label class="toggle-option {% if assignment.faith_integration %}active{% endif %}">
+            <input type="radio" name="faith_integration" value="true" {% if assignment.faith_integration %}checked{% endif %}> Yes
+          </label>
+          <label class="toggle-option {% if not assignment.faith_integration %}active{% endif %}">
+            <input type="radio" name="faith_integration" value="false" {% if not assignment.faith_integration %}checked{% endif %}> No
+          </label>
         </div>
       </div>
-
-      <div class="row">
-        <div class="form-group wide">
-          <label for="ai_notes">AI Grading Instructions</label>
-          <textarea name="ai_notes" id="ai_notes" rows="4">{{ assignment.ai_notes }}</textarea>
-        </div>
+    </div>
+  
+    <div class="row">
+      <div class="form-group wide">
+        <label for="ai_notes">AI Grading Instructions</label>
+        <textarea name="ai_notes" id="ai_notes" rows="4">{{ assignment.ai_notes }}</textarea>
       </div>
-
-      <button type="submit" class="submit">💾 Save Changes</button>
-      <button type="button" class="submit" style="background-color: #d9534f;" onclick="confirmDeleteAssignment('{{ assignment.assignment_id }}')">
-        🗑 Delete Assignment
-      </button>
-      
-    </form>
-  </div>
+    </div>
+  
+    <button type="submit" class="submit">💾 Save Changes</button>
+    <button type="button" class="submit" style="background-color: #d9534f;" onclick="confirmDeleteAssignment('{{ assignment.id }}')">
+      🗑 Delete Assignment
+    </button>
+  </form>
+</div>
+</body>
 
   <script>
     function deleteFile(assignmentId, fileType) {

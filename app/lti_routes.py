@@ -1329,7 +1329,7 @@ def edit_assignment(assignment_id):
         faith_raw = request.form.get("faith_integration", "false")
         faith_integration = True if faith_raw.lower() == "true" else False
         assignment.faith_integration = faith_integration
-        assignment["delay_posting"] = int(request.form.get("delay_posting", 0))
+        assignment.delay_posting = int(request.form.get("delay_posting", 0))
 
 
         # Upload rubric file if a new one was provided
@@ -1360,7 +1360,7 @@ def delete_file():
     import os
     from flask import request, jsonify
     from supabase import create_client
-    from app.db import SessionLocal
+    from db import SessionLocal
     from app.models import Assignment  # adjust if your model is in a different file
 
     data = request.get_json()
