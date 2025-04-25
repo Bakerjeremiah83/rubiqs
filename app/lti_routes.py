@@ -1391,23 +1391,24 @@ def delete_assignment():
 
 @lti.route("/release-pending", methods=["GET"])
 def release_pending_feedback():
-    from datetime import datetime
-    print("🔍 Running /release-pending route...")
+    print("🚀 /release-pending triggered")
 
     try:
+        from datetime import datetime
         now = datetime.utcnow().isoformat()
 
-        # 1. Get all pending entries where release_time has passed
         response = supabase.table("submissions") \
             .select("*") \
             .eq("pending", True) \
             .lt("release_time", now) \
             .execute()
 
-        print("📦 Supabase response:", response)
+        if hasattr(response, "error") and response.error:
+            print("❌ Supabase query error:", response.error.message)
+            return f"Supabase query failed: {response.error.message}", 500
 
         pending = response.data or []
-        print(f"📝 {len(pending)} entries eligible for release.")
+        print(f"📬 Found {len(pending)} entries eligible for release")
 
         released = 0
 
@@ -1422,7 +1423,6 @@ def release_pending_feedback():
                 print(f"⚠️ Skipping incomplete submission: {submission_id}")
                 continue
 
-            # ✅ Mark as no longer pending
             update_response = supabase.table("submissions").update({
                 "pending": False,
                 "reviewed": True,
@@ -1430,15 +1430,16 @@ def release_pending_feedback():
             }).eq("submission_id", submission_id).execute()
 
             if hasattr(update_response, "error") and update_response.error:
-                print(f"❌ Error updating Supabase: {update_response.error.message}")
+                print(f"❌ Error updating submission {submission_id}: {update_response.error.message}")
                 continue
 
             released += 1
 
-        return f"✅ Released {released} delayed submissions.", 200
+        return f"✅ Released {released} submissions", 200
 
     except Exception as e:
-        print("❌ Error releasing pending feedback:", str(e))
-        return "Error during release process", 500
+        print("❌ Fatal error in release process:", str(e))
+        return f"❌ Internal error: {str(e)}", 500
+
 
 
