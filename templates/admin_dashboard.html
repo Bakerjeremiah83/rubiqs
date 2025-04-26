@@ -291,34 +291,36 @@
     
     <div class="row">
       <!-- Gospel-Centered Toggle -->
-      <div class="form-group quarter">
+      <div class="form-group half">
         <label for="faith_integration">Enable Gospel-Centered Feedback?</label>
         <div class="require-toggle" style="flex-direction: row; justify-content: flex-start;">
-    
-          {% set faith_enabled = rubric_index and rubric_index[0].faith_integration %}
-    
-          <label class="toggle-option {% if faith_enabled %}active{% endif %}">
-            <input type="radio" name="faith_integration" value="true" {% if faith_enabled %}checked{% endif %}> YES
+          <label class="toggle-option">
+            <input type="radio" name="faith_integration" value="true"> YES
           </label>
-    
-          <label class="toggle-option {% if rubric_index and not rubric_index[0].faith_integration %}active{% endif %}">
-            <input type="radio" name="faith_integration" value="false" {% if rubric_index and not rubric_index[0].faith_integration %}checked{% endif %}> NO
+          <label class="toggle-option">
+            <input type="radio" name="faith_integration" value="false"> NO
           </label>
-    
         </div>
-    
         <small style="font-size: 0.85rem; color: #555; display: block; margin-top: 0.5rem;">
           If enabled, gospel-centered themes and scriptures will be incorporated into AI feedback. You’ll be taken to the Gospel-Centered tab to review or edit those settings.
         </small>
       </div>
-    </div>
     
-    
+      <!-- Delay Posting Dropdown -->
+      <div class="form-group half">
+        <label for="delay_posting">Delay Posting</label>
+        <select name="delay_posting" id="delay_posting" class="form-control">
+          <option value="immediate">Immediately</option>
+          <option value="12h">12 hours</option>
+          <option value="24h">24 hours</option>
+          <option value="36h">36 hours</option>
+          <option value="48h">48 hours</option>
+        </select>
         <small style="font-size: 0.85rem; color: #555; display: block; margin-top: 0.5rem;">
-          If enabled, gospel-centered themes and scriptures will be incorporated into AI feedback. You’ll be taken to the Gospel-Centered tab to review or edit those settings.
+          Choose how long to delay the grade and feedback after submission. Helps reduce perceived bias from instant grading.
         </small>
       </div>
-    </div>
+    </div>      
     
     
       <!-- Delay Posting Selector -->
