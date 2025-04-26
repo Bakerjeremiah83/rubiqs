@@ -312,7 +312,7 @@
   <script>
     function confirmDeleteAssignment(assignmentId) {
       if (!confirm("Are you sure you want to delete this assignment permanently?")) return;
-  
+    
       fetch('/delete-assignment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -325,7 +325,8 @@
       .then(data => {
         if (data.success) {
           alert("Assignment deleted.");
-          window.location.href = "/admin-dashboard"; // Or your assignment list page
+          // ✅ Redirect back to admin dashboard instead of reload
+          window.location.href = "/admin-dashboard";
         } else {
           alert("Could not delete the assignment.");
         }
@@ -334,7 +335,8 @@
         alert("Error: " + err.message);
       });
     }
-  </script>
+    </script>
+    
   
 
 </body>
