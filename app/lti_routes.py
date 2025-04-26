@@ -618,10 +618,11 @@ def post_grade():
 
     return render_template(
     "feedback.html",
-    score=score,
-    feedback=feedback,
-    rubric_total_points=rubric_total_points,
-    user_roles=launch_data.get("https://purl.imsglobal.org/spec/lti/claim/roles", [])
+    score=None,
+    feedback=None,
+    rubric_total_points=None,
+    user_roles=session.get("launch_data", {}).get("https://purl.imsglobal.org/spec/lti/claim/roles", []),
+    pending_message="✅ Your assignment was submitted successfully! Your grade and personalized feedback will be available after the review window."
 )
 
 @lti.route("/assignment-config", methods=["GET", "POST"])
