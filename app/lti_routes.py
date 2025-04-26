@@ -1351,6 +1351,15 @@ def edit_assignment(assignment_id):
                     assignment.rubric_file = rubric_url
                     print("✅ New rubric URL:", rubric_url)
 
+            if "additional_file" in request.files:
+                file = request.files["additional_file"]
+                if file and file.filename:
+                    print(f"📤 Uploading new additional file: {file.filename}")
+                    from app.utils.supabase_client import upload_to_supabase
+                    additional_url = upload_to_supabase(file, file.filename)
+                    assignment.additional_file = additional_url
+                    print("✅ New additional file URL:", additional_url)
+
 
             session.commit()
             print("✅ Assignment saved")
