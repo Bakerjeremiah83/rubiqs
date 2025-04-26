@@ -1323,6 +1323,7 @@ def edit_assignment(assignment_id):
         return "Assignment not found", 404
 
     if request.method == "POST":
+        print("🚀 Save Assignment POST route hit")
         try:
             print("📥 POST data:", request.form)
 
