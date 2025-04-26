@@ -899,7 +899,8 @@ def save_assignment():
         rubric_file.save(rubric_path)
 
         rubric_url = upload_to_supabase(rubric_path, rubric_filename)
-        rubric_url = rubric_url.rstrip("?")
+        rubric_url = rubric_url.rstrip("?") if rubric_url else None
+
         if not rubric_url:
             from app.supabase_client import supabase
             filepath = f"rubrics/{rubric_filename}"
