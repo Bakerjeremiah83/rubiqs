@@ -1501,15 +1501,11 @@ def delete_assignment():
         return jsonify({"success": False, "error": "Missing assignment_id"}), 400
 
     try:
-        # ✅ Load assignments from JSON
-        assignments = load_assignment_data()
-        assignments = list(assignments.values())
+        # Delete the assignment from the "assignments" table where assignment_title matches
+        response = supabase.table("assignments").delete().eq("assignment_title", assignment_title).execute()
 
-        # ✅ Remove the matching assignment by assignment title
-        assignments = [a for a in assignments if str(a.get("assignment_title", "")) != str(assignment_title)]
-
-        # ✅ Re-save updated assignments list
-        save_assignment_data(assignments)
+        if hasattr(response, "error") and response.error:
+            return jsonify({"success": False, "error": response.error.message}), 500
 
         return jsonify({"success": True})
     except Exception as e:
