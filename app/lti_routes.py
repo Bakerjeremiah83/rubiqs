@@ -991,24 +991,34 @@ def save_assignment():
 
 @lti.route("/admin-dashboard", methods=["GET", "POST"])
 def admin_dashboard():
+    from app.supabase_client import supabase
+
     session["tool_role"] = "instructor"  # TEMP for local testing
 
     if session.get("tool_role") != "instructor":
         return "❌ Access denied. Instructors only.", 403
 
-    rubric_index = list(load_assignment_data().values())
+    # ✅ Pull assignments LIVE from Supabase
+    try:
+        assignments_response = supabase.table("assignments").select("*").execute()
+        rubric_index = assignments_response.data if assignments_response.data else []
+    except Exception as e:
+        print("❌ Supabase fetch error (assignments):", e)
+        rubric_index = []
 
+    # ✅ Pull pending feedback (no changes needed here)
     try:
         response = supabase.table("submissions").select("*").eq("pending", True).execute()
         pending_feedback = response.data or []
     except Exception as e:
-        print("❌ Supabase fetch error:", e)
+        print("❌ Supabase fetch error (submissions):", e)
         flash("❌ Error loading pending submissions.", "danger")
         pending_feedback = []
 
+    # ✅ Load submission history (if you still use it)
     submission_history = load_submission_history()
 
-    # ✅ Load activity logs
+    # ✅ Load activity logs (same as before)
     log_path = os.path.join(os.path.dirname(__file__), "..", "logs", "activity_log.json")
     if os.path.exists(log_path):
         with open(log_path, "r") as f:
@@ -1025,8 +1035,7 @@ def admin_dashboard():
                            submission_history=submission_history,
                            pending_count=pending_count,
                            approved_count=approved_count,
-                           activity_logs=activity_logs)  # ✅ Pass logs to template
-
+                           activity_logs=activity_logs)
 
 
 @lti.route("/instructor-review/accept", methods=["POST"])
