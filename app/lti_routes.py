@@ -1501,7 +1501,7 @@ def delete_assignment():
         return jsonify({"success": False, "error": "Missing assignment_id"}), 400
 
     try:
-        # Delete the assignment from the "assignments" table where assignment_title matches
+        # 🔥 Delete assignment where assignment_title matches
         response = supabase.table("assignments").delete().eq("assignment_title", assignment_title).execute()
 
         if hasattr(response, "error") and response.error:
@@ -1510,7 +1510,6 @@ def delete_assignment():
         return jsonify({"success": True})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
-
 
 
 @lti.route("/release-pending", methods=["GET"])
