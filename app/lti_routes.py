@@ -914,10 +914,12 @@ def save_assignment():
     # Handle rubric file
     if rubric_file and rubric_file.filename:
         rubric_filename = secure_filename(rubric_file.filename)
+        rubric_filename = rubric_filename.replace(" ", "_")
         rubric_path = os.path.join(upload_dir, rubric_filename)
         rubric_file.save(rubric_path)
 
         rubric_url = upload_to_supabase(rubric_path, rubric_filename)
+
 
         if not rubric_url:
             from app.supabase_client import supabase
@@ -934,6 +936,7 @@ def save_assignment():
     # Handle additional file
     if additional_file and additional_file.filename:
         additional_filename = secure_filename(additional_file.filename)
+        additional_filename = additional_filename.replace(" ", "_")
         additional_path = os.path.join(upload_dir, additional_filename)
         additional_file.save(additional_path)
 
