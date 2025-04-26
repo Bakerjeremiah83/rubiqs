@@ -53,10 +53,14 @@ FERPA_SAFE_MODE = os.getenv("FERPA_SAFE_MODE", "false").lower() == "true"
 lti = Blueprint('lti', __name__)
 
 def load_assignment_config(assignment_title):
-    rubric_index = load_assignment_data()
-    if assignment_title in rubric_index:
-        return rubric_index[assignment_title]
+    try:
+        response = supabase.table("assignments").select("*").eq("assignment_title", assignment_title).single().execute()
+        if response.data:
+            return response.data
+    except Exception as e:
+        print("❌ Error loading assignment config:", e)
     return None
+
 
 
 @lti.route("/login", methods=["POST"])
@@ -907,64 +911,38 @@ def save_assignment():
     upload_dir = os.path.join("uploads", secure_filename(assignment_title))
     os.makedirs(upload_dir, exist_ok=True)
 
-    # Initialize URLs early
     rubric_url = ""
     additional_url = ""
 
-    # Handle rubric file
+    # Handle rubric upload
     if rubric_file and rubric_file.filename:
         rubric_filename = secure_filename(rubric_file.filename)
         rubric_filename = rubric_filename.replace(" ", "_")
         rubric_path = os.path.join(upload_dir, rubric_filename)
         rubric_file.save(rubric_path)
-
         rubric_url = upload_to_supabase(rubric_path, rubric_filename)
-
-
-        if not rubric_url:
-            from app.supabase_client import supabase
-            filepath = f"rubrics/{rubric_filename}"
-            rubric_url = supabase.storage.from_("rubrics").get_public_url(filepath)
-            print("⚠️ Using existing Supabase rubric URL:", rubric_url)
-
-        # 🛡️ Safe cleanup for rubric_url
         if rubric_url:
             rubric_url = rubric_url.rstrip("?")
             if "rubrics/rubrics/" in rubric_url:
                 rubric_url = rubric_url.replace("rubrics/rubrics/", "rubrics/")
 
-    # Handle additional file
+    # Handle additional file upload
     if additional_file and additional_file.filename:
         additional_filename = secure_filename(additional_file.filename)
         additional_filename = additional_filename.replace(" ", "_")
         additional_path = os.path.join(upload_dir, additional_filename)
         additional_file.save(additional_path)
-
         additional_url = upload_to_supabase(additional_path, additional_filename)
-
-        if not additional_url:
-            from app.supabase_client import supabase
-            filepath = f"attachments/{additional_filename}"
-            additional_url = supabase.storage.from_("attachments").get_public_url(filepath)
-            print("⚠️ Using existing Supabase attachment URL:", additional_url)
-
-        # 🛡️ Safe cleanup for additional_url
         if additional_url:
             additional_url = additional_url.rstrip("?")
             if "attachments/attachments/" in additional_url:
                 additional_url = additional_url.replace("attachments/attachments/", "attachments/")
 
-    # ✅ Load existing assignment data
-    assignments = load_assignment_data()
-    assignments = list(assignments.values())
-    assignments = [a for a in assignments if a["assignment_title"] != assignment_title]
-
     rubric_url = rubric_url or ""
     additional_url = additional_url or ""
 
-
-    # ✅ Add or update assignment
-    assignments.append({
+    # ✅ Save directly to Supabase
+    supabase.table("assignments").insert({
         "assignment_title": assignment_title,
         "rubric_file": rubric_url,
         "additional_file": additional_url,
@@ -976,16 +954,15 @@ def save_assignment():
         "student_level": grade_level,
         "feedback_tone": "supportive",
         "ai_notes": custom_ai
-    })
+    }).execute()
 
     print("🧪 Saving assignment:", assignment_title)
     print("🧪 Rubric URL:", rubric_url)
     print("🧪 Additional file URL:", additional_url)
-
-    save_assignment_data(assignments)
-
     print("✅ Successfully saved assignment:", assignment_title)
+
     return redirect(f"/admin-dashboard?success={assignment_title}")
+
 
 
 @lti.route("/admin-dashboard", methods=["GET", "POST"])
@@ -1363,75 +1340,66 @@ def post_grade_to_lms(session, score, feedback):
 from app.database import SessionLocal
 from app.models import Assignment
 
-@lti.route("/edit-assignment/<int:assignment_id>", methods=["GET", "POST"])
-def edit_assignment(assignment_id):
-    from app.database import SessionLocal
-    from app.models import Assignment
-    from supabase import create_client
-    import os
-
-    session = SessionLocal()
-    assignment = session.query(Assignment).filter_by(id=assignment_id).first()
-
-    if not assignment:
-        return "Assignment not found", 404
+@lti.route("/edit-assignment/<assignment_title>", methods=["GET", "POST"])
+def edit_assignment(assignment_title):
+    assignment_title = assignment_title.replace("%20", " ")  # Handle spaces
 
     if request.method == "POST":
         print("🚀 Save Assignment POST route hit")
         try:
             print("📥 POST data:", request.form)
 
-            assignment.assignment_title = request.form["title"]
-            assignment.total_points = request.form.get("total_points", type=int)
-            assignment.ai_notes = request.form["ai_notes"]
-            assignment.student_level = request.form["student_level"]
-            assignment.grading_difficulty = request.form["grading_difficulty"]
+            total_points = request.form.get("total_points", type=int)
+            ai_notes = request.form.get("ai_notes", "")
+            student_level = request.form.get("student_level")
+            grading_difficulty = request.form.get("grading_difficulty")
 
             faith_raw = request.form.get("faith_integration", "false")
-            assignment.faith_integration = True if faith_raw.lower() == "true" else False
+            faith_integration = True if faith_raw.lower() == "true" else False
 
-            # 💥 Potential crash line
-            delay_raw = request.form.get("delay_posting", 0)
-            print("🕒 delay_posting =", delay_raw)
-            assignment.delay_posting = int(delay_raw)
+            delay_raw = request.form.get("delay_posting", "immediate")
 
-            # Upload rubric file if provided
-            if "rubric_file" in request.files:
-                file = request.files["rubric_file"]
-                if file and file.filename:
-                    print(f"📤 Uploading new rubric: {file.filename}")
-                    from app.utils.supabase_client import upload_to_supabase
-                    rubric_url = upload_to_supabase(file, file.filename)
-                    assignment.rubric_file = rubric_url
-                    print("✅ New rubric URL:", rubric_url)
+            # ✅ Update Supabase assignment record
+            response = supabase.table("assignments").update({
+                "total_points": total_points,
+                "ai_notes": ai_notes,
+                "student_level": student_level,
+                "grading_difficulty": grading_difficulty,
+                "faith_integration": faith_integration,
+                "delay_posting": delay_raw
+            }).eq("assignment_title", assignment_title).execute()
 
-            if "additional_file" in request.files:
-                file = request.files["additional_file"]
-                if file and file.filename:
-                    print(f"📤 Uploading new additional file: {file.filename}")
-                    from app.utils.supabase_client import upload_to_supabase
-                    additional_url = upload_to_supabase(file, file.filename)
-                    assignment.additional_file = additional_url
-                    print("✅ New additional file URL:", additional_url)
+            if hasattr(response, "error") and response.error:
+                print("❌ Supabase error:", response.error.message)
+                return f"❌ Supabase update error: {response.error.message}", 500
 
-
-            session.commit()
-            print("✅ Assignment saved")
+            print("✅ Assignment updated successfully")
             return redirect(url_for("lti.view_assignments"))
 
         except Exception as e:
-            session.rollback()
             print("❌ Exception in edit_assignment:", e)
             return "Internal Server Error", 500
 
-    return render_template("edit_assignment.html", assignment=assignment)
+    # GET request
+    response = supabase.table("assignments").select("*").eq("assignment_title", assignment_title).single().execute()
+    if response.data is None:
+        return "Assignment not found", 404
 
+    assignment = response.data
+    return render_template("edit_assignment.html", assignment=assignment)
 
 @lti.route("/view-assignments")
 def view_assignments():
-    session = SessionLocal()
-    assignments = session.query(Assignment).all()
+    try:
+        response = supabase.table("assignments").select("*").execute()
+        assignments = response.data or []
+    except Exception as e:
+        print("❌ Supabase fetch error (view-assignments):", e)
+        flash("❌ Error loading assignments.", "danger")
+        assignments = []
+
     return render_template("view_assignments.html", assignments=assignments)
+
 
 @lti.route('/delete-file', methods=['POST'])
 def delete_file():
@@ -1501,16 +1469,15 @@ def add_notes_column():
     except Exception as e:
         return f"❌ Error: {str(e)}"
 
-@lti.route("/delete-assignment", methods=["POST"])
+@lti.route('/delete-assignment', methods=['POST'])
 def delete_assignment():
     data = request.get_json()
-    assignment_title = data.get("assignment_id")
+    assignment_title = data.get('assignment_title')
 
     if not assignment_title:
-        return jsonify({"success": False, "error": "Missing assignment_id"}), 400
+        return jsonify({'success': False, 'error': 'Missing assignment title'}), 400
 
     try:
-        # 🔥 Delete assignment where assignment_title matches
         response = supabase.table("assignments").delete().eq("assignment_title", assignment_title).execute()
 
         if hasattr(response, "error") and response.error:
@@ -1519,6 +1486,8 @@ def delete_assignment():
         return jsonify({"success": True})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
+
+
 
 
 @lti.route("/release-pending", methods=["GET"])
