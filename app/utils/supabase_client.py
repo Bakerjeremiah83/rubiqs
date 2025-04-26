@@ -7,7 +7,6 @@ def upload_to_supabase(file, file_name):
     key = os.getenv("SUPABASE_KEY")
     supabase = create_client(url, key)
 
-    # Generate a timestamped version of the filename to avoid overwriting
     timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
     name, ext = os.path.splitext(file_name)
     new_file_name = f"{name}_{timestamp}{ext}"
@@ -15,7 +14,10 @@ def upload_to_supabase(file, file_name):
     file_path = f"rubrics/{new_file_name}"
     print(f"🆕 Uploading as: {file_path}")
 
-    res = supabase.storage.from_("rubrics").upload(file_path, file.read())
+    # Read the file as bytes
+    file_content = file.read()
+
+    res = supabase.storage.from_("rubrics").upload(file_path, file_content)
     if res.get("error"):
         raise Exception(f"Upload failed: {res['error']['message']}")
 
