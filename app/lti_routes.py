@@ -886,47 +886,56 @@ def save_assignment():
     custom_ai = request.form.get("custom_ai", "")
 
     rubric_file = request.files.get("rubric_upload")
-    additional_file = request.files.get("additional_files")
+additional_file = request.files.get("additional_files")
 
-    from werkzeug.utils import secure_filename
-    upload_dir = os.path.join("uploads", secure_filename(assignment_title))
-    os.makedirs(upload_dir, exist_ok=True)
+from werkzeug.utils import secure_filename
+upload_dir = os.path.join("uploads", secure_filename(assignment_title))
+os.makedirs(upload_dir, exist_ok=True)
 
-    rubric_url = ""
-    if rubric_file and rubric_file.filename:
-        rubric_filename = secure_filename(rubric_file.filename)
-        rubric_path = os.path.join(upload_dir, rubric_filename)
-        rubric_file.save(rubric_path)
+# Initialize URLs early
+rubric_url = ""
+additional_url = ""
 
-        rubric_url = upload_to_supabase(rubric_path, rubric_filename)
+# Handle rubric file
+if rubric_file and rubric_file.filename:
+    rubric_filename = secure_filename(rubric_file.filename)
+    rubric_path = os.path.join(upload_dir, rubric_filename)
+    rubric_file.save(rubric_path)
 
-        if not rubric_url:
-            from app.supabase_client import supabase
-            filepath = f"rubrics/{rubric_filename}"
-            rubric_url = supabase.storage.from_("rubrics").get_public_url(filepath)
-            print("⚠️ Using existing Supabase rubric URL:", rubric_url)
+    rubric_url = upload_to_supabase(rubric_path, rubric_filename)
 
-        
-        # 🛡️ Safe cleanup for additional_url too
-        if additional_url:
-            additional_url = additional_url.rstrip("?")
-            if "attachments/attachments/" in additional_url:
-                additional_url = additional_url.replace("attachments/attachments/", "attachments/")
+    if not rubric_url:
+        from app.supabase_client import supabase
+        filepath = f"rubrics/{rubric_filename}"
+        rubric_url = supabase.storage.from_("rubrics").get_public_url(filepath)
+        print("⚠️ Using existing Supabase rubric URL:", rubric_url)
 
+    # 🛡️ Safe cleanup for rubric_url
+    if rubric_url:
+        rubric_url = rubric_url.rstrip("?")
+        if "rubrics/rubrics/" in rubric_url:
+            rubric_url = rubric_url.replace("rubrics/rubrics/", "rubrics/")
 
+# Handle additional file
+if additional_file and additional_file.filename:
+    additional_filename = secure_filename(additional_file.filename)
+    additional_path = os.path.join(upload_dir, additional_filename)
+    additional_file.save(additional_path)
 
-    additional_url = ""
-    if additional_file and additional_file.filename:
-        additional_filename = secure_filename(additional_file.filename)
-        additional_path = os.path.join(upload_dir, additional_filename)
-        additional_file.save(additional_path)
+    additional_url = upload_to_supabase(additional_path, additional_filename)
 
-        additional_url = upload_to_supabase(additional_path, additional_filename)
-        if not additional_url:
-            from app.supabase_client import supabase
-            filepath = f"attachments/{additional_filename}"
-            additional_url = supabase.storage.from_("attachments").get_public_url(filepath)
-            print("⚠️ Using existing Supabase attachment URL:", additional_url)
+    if not additional_url:
+        from app.supabase_client import supabase
+        filepath = f"attachments/{additional_filename}"
+        additional_url = supabase.storage.from_("attachments").get_public_url(filepath)
+        print("⚠️ Using existing Supabase attachment URL:", additional_url)
+
+    # 🛡️ Safe cleanup for additional_url
+    if additional_url:
+        additional_url = additional_url.rstrip("?")
+        if "attachments/attachments/" in additional_url:
+            additional_url = additional_url.replace("attachments/attachments/", "attachments/")
+
 
     # ✅ Load existing data
     assignments = load_assignment_data()
