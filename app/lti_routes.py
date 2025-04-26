@@ -30,6 +30,10 @@ from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
 from supabase import create_client
 
+from app.utils.prompt_builder import build_grading_prompt
+
+from app.utils.prompt_builder import build_grading_prompt
+
 from app.supabase_client import upload_to_supabase
 from app.utils.zerogpt_api import check_ai_with_gpt
 
@@ -351,19 +355,20 @@ def grade_docx():
     except Exception as e:
         return f"❌ Failed to load rubric file: {str(e)}", 500
 
-
+    grading_prompt = build_grading_prompt(grading_difficulty)
     prompt = f"""
-You are a helpful AI grader.
+    You are a helpful AI grader.
 
-Assignment Title: {assignment_title}
-Grading Difficulty: {grading_difficulty}
-Student Level: {student_level}
-Feedback Tone: {feedback_tone}
-Total Points: {rubric_total_points}
+    Assignment Title: {assignment_title}
+    Grading Difficulty: {grading_difficulty}
+    Student Level: {student_level}
+    Feedback Tone: {feedback_tone}
+    Total Points: {rubric_total_points}
 
-Rubric:
-{rubric_text}
-"""
+    Rubric:
+    {rubric_text}
+    """
+
     if ai_notes:
         prompt += f"\nInstructor Notes:\n{ai_notes}\n"
     if reference_data:
