@@ -988,37 +988,37 @@ def save_assignment():
     return redirect(f"/admin-dashboard?success={assignment_title}")
 
 
-
 @lti.route("/admin-dashboard", methods=["GET", "POST"])
 def admin_dashboard():
-    from app.supabase_client import supabase
-
     session["tool_role"] = "instructor"  # TEMP for local testing
 
     if session.get("tool_role") != "instructor":
         return "❌ Access denied. Instructors only.", 403
 
-    # ✅ Pull assignments LIVE from Supabase
     try:
-        assignments_response = supabase.table("assignments").select("*").execute()
-        rubric_index = assignments_response.data if assignments_response.data else []
+        # ✅ NEW: Fetch assignments live from Supabase
+        response = supabase.table("assignments").select("*").execute()
+        if response.data is None:
+            rubric_index = []
+        else:
+            rubric_index = response.data
     except Exception as e:
         print("❌ Supabase fetch error (assignments):", e)
+        flash("❌ Error loading assignments.", "danger")
         rubric_index = []
 
-    # ✅ Pull pending feedback (no changes needed here)
     try:
+        # ✅ Fetch pending feedback
         response = supabase.table("submissions").select("*").eq("pending", True).execute()
         pending_feedback = response.data or []
     except Exception as e:
-        print("❌ Supabase fetch error (submissions):", e)
+        print("❌ Supabase fetch error (pending submissions):", e)
         flash("❌ Error loading pending submissions.", "danger")
         pending_feedback = []
 
-    # ✅ Load submission history (if you still use it)
     submission_history = load_submission_history()
 
-    # ✅ Load activity logs (same as before)
+    # ✅ Load activity logs
     log_path = os.path.join(os.path.dirname(__file__), "..", "logs", "activity_log.json")
     if os.path.exists(log_path):
         with open(log_path, "r") as f:
