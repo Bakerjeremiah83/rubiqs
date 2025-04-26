@@ -1492,23 +1492,29 @@ def add_notes_column():
     except Exception as e:
         return f"❌ Error: {str(e)}"
 
-@lti.route('/delete-assignment', methods=['POST'])
+@lti.route("/delete-assignment", methods=["POST"])
 def delete_assignment():
     data = request.get_json()
-    assignment_id = data.get('assignment_id')
+    assignment_title = data.get("assignment_id")
 
-    if not assignment_id:
-        return jsonify({'success': False, 'error': 'Missing assignment ID'}), 400
+    if not assignment_title:
+        return jsonify({"success": False, "error": "Missing assignment_id"}), 400
 
     try:
-        response = supabase.table("assignments").delete().eq("id", assignment_id).execute()
+        # ✅ Load assignments from JSON
+        assignments = load_assignment_data()
+        assignments = list(assignments.values())
 
-        if hasattr(response, "error") and response.error:
-            return jsonify({"error": response.error.message}), 500
+        # ✅ Remove the matching assignment by assignment title
+        assignments = [a for a in assignments if str(a.get("assignment_title", "")) != str(assignment_title)]
+
+        # ✅ Re-save updated assignments list
+        save_assignment_data(assignments)
 
         return jsonify({"success": True})
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
+
 
 
 @lti.route("/release-pending", methods=["GET"])
