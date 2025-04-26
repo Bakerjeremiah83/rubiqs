@@ -215,7 +215,12 @@ def student_test_upload():
         assignment_config=assignment_config
     )
 
+
 def get_total_points_from_rubric(rubric_json):
+    """
+    Calculates the total points from a rubric JSON file.
+    Assumes each criterion has a 'points' field.
+    """
     total_points = 0
     for criterion in rubric_json.get("criteria", []):
         points = criterion.get("points", 0)
