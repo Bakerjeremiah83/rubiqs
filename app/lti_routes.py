@@ -956,6 +956,10 @@ def save_assignment():
     assignments = list(assignments.values())
     assignments = [a for a in assignments if a["assignment_title"] != assignment_title]
 
+    rubric_url = rubric_url or ""
+    additional_url = additional_url or ""
+
+
     # ✅ Add or update assignment
     assignments.append({
         "assignment_title": assignment_title,
