@@ -198,7 +198,7 @@
             </span>
             <a class="instruction-note" href="{{ assignment.rubric_file }}" target="_blank">View</a>
             <button type="button" class="submit-button" style="padding: 0.25rem 0.75rem;"
-              onclick="deleteFile('{{ assignment.id }}', 'rubric')">❌ Remove</button>
+              onclick="deleteFile('{{ assignment.assignment_title }}', 'rubric')">❌ Remove</button>
           </div>
         {% endif %}
         <input type="file" name="rubric_file" id="rubric_file" />
@@ -213,7 +213,7 @@
             </span>
             <a class="instruction-note" href="{{ assignment.additional_file }}" target="_blank">View</a>
             <button type="button" class="submit-button" style="padding: 0.25rem 0.75rem;"
-              onclick="deleteFile('{{ assignment.id }}', 'additional')">❌ Remove</button>
+              onclick="deleteFile('{{ assignment.assignment_title }}', 'additional')">❌ Remove</button>
           </div>
         {% endif %}
         <input type="file" name="additional_file" id="additional_file" />
@@ -270,7 +270,7 @@
     </div>
   
     <button type="submit" class="submit">💾 Save Changes</button>
-    <button type="button" class="submit" style="background-color: #d9534f;" onclick="confirmDeleteAssignment('{{ assignment.id }}')">
+    <button type="button" class="submit" style="background-color: #d9534f;" onclick="confirmDeleteAssignment('{{ assignment.assignment_title }}')">
       🗑 Delete Assignment
     </button>
   </form>
@@ -335,8 +335,7 @@
         alert("Error: " + err.message);
       });
     }
-    </script>
-    
+    </script>    
   
 
 </body>
