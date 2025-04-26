@@ -294,17 +294,32 @@
       <div class="form-group quarter">
         <label for="faith_integration">Enable Gospel-Centered Feedback?</label>
         <div class="require-toggle" style="flex-direction: row; justify-content: flex-start;">
-          <label class="toggle-option {% if rubric_index[0].faith_integration %}active{% endif %}">
-            <input type="radio" name="faith_integration" value="true" {% if rubric_index[0].faith_integration %}checked{% endif %}> YES
+    
+          {% set faith_enabled = rubric_index and rubric_index[0].faith_integration %}
+    
+          <label class="toggle-option {% if faith_enabled %}active{% endif %}">
+            <input type="radio" name="faith_integration" value="true" {% if faith_enabled %}checked{% endif %}> YES
           </label>
-          <label class="toggle-option {% if not rubric_index[0].faith_integration %}active{% endif %}">
-            <input type="radio" name="faith_integration" value="false" {% if not rubric_index[0].faith_integration %}checked{% endif %}> NO
+    
+          <label class="toggle-option {% if rubric_index and not rubric_index[0].faith_integration %}active{% endif %}">
+            <input type="radio" name="faith_integration" value="false" {% if rubric_index and not rubric_index[0].faith_integration %}checked{% endif %}> NO
           </label>
+    
         </div>
+    
         <small style="font-size: 0.85rem; color: #555; display: block; margin-top: 0.5rem;">
           If enabled, gospel-centered themes and scriptures will be incorporated into AI feedback. You’ll be taken to the Gospel-Centered tab to review or edit those settings.
         </small>
       </div>
+    </div>
+    
+    
+        <small style="font-size: 0.85rem; color: #555; display: block; margin-top: 0.5rem;">
+          If enabled, gospel-centered themes and scriptures will be incorporated into AI feedback. You’ll be taken to the Gospel-Centered tab to review or edit those settings.
+        </small>
+      </div>
+    </div>
+    
     
       <!-- Delay Posting Selector -->
       <div class="form-group quarter">
