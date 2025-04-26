@@ -14,12 +14,14 @@ def upload_to_supabase(file, file_name):
     file_path = f"rubrics/{new_file_name}"
     print(f"🆕 Uploading as: {file_path}")
 
-    # Read the file as bytes
+    # Read the file content
     file_content = file.read()
 
     res = supabase.storage.from_("rubrics").upload(file_path, file_content)
-    if res.get("error"):
-        raise Exception(f"Upload failed: {res['error']['message']}")
+
+    # Correct way to check for an error:
+    if hasattr(res, "error") and res.error:
+        raise Exception(f"Upload failed: {res.error['message']}")
 
     public_url = f"{url}/storage/v1/object/public/rubrics/{new_file_name}"
     return public_url
