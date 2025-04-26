@@ -215,6 +215,15 @@ def student_test_upload():
         assignment_config=assignment_config
     )
 
+def get_total_points_from_rubric(rubric_json):
+    total_points = 0
+    for criterion in rubric_json.get("criteria", []):
+        points = criterion.get("points", 0)
+        try:
+            total_points += int(points)
+        except (ValueError, TypeError):
+            continue
+    return total_points
 
 @lti.route("/grade-docx", methods=["POST"])
 def grade_docx():
