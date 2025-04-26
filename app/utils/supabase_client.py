@@ -15,7 +15,7 @@ def upload_to_supabase(file, file_name):
     file_path = f"rubrics/{new_file_name}"
     print(f"🆕 Uploading as: {file_path}")
 
-    res = supabase.storage.from_("rubrics").upload(file_path, file)
+    res = supabase.storage.from_("rubrics").upload(file_path, file.read())
     if res.get("error"):
         raise Exception(f"Upload failed: {res['error']['message']}")
 
