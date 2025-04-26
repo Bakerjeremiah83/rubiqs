@@ -1311,42 +1311,56 @@ from app.models import Assignment
 
 @lti.route("/edit-assignment/<int:assignment_id>", methods=["GET", "POST"])
 def edit_assignment(assignment_id):
+    from app.database import SessionLocal
+    from app.models import Assignment
+    from supabase import create_client
+    import os
+
     session = SessionLocal()
-    
     assignment = session.query(Assignment).filter_by(id=assignment_id).first()
 
     if not assignment:
         return "Assignment not found", 404
 
     if request.method == "POST":
-        assignment.assignment_title = request.form["title"]
-        assignment.total_points = request.form.get("total_points", type=int)
-        assignment.ai_notes = request.form["ai_notes"]
-        assignment.student_level = request.form["student_level"]
-        assignment.grading_difficulty = request.form["grading_difficulty"]
-
-        faith_raw = request.form.get("faith_integration", "false")
-        faith_integration = True if faith_raw.lower() == "true" else False
-        assignment.faith_integration = faith_integration
-        assignment.delay_posting = int(request.form.get("delay_posting", 0))
-
-
-        # Upload rubric file if a new one was provided
-        if "rubric_file" in request.files:
-            file = request.files["rubric_file"]
-            if file and file.filename:
-                rubric_url = upload_to_supabase(file)
-                assignment.rubric_file = rubric_url
-
         try:
+            print("📥 POST data:", request.form)
+
+            assignment.assignment_title = request.form["title"]
+            assignment.total_points = request.form.get("total_points", type=int)
+            assignment.ai_notes = request.form["ai_notes"]
+            assignment.student_level = request.form["student_level"]
+            assignment.grading_difficulty = request.form["grading_difficulty"]
+
+            faith_raw = request.form.get("faith_integration", "false")
+            assignment.faith_integration = True if faith_raw.lower() == "true" else False
+
+            # 💥 Potential crash line
+            delay_raw = request.form.get("delay_posting", 0)
+            print("🕒 delay_posting =", delay_raw)
+            assignment.delay_posting = int(delay_raw)
+
+            # Upload rubric file if provided
+            if "rubric_file" in request.files:
+                file = request.files["rubric_file"]
+                if file and file.filename:
+                    print(f"📤 Uploading new rubric: {file.filename}")
+                    from app.utils.supabase_client import upload_to_supabase
+                    rubric_url = upload_to_supabase(file)
+                    assignment.rubric_file = rubric_url
+                    print("✅ New rubric URL:", rubric_url)
+
             session.commit()
-            flash("Assignment updated successfully!", "success")
+            print("✅ Assignment saved")
             return redirect(url_for("lti.view_assignments"))
+
         except Exception as e:
             session.rollback()
-            flash("Error saving changes.", "danger")
+            print("❌ Exception in edit_assignment:", e)
+            return "Internal Server Error", 500
 
     return render_template("edit_assignment.html", assignment=assignment)
+
 
 @lti.route("/view-assignments")
 def view_assignments():
