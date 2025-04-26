@@ -1359,55 +1359,55 @@ def delete_file():
     import os
     from flask import request, jsonify
     from supabase import create_client
-    from .db import SessionLocal
-    from .models import Assignment
-
-
-    data = request.get_json()
-    assignment_id = data.get("assignment_id")
-    file_type = data.get("file_type")
-
-    print(f"➡️ Received request to delete file. Assignment ID: {assignment_id}, Type: {file_type}")
-
-    if not assignment_id or file_type not in ["rubric", "additional"]:
-        return jsonify({"success": False, "error": "Missing data"}), 400
-
-    # DB setup
-    session = SessionLocal()
-    assignment = session.query(Assignment).filter_by(id=assignment_id).first()
-
-    if not assignment:
-        return jsonify({"success": False, "error": "Assignment not found"}), 404
-
-    # Supabase setup
-    supabase = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
-    deleted_filename = ""
+    from app.database import SessionLocal
+    from app.models import Assignment
 
     try:
-        if file_type == "rubric":
-            deleted_filename = assignment.rubric_file.split("/")[-1] if assignment.rubric_file else ""
+        data = request.get_json()
+        print("📥 Incoming delete request:", data)
+
+        assignment_id = data.get("assignment_id")
+        file_type = data.get("file_type")
+
+        if not assignment_id or file_type not in ["rubric", "additional"]:
+            print("❌ Missing or invalid data")
+            return jsonify({"success": False, "error": "Missing or invalid data"}), 400
+
+        session = SessionLocal()
+        assignment = session.query(Assignment).filter_by(id=assignment_id).first()
+
+        if not assignment:
+            print("❌ Assignment not found")
+            return jsonify({"success": False, "error": "Assignment not found"}), 404
+
+        supabase = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
+
+        deleted_filename = ""
+        if file_type == "rubric" and assignment.rubric_file:
+            deleted_filename = assignment.rubric_file.split("/")[-1]
             assignment.rubric_file = None
-        elif file_type == "additional":
-            deleted_filename = assignment.additional_file.split("/")[-1] if assignment.additional_file else ""
+        elif file_type == "additional" and assignment.additional_file:
+            deleted_filename = assignment.additional_file.split("/")[-1]
             assignment.additional_file = None
 
-        # Try removing from Supabase
         if deleted_filename:
             deleted_filename = deleted_filename.lstrip("/")
-            print(f"🗑️ Deleting file from Supabase: {deleted_filename}")
+            print(f"🗑️ Attempting to delete file: {deleted_filename}")
             res = supabase.storage.from_("rubrics").remove([deleted_filename])
-            print(f"✅ Supabase delete response: {res}")
-        
+            print("✅ Supabase response:", res)
+
         session.commit()
         return jsonify({"success": True})
-    
+
     except Exception as e:
-        session.rollback()
-        print(f"❌ Error deleting file: {e}")
+        print("❌ Exception caught in /delete-file route:", e)
         return jsonify({"success": False, "error": str(e)}), 500
 
     finally:
-        session.close()
+        try:
+            session.close()
+        except:
+            pass
 
 
 @lti.route("/dev/add-notes-column")
