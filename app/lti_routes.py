@@ -899,13 +899,21 @@ def save_assignment():
         rubric_file.save(rubric_path)
 
         rubric_url = upload_to_supabase(rubric_path, rubric_filename)
-        rubric_url = rubric_url.rstrip("?") if rubric_url else None
 
         if not rubric_url:
             from app.supabase_client import supabase
             filepath = f"rubrics/{rubric_filename}"
             rubric_url = supabase.storage.from_("rubrics").get_public_url(filepath)
             print("⚠️ Using existing Supabase rubric URL:", rubric_url)
+
+        
+        # 🛡️ Safe cleanup for additional_url too
+        if additional_url:
+            additional_url = additional_url.rstrip("?")
+            if "attachments/attachments/" in additional_url:
+                additional_url = additional_url.replace("attachments/attachments/", "attachments/")
+
+
 
     additional_url = ""
     if additional_file and additional_file.filename:
