@@ -429,11 +429,15 @@ def grade_docx():
     if assignment_config.get("instructor_approval"):
         print("🧪 Instructor review required: saving temporarily")
     
+        submission_time = datetime.utcnow()
+
         supabase.table("submissions").insert({
             "submission_id": submission_id,
             "student_id": submission_data["student_id"],
             "assignment_title": assignment_title,
-            "timestamp": submission_data["timestamp"],
+            "submission_time": submission_time.isoformat(),  # ✅ NEW
+            "delay_hours": 0,                                # ✅ 0 delay for instructor review
+            "ready_to_post": False,                          # ✅ Always false until instructor approves
             "score": score,
             "feedback": feedback,
             "student_text": full_text,
@@ -442,6 +446,7 @@ def grade_docx():
             "pending": True,
             "reviewed": False
         }).execute()
+
 
         log_gpt_interaction(assignment_title, prompt, feedback, score)
 
@@ -470,20 +475,24 @@ def grade_docx():
 
             release_time = datetime.utcnow() + timedelta(hours=delay_hours)
 
+            submission_time = datetime.utcnow()
+
             supabase.table("submissions").insert({
                 "submission_id": submission_id,
                 "student_id": submission_data["student_id"],
                 "assignment_title": assignment_title,
-                "timestamp": submission_data["timestamp"],
+                "submission_time": submission_time.isoformat(),  # ✅ NEW
+                "delay_hours": delay_hours,                      # ✅ delay from assignment config
+                "ready_to_post": False,                          # ✅ Always false initially
                 "score": score,
                 "feedback": feedback,
                 "student_text": full_text,
                 "ai_check_result": None,
                 "instructor_notes": "",
                 "pending": True,
-                "reviewed": False,
-                "release_time": release_time.isoformat()
+                "reviewed": False
             }).execute()
+
 
             log_gpt_interaction(assignment_title, prompt, feedback, score)
 
@@ -960,8 +969,7 @@ def save_assignment():
         "feedback_tone": "supportive",
         "ai_notes": custom_ai
     }).execute()
-
-    print("🧪 Supabase insert response:", response)
+    
 
     # ✅ Debug print statements BEFORE redirect
     print("🧪 Saving assignment:", assignment_title)
@@ -1559,5 +1567,36 @@ def release_pending_feedback():
         print("❌ Fatal error in release process:", str(e))
         return f"❌ Internal error: {str(e)}", 500
 
+@lti.route("/run-delay-checker")
+def run_delay_checker():
+    from datetime import datetime, timedelta
+
+    # Fetch submissions that are still waiting
+    response = supabase.table("submissions").select("*").eq("ready_to_post", False).execute()
+
+    if not response.data:
+        print("✅ No submissions pending release.")
+        return "✅ No pending submissions to check.", 200
+
+    now = datetime.utcnow()
+    updates_made = 0
+
+    for submission in response.data:
+        try:
+            submission_time = datetime.fromisoformat(submission["submission_time"].replace("Z", ""))
+            delay_hours = submission.get("delay_hours", 0)
+            release_time = submission_time + timedelta(hours=delay_hours)
+
+            if now >= release_time:
+                # ✅ Update ready_to_post = True
+                supabase.table("submissions").update({"ready_to_post": True}).eq("submission_id", submission["submission_id"]).execute()
+                updates_made += 1
+
+        except Exception as e:
+            print(f"❌ Error checking submission {submission.get('submission_id')}: {str(e)}")
+
+    print(f"✅ Delay check complete. Updated {updates_made} submissions.")
+
+    return f"✅ Delay check complete. Updated {updates_made} submissions.", 200
 
 
