@@ -411,7 +411,7 @@ def grade_docx():
         "submission_id": submission_id,
         "student_id": "demo_student_001",
         "assignment_title": assignment_title,
-        "timestamp": datetime.utcnow().isoformat(),
+        "submission_time": datetime.utcnow().isoformat(),
         "score": score,
         "feedback": feedback,
         "student_text": full_text,
@@ -1089,7 +1089,7 @@ def instructor_review():
         supabase.table("submissions").update({
             "score": updated_score,
             "feedback": updated_feedback,
-            "timestamp": datetime.utcnow().isoformat(),
+            "submission_time": datetime.utcnow().isoformat(),
             "reviewed": True,
             "pending": False
         }).eq("submission_id", submission_id).execute()
