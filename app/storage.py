@@ -117,20 +117,6 @@ def store_submission_history(data):
     finally:
         session.close()
 
-def upload_to_supabase(file_path, filename, folder="rubrics"):
-    try:
-        with open(file_path, "rb") as f:
-            data = f.read()
-
-        filepath = f"{folder}/{filename}"
-        supabase.storage.from_("rubrics").upload(filepath, data)
-        supabase.storage.from_("rubrics").update(filepath, {"cacheControl": "3600", "upsert": True})
-
-        public_url = supabase.storage.from_("rubrics").get_public_url(filepath)
-        return public_url
-    except Exception as e:
-        print("❌ Supabase Upload Failed:", str(e))
-        return None
 
 def delete_pending_feedback(submission_id):
     session = SessionLocal()

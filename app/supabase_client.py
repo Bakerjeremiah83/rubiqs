@@ -1,4 +1,5 @@
-# File: app/supabase_client.py
+# app/supabase_client.py
+
 from supabase import create_client
 from dotenv import load_dotenv
 import os
@@ -21,7 +22,7 @@ def upload_to_supabase(file_path, file_name):
         supabase.storage.from_("rubrics").upload(
             file_name,
             data,
-            {"content-type": content_type}
+            {"content-type": content_type, "upsert": True}  # ✅ Upsert = overwrite old rubric
         )
 
         public_url = f"{SUPABASE_URL}/storage/v1/object/public/rubrics/{file_name}"
@@ -29,4 +30,3 @@ def upload_to_supabase(file_path, file_name):
     except Exception as e:
         print("❌ Failed to upload to Supabase:", str(e))
         return None
-
