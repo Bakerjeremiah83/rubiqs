@@ -521,5 +521,41 @@
     }, 4000);
   </script>
 {% endif %}
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll(".delete-btn").forEach(button => {
+      button.addEventListener("click", function (e) {
+        e.preventDefault();
+        const assignmentTitle = button.getAttribute("data-assignment-title");
+        if (!assignmentTitle) {
+          alert("❌ Assignment title not found.");
+          return;
+        }
+  
+        if (confirm(`Are you sure you want to delete "${assignmentTitle}"?`)) {
+          fetch("/delete-assignment", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ assignment_title: assignmentTitle })
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              alert("✅ Assignment deleted successfully!");
+              location.reload();
+            } else {
+              alert("❌ Failed to delete assignment: " + (data.error || "Unknown error."));
+            }
+          })
+          .catch(error => {
+            console.error("❌ Error deleting assignment:", error);
+            alert("❌ Error deleting assignment.");
+          });
+        }
+      });
+    });
+  });
+  </script>
 </body>
 </html>

@@ -1340,10 +1340,8 @@ def post_grade_to_lms(session, score, feedback):
 from app.database import SessionLocal
 from app.models import Assignment
 
-@lti.route("/edit-assignment/<assignment_title>", methods=["GET", "POST"])
-def edit_assignment(assignment_title):
-    assignment_title = assignment_title.replace("%20", " ")  # Handle spaces
-
+@lti.route("/edit-assignment/<int:assignment_id>", methods=["GET", "POST"])
+def edit_assignment(assignment_id):
     if request.method == "POST":
         print("🚀 Save Assignment POST route hit")
         try:
@@ -1367,7 +1365,7 @@ def edit_assignment(assignment_title):
                 "grading_difficulty": grading_difficulty,
                 "faith_integration": faith_integration,
                 "delay_posting": delay_raw
-            }).eq("assignment_title", assignment_title).execute()
+            }).eq("id", assignment_id).execute()
 
             if hasattr(response, "error") and response.error:
                 print("❌ Supabase error:", response.error.message)
@@ -1381,12 +1379,13 @@ def edit_assignment(assignment_title):
             return "Internal Server Error", 500
 
     # GET request
-    response = supabase.table("assignments").select("*").eq("assignment_title", assignment_title).single().execute()
+    response = supabase.table("assignments").select("*").eq("id", assignment_id).single().execute()
     if response.data is None:
         return "Assignment not found", 404
 
     assignment = response.data
     return render_template("edit_assignment.html", assignment=assignment)
+
 
 @lti.route("/view-assignments")
 def view_assignments():
