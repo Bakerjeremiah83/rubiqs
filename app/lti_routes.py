@@ -420,7 +420,7 @@ def grade_docx():
     submission_id = str(uuid.uuid4())
     submission_data = {
         "submission_id": submission_id,
-        "student_id": "demo_student_001",
+        "student_id": "demo_student_001",  # Update later with real student_id if needed
         "assignment_title": assignment_title,
         "submission_time": datetime.utcnow().isoformat(),
         "score": score,
@@ -435,20 +435,16 @@ def grade_docx():
 
     if assignment_config.get("instructor_approval"):
         print("🧪 Instructor review required: saving temporarily")
-    
         submission_time = datetime.utcnow()
-
-        # Calculate release_time based on delay_hours
         release_time = datetime.utcnow() + timedelta(hours=delay_hours)
 
-        # Save to Supabase with release_time field
         supabase.table("submissions").insert({
             "submission_id": submission_id,
             "student_id": submission_data["student_id"],
             "assignment_title": assignment_title,
-            "submission_time": submission_time.isoformat(),  # Make sure submission_time is saved correctly
-            "delay_hours": delay_hours,                      # The delay time for posting
-            "ready_to_post": False,                          # Initially false until release time has passed
+            "submission_time": submission_time.isoformat(),
+            "delay_hours": delay_hours,
+            "ready_to_post": False,
             "score": score,
             "feedback": feedback,
             "student_text": full_text,
@@ -456,62 +452,48 @@ def grade_docx():
             "instructor_notes": "",
             "pending": True,
             "reviewed": False,
-            "release_time": release_time.isoformat()  # Save the calculated release_time in the database
+            "release_time": release_time.isoformat()
         }).execute()
-
 
         log_gpt_interaction(assignment_title, prompt, feedback, score)
 
         return render_template(
             "feedback.html",
-            score=score,
-            feedback=feedback,
-            rubric_total_points=rubric_total_points,
-            user_roles=session.get("launch_data", {}).get("https://purl.imsglobal.org/spec/lti/claim/roles", []),
-            pending_message="This submission requires instructor review. Your feedback is saved, and your score will be posted after approval."
+            pending_message="✅ This submission requires instructor review. Your feedback will be posted after approval."
+        )
+
+    elif delay_hours > 0:
+        print(f"🧪 Delaying posting for {delay_hours} hours")
+        submission_time = datetime.utcnow()
+        release_time = datetime.utcnow() + timedelta(hours=delay_hours)
+
+        supabase.table("submissions").insert({
+            "submission_id": submission_id,
+            "student_id": submission_data["student_id"],
+            "assignment_title": assignment_title,
+            "submission_time": submission_time.isoformat(),
+            "delay_hours": delay_hours,
+            "ready_to_post": False,
+            "score": score,
+            "feedback": feedback,
+            "student_text": full_text,
+            "ai_check_result": None,
+            "instructor_notes": "",
+            "pending": True,
+            "reviewed": False,
+            "release_time": release_time.isoformat()
+        }).execute()
+
+        log_gpt_interaction(assignment_title, prompt, feedback, score)
+
+        return render_template(
+            "feedback.html",
+            pending_message=f"⏳ This submission will be released after {delay_hours} hour(s)."
         )
 
     else:
-
-        if delay_hours > 0:
-
-            # Calculate release_time based on delay_hours
-            release_time = datetime.utcnow() + timedelta(hours=delay_hours)
-
-            # Save to Supabase with release_time field
-            supabase.table("submissions").insert({
-                "submission_id": submission_id,
-                "student_id": submission_data["student_id"],
-                "assignment_title": assignment_title,
-                "submission_time": submission_time.isoformat(),  # Make sure submission_time is saved correctly
-                "delay_hours": delay_hours,                      # The delay time for posting
-                "ready_to_post": False,                          # Initially false until release time has passed
-                "score": score,
-                "feedback": feedback,
-                "student_text": full_text,
-                "ai_check_result": None,
-                "instructor_notes": "",
-                "pending": True,
-                "reviewed": False,
-                "release_time": release_time.isoformat()  # Save the calculated release_time in the database
-            }).execute()
-
-
-
-            log_gpt_interaction(assignment_title, prompt, feedback, score)
-
-            return render_template(
-                "feedback.html",
-                score=score,
-                feedback=feedback,
-                rubric_total_points=rubric_total_points,
-                user_roles=session.get("launch_data", {}).get("https://purl.imsglobal.org/spec/lti/claim/roles", []),
-                pending_message=f"This submission will be released after a delay of {delay_hours} hour(s)."
-            )
-
-        # ✅ Immediate grading if no delay
+        print("🧪 Immediate grading and posting")
         post_grade_to_lms(session, score, feedback)
-
         log_gpt_interaction(assignment_title, prompt, feedback, score)
 
         if FERPA_SAFE_MODE:
@@ -531,7 +513,6 @@ def grade_docx():
                 rubric_total_points=rubric_total_points,
                 user_roles=session.get("launch_data", {}).get("https://purl.imsglobal.org/spec/lti/claim/roles", [])
             )
-
 
 
 @lti.route("/review-feedback", methods=["GET", "POST"])
