@@ -930,7 +930,6 @@ def save_assignment():
         flash("❌ Rubric upload failed. Please try uploading the rubric again.", "error")
         return redirect(url_for('lti.view_assignments'))
 
-
     # Handle additional file upload
     if additional_file and additional_file.filename:
         additional_filename = secure_filename(additional_file.filename)
@@ -946,8 +945,8 @@ def save_assignment():
     rubric_url = rubric_url or ""
     additional_url = additional_url or ""
 
-    # Save directly to Supabase
-    supabase.table("assignments").insert({
+    # ✅ Save directly to Supabase and capture response
+    response = supabase.table("assignments").insert({
         "assignment_title": assignment_title,
         "rubric_file": rubric_url,
         "additional_file": additional_url,
@@ -961,11 +960,18 @@ def save_assignment():
         "ai_notes": custom_ai
     }).execute()
 
+    # ✅ Debug print statements BEFORE redirect
     print("🧪 Saving assignment:", assignment_title)
     print("🧪 Rubric URL:", rubric_url)
     print("🧪 Additional file URL:", additional_url)
-    print("✅ Successfully saved assignment:", assignment_title)
 
+    # ✅ Check if insert succeeded
+    if hasattr(response, 'error') and response.error:
+        flash(f"❌ Error saving assignment: {response.error['message']}", "error")
+        return redirect(url_for('lti.view_assignments'))
+
+    # ✅ No error, proceed normally
+    flash("✅ Assignment saved successfully.", "success")
     return redirect(f"/admin-dashboard?success={assignment_title}")
 
 
