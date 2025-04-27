@@ -19,3 +19,5 @@ ENV PYTHONPATH=/app
 # Run the app using gunicorn from the app.main module
 CMD ["gunicorn", "-b", "0.0.0.0:8000", "app.main:app"]
 
+# For the background worker, specify it in Render settings when creating a worker
+# (Do not include ENTRYPOINT here unless using it directly in Docker, which is not recommended for workers)

@@ -431,21 +431,27 @@ def grade_docx():
     
         submission_time = datetime.utcnow()
 
+        # Calculate release_time based on delay_hours
+        release_time = datetime.utcnow() + timedelta(hours=delay_hours)
+
+        # Save to Supabase with release_time field
         supabase.table("submissions").insert({
             "submission_id": submission_id,
             "student_id": submission_data["student_id"],
             "assignment_title": assignment_title,
-            "submission_time": submission_time.isoformat(),  # ✅ NEW
-            "delay_hours": 0,                                # ✅ 0 delay for instructor review
-            "ready_to_post": False,                          # ✅ Always false until instructor approves
+            "submission_time": submission_time.isoformat(),  # Make sure submission_time is saved correctly
+            "delay_hours": delay_hours,                      # The delay time for posting
+            "ready_to_post": False,                          # Initially false until release time has passed
             "score": score,
             "feedback": feedback,
             "student_text": full_text,
             "ai_check_result": None,
             "instructor_notes": "",
             "pending": True,
-            "reviewed": False
+            "reviewed": False,
+            "release_time": release_time.isoformat()  # Save the calculated release_time in the database
         }).execute()
+
 
 
         log_gpt_interaction(assignment_title, prompt, feedback, score)
@@ -474,25 +480,27 @@ def grade_docx():
         if delay_hours > 0:
             from datetime import timedelta
 
+            # Calculate release_time based on delay_hours
             release_time = datetime.utcnow() + timedelta(hours=delay_hours)
 
-            submission_time = datetime.utcnow()
-
+            # Save to Supabase with release_time field
             supabase.table("submissions").insert({
                 "submission_id": submission_id,
                 "student_id": submission_data["student_id"],
                 "assignment_title": assignment_title,
-                "submission_time": submission_time.isoformat(),  # ✅ NEW
-                "delay_hours": delay_hours,                      # ✅ delay from assignment config
-                "ready_to_post": False,                          # ✅ Always false initially
+                "submission_time": submission_time.isoformat(),  # Make sure submission_time is saved correctly
+                "delay_hours": delay_hours,                      # The delay time for posting
+                "ready_to_post": False,                          # Initially false until release time has passed
                 "score": score,
                 "feedback": feedback,
                 "student_text": full_text,
                 "ai_check_result": None,
                 "instructor_notes": "",
                 "pending": True,
-                "reviewed": False
+                "reviewed": False,
+                "release_time": release_time.isoformat()  # Save the calculated release_time in the database
             }).execute()
+
 
 
             log_gpt_interaction(assignment_title, prompt, feedback, score)
@@ -1584,12 +1592,12 @@ def run_delay_checker():
 
     for submission in response.data:
         try:
-            submission_time = datetime.fromisoformat(submission["submission_time"].replace("Z", ""))
-            delay_hours = submission.get("delay_hours", 0)
-            release_time = submission_time + timedelta(hours=delay_hours)
+            # Get the release_time from the database (this is already stored when you save submissions)
+            release_time = datetime.fromisoformat(submission["release_time"].replace("Z", ""))
 
+            # Check if the current time is greater than or equal to the release time
             if now >= release_time:
-                # ✅ Update ready_to_post = True
+                # Update ready_to_post to True if delay has expired
                 supabase.table("submissions").update({"ready_to_post": True}).eq("submission_id", submission["submission_id"]).execute()
                 updates_made += 1
 
@@ -1599,5 +1607,7 @@ def run_delay_checker():
     print(f"✅ Delay check complete. Updated {updates_made} submissions.")
 
     return f"✅ Delay check complete. Updated {updates_made} submissions.", 200
+
+
 
 
