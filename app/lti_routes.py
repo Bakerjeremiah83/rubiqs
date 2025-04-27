@@ -245,6 +245,17 @@ def grade_docx():
     assignment_config = load_assignment_config(assignment_title)
     print("🧪 SESSION CONTENTS:", session)
 
+    delay_setting = assignment_config.get("delay_posting", "immediate")
+    delay_map = {
+        "immediate": 0,
+        "1m": 0.0166,
+        "12h": 12,
+        "24h": 24,
+        "36h": 36,
+        "48h": 48
+    }
+    delay_hours = delay_map.get(delay_setting, 0)
+
     print("🧪 Grading assignment:", assignment_title)
     print("🧪 Assignment config loaded:", assignment_config)
 
@@ -461,16 +472,6 @@ def grade_docx():
         )
 
     else:
-        delay_setting = assignment_config.get("delay_posting", "immediate")
-        delay_map = {
-            "immediate": 0,
-            "1m": 0.0166,
-            "12h": 12,
-            "24h": 24,
-            "36h": 36,
-            "48h": 48
-        }
-        delay_hours = delay_map.get(delay_setting, 0)
 
         if delay_hours > 0:
 
