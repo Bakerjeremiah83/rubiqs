@@ -473,7 +473,6 @@ def grade_docx():
         delay_hours = delay_map.get(delay_setting, 0)
 
         if delay_hours > 0:
-            from datetime import timedelta
 
             # Calculate release_time based on delay_hours
             release_time = datetime.utcnow() + timedelta(hours=delay_hours)
