@@ -1021,8 +1021,12 @@ def admin_dashboard():
 @lti.route("/instructor-review/accept", methods=["POST"])
 def accept_review():
     submission_id = request.form.get("submission_id")
+    
+    # ✅ Safer handling if submission_id is missing
     if not submission_id:
-        return "❌ Submission ID missing", 400
+        flash("❌ Error: Missing submission ID. Cannot approve this submission.", "error")
+        return redirect(url_for('lti.instructor_review'))
+
 
     # ✅ Check if Canvas AGS is supported
     if session.get("platform") == "canvas" and session.get("lineitem_url") and session.get("ags_token"):

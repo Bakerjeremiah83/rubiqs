@@ -64,6 +64,8 @@
 
 
       <form method="POST">
+        <input type="hidden" name="submission_id" value="{{ current_review.submission_id }}">
+        
         <label for="score">Score</label>
         <input type="number" name="score" value="{{ current_review.score }}" min="0" max="100" required>
       
