@@ -1357,7 +1357,7 @@ def edit_assignment(assignment_id):
 
             delay_raw = request.form.get("delay_posting", "immediate")
 
-            # ✅ Update Supabase assignment record
+            # ✅ Update Supabase assignment record by ID
             response = supabase.table("assignments").update({
                 "total_points": total_points,
                 "ai_notes": ai_notes,
@@ -1378,13 +1378,14 @@ def edit_assignment(assignment_id):
             print("❌ Exception in edit_assignment:", e)
             return "Internal Server Error", 500
 
-    # GET request
+    # GET request: fetch assignment by ID
     response = supabase.table("assignments").select("*").eq("id", assignment_id).single().execute()
     if response.data is None:
         return "Assignment not found", 404
 
     assignment = response.data
     return render_template("edit_assignment.html", assignment=assignment)
+
 
 
 @lti.route("/view-assignments")
