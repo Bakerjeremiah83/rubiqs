@@ -234,7 +234,6 @@ def get_total_points_from_rubric(rubric_json):
 
 @lti.route("/grade-docx", methods=["POST"])
 def grade_docx():
-
     print(f"🔐 FERPA_SAFE_MODE: {FERPA_SAFE_MODE}")
 
     assignment_title = session.get("launch_data", {}).get(
@@ -321,7 +320,6 @@ def grade_docx():
             return f"❌ Exception while downloading rubric: {str(e)}", 500
     else:
         return "❌ No rubric file found for this assignment.", 400
-
 
     grading_difficulty = assignment_config.get("grading_difficulty", "balanced")
     student_level = assignment_config.get("student_level", "college")
@@ -429,7 +427,7 @@ def grade_docx():
     
         submission_time = datetime.utcnow()
 
-       # Calculate release_time based on delay_hours
+        # Calculate release_time based on delay_hours
         release_time = datetime.utcnow() + timedelta(hours=delay_hours)
 
         # Save to Supabase with release_time field
@@ -533,6 +531,7 @@ def grade_docx():
                 rubric_total_points=rubric_total_points,
                 user_roles=session.get("launch_data", {}).get("https://purl.imsglobal.org/spec/lti/claim/roles", [])
             )
+
 
 
 @lti.route("/review-feedback", methods=["GET", "POST"])
