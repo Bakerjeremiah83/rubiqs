@@ -463,6 +463,7 @@ def grade_docx():
         delay_setting = assignment_config.get("delay_posting", "immediate")
         delay_map = {
             "immediate": 0,
+            "1m": 0.0166,
             "12h": 12,
             "24h": 24,
             "36h": 36,
