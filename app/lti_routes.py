@@ -248,7 +248,7 @@ def grade_docx():
     print("🧪 Grading assignment:", assignment_title)
     print("🧪 Assignment config loaded:", assignment_config)
 
-    if not assignment_config or not assignment_config.get("rubric_file"):
+    if not assignment_config or not assignment_config.get("rubric_file", "").strip():
         return f"❌ Assignment setup incomplete. Missing configuration or rubric for: {assignment_title}", 400
 
     print("📥 /grade-docx hit")
