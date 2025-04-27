@@ -118,17 +118,18 @@
         </thead>
         <tbody>
           {% for assignment in assignments %}
-            <tr>
-              <td>{{ assignment.assignment_title }}</td>
-              <td>{{ assignment.total_points }}</td>
-              <td>{{ assignment.student_level|capitalize }}</td>
-              <td>{% if assignment.faith_integration %}✅{% else %}❌{% endif %}</td>
-              <td style="display: flex; gap: 0.5rem;">
-                <a href="/edit-assignment/{{ assignment.assignment_title }}" class="submit-button">Edit</a>
-                <button onclick="confirmDeleteAssignment('{{ assignment.assignment_title }}')" class="submit-button" style="background-color: #d9534f;">🗑</button>
-              </td>
-            </tr>
+          <tr>
+            <td>{{ assignment.assignment_title }}</td>
+            <td>{{ assignment.total_points }}</td>
+            <td>{{ assignment.student_level|capitalize }}</td>
+            <td>{% if assignment.faith_integration %}✅{% else %}❌{% endif %}</td>
+            <td style="display: flex; gap: 0.5rem;">
+              <a href="/edit-assignment/{{ assignment.id }}" class="submit-button">✏️ Edit</a>
+              <button class="delete-btn" data-assignment-title="{{ assignment.assignment_title }}" style="background-color: #d9534f; border: none; color: white; padding: 0.5rem 0.75rem; border-radius: 8px; cursor: pointer;">🗑️ Delete</button>
+            </td>
+          </tr>
           {% endfor %}
+
         </tbody>
       </table>
     {% else %}
@@ -140,28 +141,40 @@
     </div>
   </div>
   <script>
-    function deleteAssignment(assignmentTitle) {
-      if (!confirm("Are you sure you want to permanently delete this assignment?")) return;
+    document.addEventListener("DOMContentLoaded", function () {
+      document.querySelectorAll(".delete-btn").forEach(button => {
+        button.addEventListener("click", function (e) {
+          e.preventDefault();
+          const assignmentTitle = button.getAttribute("data-assignment-title");
+          if (!assignmentTitle) {
+            alert("❌ Assignment title not found.");
+            return;
+          }
     
-      fetch('/delete-assignment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ assignment_title: assignmentTitle })
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          alert('Assignment deleted successfully.');
-          location.reload(); // 🔥 Refresh to show updated list
-        } else {
-          alert('Error deleting assignment: ' + (data.error || 'Unknown error.'));
-        }
-      })
-      .catch(error => {
-        alert('Request failed: ' + error.message);
+          if (confirm(`Are you sure you want to delete "${assignmentTitle}"?`)) {
+            fetch("/delete-assignment", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ assignment_title: assignmentTitle })
+            })
+            .then(response => response.json())
+            .then(data => {
+              if (data.success) {
+                alert("✅ Assignment deleted successfully!");
+                location.reload();
+              } else {
+                alert("❌ Failed to delete assignment: " + (data.error || "Unknown error."));
+              }
+            })
+            .catch(error => {
+              console.error("❌ Error deleting assignment:", error);
+              alert("❌ Error deleting assignment.");
+            });
+          }
+        });
       });
-    }
-    </script>
+    });
+    </script>    
       
 
 </body>
