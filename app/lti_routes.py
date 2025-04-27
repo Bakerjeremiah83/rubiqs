@@ -25,6 +25,7 @@ import openai
 from io import BytesIO
 from docx import Document
 from pdfminer.high_level import extract_text as extract_pdf_text
+from datetime import datetime, timedelta
 from datetime import datetime
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
