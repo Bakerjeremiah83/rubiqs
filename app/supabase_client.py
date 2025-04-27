@@ -1,22 +1,21 @@
+from supabase import create_client
+from dotenv import load_dotenv
+import os
+import mimetypes
+
+# ✅ Load environment and create global supabase
+load_dotenv()
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+
 def upload_to_supabase(file_path, file_name):
-    from supabase import create_client
-    from dotenv import load_dotenv
-    import os
-    import mimetypes
-
-    load_dotenv()
-    SUPABASE_URL = os.getenv("SUPABASE_URL")
-    SUPABASE_KEY = os.getenv("SUPABASE_KEY")
-
-    supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-
     content_type, _ = mimetypes.guess_type(file_name)
     content_type = content_type or "application/octet-stream"
 
     with open(file_path, "rb") as f:
         data = f.read()
 
-    # ✅ Upload without 'upsert' in headers/options
     response = supabase.storage.from_("rubrics").upload(
         file_name,
         data,
