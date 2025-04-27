@@ -928,7 +928,8 @@ def save_assignment():
 
     if not rubric_url:
         flash("❌ Rubric upload failed. Please try uploading the rubric again.", "error")
-        return redirect(url_for('lti.assignment_setup'))
+        return redirect(url_for('lti.view_assignments'))
+
 
     # Handle additional file upload
     if additional_file and additional_file.filename:
