@@ -52,7 +52,7 @@ lti = Blueprint('lti', __name__)
 
 def load_assignment_config(assignment_title):
     try:
-        response = supabase.table("assignments").select("*").eq("assignment_title", assignment_title).single().execute()
+        response = supabase.table("assignments").select("*").ilike("assignment_title", f"%{assignment_title.strip()}%").maybe_single().execute()
         if response.data:
             return response.data
     except Exception as e:
