@@ -25,13 +25,10 @@ import openai
 from io import BytesIO
 from docx import Document
 from pdfminer.high_level import extract_text as extract_pdf_text
-from datetime import datetime, timedelta
-from datetime import datetime
+from datetime import datetime, timedelta 
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
 from supabase import create_client
-
-from app.utils.prompt_builder import build_grading_prompt
 
 from app.utils.prompt_builder import build_grading_prompt
 
