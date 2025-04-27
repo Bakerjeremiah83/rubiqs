@@ -429,7 +429,7 @@ def grade_docx():
     
         submission_time = datetime.utcnow()
 
-        # Calculate release_time based on delay_hours
+       # Calculate release_time based on delay_hours
         release_time = datetime.utcnow() + timedelta(hours=delay_hours)
 
         # Save to Supabase with release_time field
@@ -449,7 +449,6 @@ def grade_docx():
             "reviewed": False,
             "release_time": release_time.isoformat()  # Save the calculated release_time in the database
         }).execute()
-
 
 
         log_gpt_interaction(assignment_title, prompt, feedback, score)
@@ -1591,7 +1590,7 @@ def run_delay_checker():
     for submission in response.data:
         try:
             # Get the release_time from the database (this is already stored when you save submissions)
-            release_time = datetime.fromisoformat(submission["release_time"].replace("Z", ""))
+            release_time = datetime.fromisoformat(submission["release_time"].replace("Z", ""))  # Remove 'Z' if present
 
             # Check if the current time is greater than or equal to the release time
             if now >= release_time:
