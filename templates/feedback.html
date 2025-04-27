@@ -102,9 +102,12 @@
     </div>
       x{% endif %}
 
-    <div class="score">
+      {% if not pending %}
+      <div class="score">
       Score: {{ score }} / {{ rubric_total_points }}
     </div>
+    {% endif %}
+
 
     <div class="feedback-box">
       {{ feedback }}
