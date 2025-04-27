@@ -926,6 +926,10 @@ def save_assignment():
             if "rubrics/rubrics/" in rubric_url:
                 rubric_url = rubric_url.replace("rubrics/rubrics/", "rubrics/")
 
+    if not rubric_url:
+        flash("❌ Rubric upload failed. Please try uploading the rubric again.", "error")
+        return redirect(url_for('lti.assignment_setup'))
+
     # Handle additional file upload
     if additional_file and additional_file.filename:
         additional_filename = secure_filename(additional_file.filename)
@@ -941,7 +945,7 @@ def save_assignment():
     rubric_url = rubric_url or ""
     additional_url = additional_url or ""
 
-    # ✅ Save directly to Supabase
+    # Save directly to Supabase
     supabase.table("assignments").insert({
         "assignment_title": assignment_title,
         "rubric_file": rubric_url,
@@ -962,7 +966,6 @@ def save_assignment():
     print("✅ Successfully saved assignment:", assignment_title)
 
     return redirect(f"/admin-dashboard?success={assignment_title}")
-
 
 
 @lti.route("/admin-dashboard", methods=["GET", "POST"])
