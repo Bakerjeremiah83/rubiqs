@@ -947,6 +947,7 @@ def save_assignment():
 
     # ✅ Save directly to Supabase and capture response
     response = supabase.table("assignments").insert({
+        
         "assignment_title": assignment_title,
         "rubric_file": rubric_url,
         "additional_file": additional_url,
@@ -959,6 +960,8 @@ def save_assignment():
         "feedback_tone": "supportive",
         "ai_notes": custom_ai
     }).execute()
+
+    print("🧪 Supabase insert response:", response)
 
     # ✅ Debug print statements BEFORE redirect
     print("🧪 Saving assignment:", assignment_title)
