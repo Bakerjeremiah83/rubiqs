@@ -1606,6 +1606,45 @@ def run_delay_checker():
 
     return f"✅ Delay check complete. Updated {updates_made} submissions.", 200
 
+import csv
+from flask import make_response
+
+@lti.route("/download-activity-log")
+def download_activity_log():
+    try:
+        # Fetch all submissions
+        response = supabase.table("submissions").select("*").order("timestamp", desc=True).execute()
+        submissions = response.data or []
+
+        # Build CSV content
+        si = []
+        headers = ["timestamp", "student_id", "assignment_title", "score", "reviewed", "pending"]
+
+        # Add header row
+        si.append(",".join(headers))
+
+        for submission in submissions:
+            row = [
+                submission.get("timestamp", ""),
+                submission.get("student_id", ""),
+                submission.get("assignment_title", ""),
+                str(submission.get("score", "")),
+                str(submission.get("reviewed", "")),
+                str(submission.get("pending", ""))
+            ]
+            si.append(",".join(row))
+
+        csv_content = "\n".join(si)
+
+        # Return CSV file
+        response = make_response(csv_content)
+        response.headers["Content-Disposition"] = "attachment; filename=activity_log.csv"
+        response.headers["Content-type"] = "text/csv"
+        return response
+
+    except Exception as e:
+        print("❌ Error generating activity log download:", e)
+        return "❌ Failed to generate report.", 500
 
 
 

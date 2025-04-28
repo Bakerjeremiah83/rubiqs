@@ -430,34 +430,12 @@
   <div class="row">
     <div class="form-group wide">
       <label>Activity Logs</label>
-      <p>This panel shows recent system activity related to submissions, grading, approvals, and assignment configuration.</p>
-      <table style="width:100%; border-collapse: collapse; font-size: 0.95rem;">
-        <thead style="background-color: #f1f1f1;">
-          <tr>
-            <th style="border: 1px solid #ccc; padding: 0.75rem;">Timestamp</th>
-            <th style="border: 1px solid #ccc; padding: 0.75rem;">User</th>
-            <th style="border: 1px solid #ccc; padding: 0.75rem;">Action</th>
-            <th style="border: 1px solid #ccc; padding: 0.75rem;">Details</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for log in activity_logs %}
-            <tr>
-              <td style="border: 1px solid #ccc; padding: 0.75rem;">{{ log.timestamp }}</td>
-              <td style="border: 1px solid #ccc; padding: 0.75rem;">{{ log.user }}</td>
-              <td style="border: 1px solid #ccc; padding: 0.75rem;">{{ log.action }}</td>
-              <td style="border: 1px solid #ccc; padding: 0.75rem;">{{ log.details }}</td>
-            </tr>
-          {% else %}
-            <tr>
-              <td colspan="4" style="text-align: center; padding: 1rem; background: #f8f8f8; font-style: italic;">
-                No recent activity logged.
-              </td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-      
+      <p>
+        Download a full report of all student submissions and instructor actions. This report can be used for FERPA compliance or internal auditing purposes.
+      </p>
+      <a href="/download-activity-log" style="display: inline-block; padding: 0.75rem 1.5rem; background: #1f3a54; color: white; border-radius: 8px; font-weight: bold; text-decoration: none;">
+        📥 Download Activity Report
+      </a>
     </div>
   </div>
 </div>
