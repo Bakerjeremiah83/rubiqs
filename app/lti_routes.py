@@ -251,6 +251,8 @@ def grade_docx():
     assignment_title = session.get("launch_data", {}).get(
     "https://purl.imsglobal.org/spec/lti/claim/resource_link", {}
     ).get("title", "").strip()
+    
+    print(f"🌐 RAW assignment_title FROM LAUNCH: {repr(assignment_title)}")
 
     assignment_title = normalize_title(assignment_title)
 
