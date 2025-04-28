@@ -1362,6 +1362,7 @@ def edit_assignment(assignment_id):
             ai_notes = request.form.get("ai_notes", "")
             student_level = request.form.get("student_level")
             grading_difficulty = request.form.get("grading_difficulty")
+            delay_posting = request.form.get("delay_posting", "immediate")
 
             faith_raw = request.form.get("faith_integration", "false")
             faith_integration = True if faith_raw.lower() == "true" else False
