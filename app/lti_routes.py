@@ -238,17 +238,18 @@ def grade_docx():
     print(f"🔐 FERPA_SAFE_MODE: {FERPA_SAFE_MODE}")
 
     assignment_title = session.get("launch_data", {}).get(
-        "https://purl.imsglobal.org/spec/lti/claim/resource_link", {}
+    "https://purl.imsglobal.org/spec/lti/claim/resource_link", {}
     ).get("title", "").strip()
 
-    # 🛡️ Normalize assignment title
     assignment_title = assignment_title.replace("–", "-").strip()
 
-    print("🧪 ALL LOADED ASSIGNMENTS:", load_assignment_data())
-
     assignment_config = load_assignment_config(assignment_title)
-    print("🧪 SESSION CONTENTS:", session)
 
+    # 🚨 Defensive check here
+    if not assignment_config:
+        return "❌ Assignment not found. Please contact your instructor.", 400
+
+    # ✅ Now safe to continue
     delay_setting = assignment_config.get("delay_posting", "immediate")
     delay_map = {
         "immediate": 0,
@@ -260,11 +261,13 @@ def grade_docx():
     }
     delay_hours = delay_map.get(delay_setting, 0)
 
+
     print("🧪 Grading assignment:", assignment_title)
     print("🧪 Assignment config loaded:", assignment_config)
 
-    if not assignment_config or not assignment_config.get("rubric_file", "").strip():
+    if not assignment_config.get("rubric_file", "").strip():
         return f"❌ Assignment setup incomplete. Missing configuration or rubric for: {assignment_title}", 400
+
 
     print("📥 /grade-docx hit")
     print("🧪 Confirming: about to fetch rubric from Supabase.")
