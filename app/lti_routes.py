@@ -240,6 +240,9 @@ def grade_docx():
         "https://purl.imsglobal.org/spec/lti/claim/resource_link", {}
     ).get("title", "").strip()
 
+    # 🛡️ Normalize assignment title
+    assignment_title = assignment_title.replace("–", "-").strip()
+
     print("🧪 ALL LOADED ASSIGNMENTS:", load_assignment_data())
 
     assignment_config = load_assignment_config(assignment_title)
