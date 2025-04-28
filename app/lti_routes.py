@@ -60,14 +60,15 @@ lti = Blueprint('lti', __name__)
 
 def load_assignment_config(assignment_title):
     try:
-        response = supabase.table("assignments").select("*").ilike("assignment_title", f"%{assignment_title.strip()}%").maybe_single().execute()
+        response = supabase.table("assignments").select("*").execute()
         if response.data:
-            return response.data
+            for assignment in response.data:
+                stored_title = assignment.get("assignment_title", "")
+                if normalize_title(stored_title) == assignment_title:
+                    return assignment
     except Exception as e:
         print("❌ Error loading assignment config:", e)
     return None
-
-
 
 
 @lti.route("/login", methods=["POST"])
