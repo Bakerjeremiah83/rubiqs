@@ -37,6 +37,14 @@ from app.utils.zerogpt_api import check_ai_with_gpt
 
 from app.models import Assignment
 
+# 🛡️ Safe normalization function for assignment titles
+def normalize_title(title):
+    title = title.replace("–", "-").replace("—", "-")
+    title = re.sub(r'\s+', ' ', title)
+    title = title.replace("\u00A0", " ")
+    title = title.lower().strip()
+    return title
+
 
 
 # ✅ Load environment and initialize Supabase client
@@ -241,7 +249,7 @@ def grade_docx():
     "https://purl.imsglobal.org/spec/lti/claim/resource_link", {}
     ).get("title", "").strip()
 
-    assignment_title = assignment_title.replace("–", "-").strip()
+    assignment_title = normalize_title(assignment_title)
 
     assignment_config = load_assignment_config(assignment_title)
 
