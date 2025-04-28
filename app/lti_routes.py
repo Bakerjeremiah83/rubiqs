@@ -64,11 +64,13 @@ def load_assignment_config(assignment_title):
         if response.data:
             for assignment in response.data:
                 stored_title = assignment.get("assignment_title", "")
-                if normalize_title(stored_title) == assignment_title:
+                # Normalize BOTH titles before comparing
+                if normalize_title(stored_title) == normalize_title(assignment_title):
                     return assignment
     except Exception as e:
         print("❌ Error loading assignment config:", e)
     return None
+
 
 
 @lti.route("/login", methods=["POST"])
