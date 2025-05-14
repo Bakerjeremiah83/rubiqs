@@ -453,7 +453,7 @@ def grade_docx():
     submission_id = str(uuid.uuid4())
     submission_data = {
         "submission_id": submission_id,
-        "student_id": "demo_student_001",  # Update later with real student_id if needed
+        "student_id": session.get("student_id"),
         "assignment_title": assignment_title,
         "submission_time": datetime.utcnow().isoformat(),
         "score": score,
@@ -470,6 +470,11 @@ def grade_docx():
         print("🧪 Instructor review required: saving temporarily")
         submission_time = datetime.utcnow()
         release_time = datetime.utcnow() + timedelta(hours=delay_hours)
+
+        supabase.postgrest.rpc("set_config", {
+            "key": "request.jwt.claims.sub",
+            "value": session.get("student_id")
+        })
 
         supabase.table("submissions").insert({
             "submission_id": submission_id,
