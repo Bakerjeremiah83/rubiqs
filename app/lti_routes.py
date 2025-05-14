@@ -461,6 +461,7 @@ def grade_docx():
         "student_text": full_text,
         "ai_check_result": None
     }
+    print("🧪 INSERTING submission for student_id:", session.get("student_id"))
 
     print("🧪 Instructor Approval in Config:", assignment_config.get("instructor_approval"))
     print("🧪 TYPE CHECK:", type(assignment_config.get("instructor_approval")))
@@ -475,6 +476,7 @@ def grade_docx():
             "uid": session.get("student_id")
         }).execute()
 
+        print("🧪 RLS set_client_uid:", session.get("student_id"))
 
 
         supabase.table("submissions").insert({
