@@ -592,6 +592,7 @@ def review_feedback():
     if request.method == "POST" and request.form.get("action") == "Approve and Post":
         student_id = request.form.get("student_id")
         assignment_title = request.form.get("assignment_title")
+        allow_inline = request.form.get("allow_inline_submission", "no") == "yes"
         new_score = int(request.form.get("score"))
         new_feedback = request.form.get("feedback")
 
@@ -736,6 +737,7 @@ def assignment_config():
         student_level = request.form.get("student_level", "college")
         feedback_tone = request.form.get("feedback_tone", "").strip()
         ai_notes = request.form.get("ai_notes", "").strip()
+        allow_inline = request.form.get("allow_inline_submission", "no") == "yes"
         delay_posting = request.form.get("delay_posting", "immediate")
 
 
@@ -762,6 +764,7 @@ def assignment_config():
                     "feedback_tone": feedback_tone,
                     "ai_notes": ai_notes,
                     "delay_posting": delay_posting,
+                    "allow_inline_submission": allow_inline,
 
                 })
                 updated = True
@@ -780,6 +783,7 @@ def assignment_config():
                 "feedback_tone": feedback_tone,
                 "ai_notes": ai_notes,
                 "delay_posting": delay_posting,
+                "allow_inline_submission": allow_inline,
 
             })
 
@@ -1416,6 +1420,7 @@ def edit_assignment(assignment_id):
             student_level = request.form.get("student_level")
             grading_difficulty = request.form.get("grading_difficulty")
             delay_posting = request.form.get("delay_posting", "immediate")
+            allow_inline = request.form.get("allow_inline_submission", "no") == "yes"
 
             faith_raw = request.form.get("faith_integration", "false")
             faith_integration = True if faith_raw.lower() == "true" else False
@@ -1429,7 +1434,8 @@ def edit_assignment(assignment_id):
                 "student_level": student_level,
                 "grading_difficulty": grading_difficulty,
                 "faith_integration": faith_integration,
-                "delay_posting": delay_raw
+                "delay_posting": delay_raw,
+                "allow_inline_submission": allow_inline
             }).eq("id", assignment_id).execute()
 
             if hasattr(response, "error") and response.error:
