@@ -8,9 +8,7 @@ from app.storage import (
     save_assignment_data,
     store_pending_feedback,
     load_pending_feedback,
-    load_all_pending_feedback,
-    store_submission_history,
-    load_submission_history
+    load_all_pending_feedback
 )
 
 import os
@@ -43,8 +41,6 @@ def normalize_title(title):
     title = title.lower().strip()
     return title
 
-
-
 # ✅ Load environment and initialize Supabase client
 load_dotenv()
 SUPABASE_URL = os.getenv("SUPABASE_URL")
@@ -62,7 +58,6 @@ def load_assignment_config(assignment_title):
         if response.data:
             for assignment in response.data:
                 stored_title = assignment.get("assignment_title", "")
-                # Normalize BOTH titles before comparing
                 if normalize_title(stored_title) == normalize_title(assignment_title):
                     return assignment
     except Exception as e:
@@ -221,10 +216,7 @@ def launch():
 def student_test_upload():
     # Simulate a student launch with mock data
     session["tool_role"] = "student"
-    roles = decoded.get("https://purl.imsglobal.org/spec/lti/claim/roles", [])
-    is_instructor = any("Instructor" in role for role in roles)
-    user_role = "instructor" if is_instructor else "student"
-    session["tool_role"] = user_role  # overwrite with accurate role
+    user_role = "instructor"  # or "student"
     print("🎓 LTI role detected:", user_role)
 
     session["launch_data"] = {
@@ -540,7 +532,6 @@ def grade_docx():
                 user_roles=session.get("launch_data", {}).get("https://purl.imsglobal.org/spec/lti/claim/roles", [])
             )
         else:
-            store_submission_history(submission_data)
             return render_template(
                 "feedback.html",
                 score=score,
@@ -548,6 +539,7 @@ def grade_docx():
                 rubric_total_points=rubric_total_points,
                 user_roles=session.get("launch_data", {}).get("https://purl.imsglobal.org/spec/lti/claim/roles", [])
             )
+
 
 
 @lti.route("/review-feedback", methods=["GET", "POST"])
@@ -1035,7 +1027,6 @@ def admin_dashboard():
         flash("❌ Error loading pending submissions.", "danger")
         pending_feedback = []
 
-    submission_history = load_submission_history()
 
     # ✅ Load activity logs
     log_path = os.path.join(os.path.dirname(__file__), "..", "logs", "activity_log.json")
@@ -1051,7 +1042,6 @@ def admin_dashboard():
     return render_template("admin_dashboard.html",
                            rubric_index=rubric_index,
                            pending_feedback=pending_feedback,
-                           submission_history=submission_history,
                            pending_count=pending_count,
                            approved_count=approved_count,
                            activity_logs=activity_logs)
@@ -1238,7 +1228,8 @@ def log_gpt_interaction(assignment_title, prompt, feedback, score=None):
 def test_store():
     import uuid
     from datetime import datetime
-    from app.utils.storage import store_pending_feedback
+    from app.storage import store_pending_feedback
+
 
     submission_id = str(uuid.uuid4())
     test_data = {

@@ -2,7 +2,7 @@
 
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
-from app.models import Assignment, PendingReview, SubmissionHistory
+from app.models import Assignment, PendingReview
 from app.supabase_client import supabase
 import os
 import json
@@ -100,24 +100,6 @@ def load_all_pending_feedback():
         session.close()
 
 
-# ----------------------------
-# ✅ SUBMISSION HISTORY
-# ----------------------------
-
-def store_submission_history(data):
-    from pprint import pprint
-    session = SessionLocal()
-    try:
-        print("🧪 Writing to submission_history:", json.dumps(data, indent=2))
-        session.add(SubmissionHistory(**data))
-        session.commit()
-        print("✅ Submission saved to Supabase")
-    except Exception as e:
-        print("❌ ERROR saving to submission_history:", str(e))
-    finally:
-        session.close()
-
-
 def delete_pending_feedback(submission_id):
     session = SessionLocal()
     try:
@@ -126,9 +108,3 @@ def delete_pending_feedback(submission_id):
     finally:
         session.close()
 
-def load_submission_history():
-    session = SessionLocal()
-    try:
-        return [r.to_dict() for r in session.query(SubmissionHistory).all()]
-    finally:
-        session.close()
