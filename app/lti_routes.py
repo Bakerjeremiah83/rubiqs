@@ -255,9 +255,11 @@ def get_total_points_from_rubric(rubric_json):
 def grade_docx():
     print(f"🔐 FERPA_SAFE_MODE: {FERPA_SAFE_MODE}")
 
-    assignment_title = session.get("launch_data", {}).get(
-    "https://purl.imsglobal.org/spec/lti/claim/resource_link", {}
-    ).get("title", "").strip()
+    resource_link = session.get("launch_data", {}).get("https://purl.imsglobal.org/spec/lti/claim/resource_link", {})
+    assignment_title = resource_link.get("title") or f"Assignment-{resource_link.get('id')}" or "Untitled Assignment"
+    assignment_title = str(assignment_title).strip()
+    print(f"🧪 Final resolved assignment_title: {assignment_title}")
+
     
     print(f"🌐 RAW assignment_title FROM LAUNCH: {repr(assignment_title)}")
 
