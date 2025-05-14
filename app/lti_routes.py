@@ -1211,7 +1211,7 @@ def update_config():
     faith_raw = request.form.get("faith_integration", "false")
     faith_integration = True if faith_raw.lower() == "true" else False
     allow_inline = request.form.get("allow_inline_submission", "no") == "yes"
-    delay_posting = int(request.form.get("delay_posting", 0))
+    delay_posting = request.form.get("delay_posting", "immediate")
 
 
 
@@ -1232,6 +1232,11 @@ def update_config():
 
     with open(rubric_index_path, "w") as f:
         json.dump(rubric_index, f, indent=2)
+
+    print("✅ Updated config for:", assignment_title)
+    print("✅ allow_inline =", allow_inline)
+
+
 
     return redirect("/admin-dashboard")
 
