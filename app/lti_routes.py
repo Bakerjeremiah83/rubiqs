@@ -957,6 +957,9 @@ def save_assignment():
     rubric_file = request.files.get("rubric_upload")
     additional_file = request.files.get("additional_files")
 
+    allow_inline = request.form.get("allow_inline_submission", "no") == "yes"
+
+
     from werkzeug.utils import secure_filename
     upload_dir = os.path.join("uploads", secure_filename(assignment_title))
     os.makedirs(upload_dir, exist_ok=True)
@@ -1008,7 +1011,8 @@ def save_assignment():
         "grading_difficulty": grading_difficulty,
         "student_level": grade_level,
         "feedback_tone": "supportive",
-        "ai_notes": custom_ai
+        "ai_notes": custom_ai,
+        "allow_inline_submission": allow_inline 
     }).execute()
     
 
