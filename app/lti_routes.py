@@ -31,10 +31,8 @@ from dotenv import load_dotenv
 from supabase import create_client
 
 from app.utils.prompt_builder import build_grading_prompt 
-
 from app.supabase_client import upload_to_supabase
 from app.utils.zerogpt_api import check_ai_with_gpt
-
 from app.models import Assignment
 
 # 🛡️ Safe normalization function for assignment titles
@@ -165,8 +163,19 @@ def launch():
         decoded = jwt.decode(jwt_token, public_key, algorithms=["RS256"], audience=aud, issuer=os.getenv("PLATFORM_ISS"))
         print("✅ JWT verified")
         print(json.dumps(decoded, indent=2))
-        session["launch_data"] = decoded
-        session["tool_role"] = "student"
+        roles = decoded.get("https://purl.imsglobal.org/spec/lti/claim/roles", [])
+        is_instructor = any("Instructor" in role for role in roles)
+        user_role = "instructor" if is_instructor else "student"
+        session["tool_role"] = user_role
+        print("🎓 LTI role detected:", user_role)
+
+
+        # Send role to Supabase session so RLS works
+        supabase.postgrest.rpc("set_config", {
+            "key": "request.jwt.claims.role",
+            "value": user_role
+        })
+
 
     except Exception as e:
         return f"❌ Invalid JWT: {str(e)}", 400
@@ -212,6 +221,12 @@ def launch():
 def student_test_upload():
     # Simulate a student launch with mock data
     session["tool_role"] = "student"
+    roles = decoded.get("https://purl.imsglobal.org/spec/lti/claim/roles", [])
+    is_instructor = any("Instructor" in role for role in roles)
+    user_role = "instructor" if is_instructor else "student"
+    session["tool_role"] = user_role  # overwrite with accurate role
+    print("🎓 LTI role detected:", user_role)
+
     session["launch_data"] = {
         "https://purl.imsglobal.org/spec/lti/claim/resource_link": {
             "title": "Test Assignment"
