@@ -472,9 +472,10 @@ def grade_docx():
         release_time = datetime.utcnow() + timedelta(hours=delay_hours)
 
         supabase.postgrest.rpc("set_config", {
-            "key": "request.jwt.claims.sub",
-            "value": session.get("student_id")
-        })
+        "key": "request.jwt.claims.sub",
+        "value": session.get("student_id")
+    }).execute()
+
 
         supabase.table("submissions").insert({
             "submission_id": submission_id,
