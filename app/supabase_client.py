@@ -20,7 +20,8 @@ def upload_to_supabase(file_path, file_name):
         file_name,
         data,
         {
-            "contentType": content_type
+            "contentType": content_type,
+            "upsert": True  # ✅ allow overwrite
         }
     )
 
