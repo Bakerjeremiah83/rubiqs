@@ -205,15 +205,18 @@ def launch():
     # ✅ Load assignment config for launch UI
     assignment_title = decoded.get("https://purl.imsglobal.org/spec/lti/claim/resource_link", {}).get("title", "").strip()
     assignment_config = load_assignment_config(assignment_title)
-    requires_persona = assignment_config.get("requires_persona", False) if assignment_config else False
+    tinymce_api_key = os.getenv("TINYMCE_API_KEY")
+
 
     return render_template(
         "launch.html",
         activity_name=assignment_title,
         user_name=decoded.get("given_name", "Student"),
         user_roles=decoded.get("https://purl.imsglobal.org/spec/lti/claim/roles", []),
-        requires_persona=requires_persona
+        assignment_config=assignment_config,
+        tinymce_api_key=tinymce_api_key
     )
+
 
 @lti.route("/student-test", methods=["GET"])
 def student_test_upload():
