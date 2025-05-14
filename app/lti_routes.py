@@ -156,6 +156,9 @@ def launch():
             return f"❌ Invalid client ID: {aud}", 403
 
         decoded = jwt.decode(jwt_token, public_key, algorithms=["RS256"], audience=aud, issuer=os.getenv("PLATFORM_ISS"))
+        session["launch_data"] = decoded
+        print("🧪 Saved launch_data keys to session:", list(decoded.keys()))
+
         print("✅ JWT verified")
         print(json.dumps(decoded, indent=2))
         roles = decoded.get("https://purl.imsglobal.org/spec/lti/claim/roles", [])
