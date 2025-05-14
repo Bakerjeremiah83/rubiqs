@@ -472,6 +472,13 @@ def grade_docx():
         submission_time = datetime.utcnow()
         release_time = datetime.utcnow() + timedelta(hours=delay_hours)
 
+    if not session.get("student_id"):
+        launch_data = session.get("launch_data", {})
+        fallback_id = launch_data.get("sub")
+        print("⚠️ session[\"student_id\"] missing. Using fallback from launch_data:", fallback_id)
+        session["student_id"] = fallback_id
+
+
         supabase.rpc("set_client_uid", {
             "uid": session.get("student_id")
         }).execute()
