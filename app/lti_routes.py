@@ -1210,6 +1210,7 @@ def update_config():
     student_level = request.form.get("student_level", "college")
     faith_raw = request.form.get("faith_integration", "false")
     faith_integration = True if faith_raw.lower() == "true" else False
+    allow_inline = request.form.get("allow_inline_submission", "no") == "yes"
     delay_posting = int(request.form.get("delay_posting", 0))
 
 
@@ -1227,6 +1228,7 @@ def update_config():
             entry["grading_difficulty"] = grading_difficulty
             entry["student_level"] = student_level
             entry["faith_integration"] = faith_integration
+            entry["allow_inline_submission"] = allow_inline
 
     with open(rubric_index_path, "w") as f:
         json.dump(rubric_index, f, indent=2)
