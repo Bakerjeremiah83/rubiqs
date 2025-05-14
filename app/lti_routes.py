@@ -1113,6 +1113,9 @@ def instructor_review():
         current_review = next((r for r in reviews if r["submission_id"] == submission_id), None)
     elif reviews:
         current_review = reviews[0]
+    
+    print("🧪 current_review =", current_review)
+
 
     return render_template("instructor_review.html", current_review=current_review, reviews=reviews)
 
