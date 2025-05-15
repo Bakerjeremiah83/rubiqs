@@ -459,7 +459,7 @@ def grade_docx():
         "instructor_notes": "",
         "pending": True,
         "reviewed": False,
-        "release_time": datetime.utcnow() + timedelta(hours=delay_hours)
+        "release_time": (datetime.utcnow() + timedelta(hours=delay_hours)).isoformat()
     }).execute()
 
     log_gpt_interaction(assignment_title, prompt, feedback, score)
