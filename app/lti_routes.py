@@ -266,19 +266,13 @@ def grade_docx():
     assignment_title = str(assignment_title).strip()
     print(f"🧪 Final resolved assignment_title: {assignment_title}")
 
-
-    
     print(f"🌐 RAW assignment_title FROM LAUNCH: {repr(assignment_title)}")
-
     assignment_title = normalize_title(assignment_title)
-
     assignment_config = load_assignment_config(assignment_title)
 
-    # 🚨 Defensive check here
     if not assignment_config:
         return "❌ Assignment not found. Please contact your instructor.", 400
 
-    # ✅ Now safe to continue
     delay_setting = assignment_config.get("delay_posting", "immediate")
     delay_map = {
         "immediate": 0,
@@ -290,25 +284,20 @@ def grade_docx():
     }
     delay_hours = delay_map.get(delay_setting, 0)
 
-
     print("🧪 Grading assignment:", assignment_title)
     print("🧪 Assignment config loaded:", assignment_config)
 
     if not assignment_config.get("rubric_file", "").strip():
         return f"❌ Assignment setup incomplete. Missing configuration or rubric for: {assignment_title}", 400
 
-
-    print("📥 /grade-docx hit")
-    print("🧪 Confirming: about to fetch rubric from Supabase.")
+    print("📅 /grade-docx hit")
     rubric_url = assignment_config.get("rubric_file", "")
     print("🧪 Rubric URL to download:", rubric_url)
 
     file = request.files.get("file")
     inline_text = request.form.get("inline_text", "").strip()
-    
     reference_data = ""
 
-    # 🧠 Require at least one form of submission
     if not file and not inline_text:
         return "❌ Please submit either a file or inline response.", 400
 
@@ -322,27 +311,19 @@ def grade_docx():
                 full_text = extract_pdf_text(BytesIO(file.read()))
             else:
                 return "❌ Unsupported file type. Please upload .docx or .pdf", 400
-
         elif inline_text:
-            full_text = inline_text  # submitted directly via TinyMCE
+            full_text = inline_text
 
-        # ✅ Run AI detection or feedback
         ai_check_result = check_ai_with_gpt(full_text)
         print("🤖 AI Detection Result:", ai_check_result)
 
     except Exception as e:
         return f"❌ Failed to extract or process submission: {str(e)}", 500
 
-
-    # ✅ Download rubric from Supabase
     import tempfile, requests
-    rubric_url = assignment_config.get("rubric_file", "")
     rubric_path = None
-
     if rubric_url:
         try:
-            print("🧪 Rubric URL to download:", rubric_url)
-
             file_ext = rubric_url.split("?")[0].split(".")[-1]
             clean_filename = rubric_url.split("/")[-1].split("?")[0]
             temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=f"_{clean_filename}")
@@ -356,10 +337,7 @@ def grade_docx():
 
             temp_file.write(response.content)
             temp_file.close()
-
             rubric_path = temp_file.name
-            print("🧪 Local rubric saved at:", rubric_path)
-            print("🧪 File exists on disk?", os.path.exists(rubric_path))
 
         except Exception as e:
             return f"❌ Exception while downloading rubric: {str(e)}", 500
@@ -377,44 +355,26 @@ def grade_docx():
                 rubric_json = json.load(f)
             rubric_text = "\n".join([f"- {c['description']}" for c in rubric_json.get("criteria", [])])
             rubric_total_points = get_total_points_from_rubric(rubric_json)
-
         elif rubric_path.endswith(".docx"):
             doc = Document(rubric_path)
             rubric_text = "\n".join([para.text for para in doc.paragraphs])
             rubric_total_points = assignment_config.get("total_points")
-
         elif rubric_path.endswith(".pdf"):
             rubric_text = extract_pdf_text(rubric_path)
             rubric_total_points = assignment_config.get("total_points")
-
         else:
-            rubric_text = "(Rubric text could not be loaded.)"
             return "❌ No total points found. Please upload a .json rubric or specify a total in the dashboard.", 400
-
-        # 📌 Debug output just before validation
-
-        print("📌 DEBUG assignment_config:", assignment_config)
-        print("📌 DEBUG rubric_text[:200]:", rubric_text[:200])
-        print("📌 DEBUG (before cast) rubric_total_points =", rubric_total_points)
-
 
         if rubric_total_points is None:
             return "❌ This assignment does not have a total point value set. Please edit it in the dashboard.", 400
-
-        try:
-            rubric_total_points = int(str(rubric_total_points).strip())
-            if rubric_total_points <= 0:
-                raise ValueError
-        except Exception as e:
-            print("❌ Failed to cast rubric_total_points:", e)
-            return "❌ This assignment has an invalid total point value. Please fix it in the dashboard.", 400
-
+        rubric_total_points = int(str(rubric_total_points).strip())
+        if rubric_total_points <= 0:
+            raise ValueError
         print("✅ rubric_total_points confirmed as:", rubric_total_points)
 
     except Exception as e:
         return f"❌ Failed to load rubric file: {str(e)}", 500
 
-    grading_prompt = build_grading_prompt(grading_difficulty)
     prompt = f"""
     You are a helpful AI grader.
 
@@ -427,7 +387,6 @@ def grade_docx():
     Rubric:
     {rubric_text}
     """
-
     if ai_notes:
         prompt += f"\nInstructor Notes:\n{ai_notes}\n"
     if reference_data:
@@ -450,89 +409,51 @@ def grade_docx():
     except openai.error.OpenAIError as e:
         return f"❌ GPT error: {str(e)}", 500
 
-    import uuid
-    
     if not session.get("student_id"):
-        launch_data = session.get("launch_data", {})
-        fallback_id = launch_data.get("sub")
-        print("⚠️ session[\"student_id\"] missing. Using fallback from launch_data:", fallback_id)
+        fallback_id = session.get("launch_data", {}).get("sub")
+        print("⚠️ session[\"student_id\"] missing. Using fallback:", fallback_id)
         session["student_id"] = fallback_id
 
-    # ✅ Set Supabase RLS identity right after student_id is guaranteed
-    supabase.rpc("set_client_uid", {
-        "uid": session.get("student_id")
-    }).execute()
-    print("👤 Supabase client UID set to:", session.get("student_id"))
+    supabase.rpc("set_client_uid", {"uid": session["student_id"]}).execute()
+    print("👤 Supabase client UID set to:", session["student_id"])
 
-    # ✅ Build submission after student_id is finalized
     submission_id = str(uuid.uuid4())
+    submission_time = datetime.utcnow()
+    release_time = submission_time + timedelta(hours=delay_hours)
+    ready_to_post = delay_hours == 0 and not assignment_config.get("instructor_approval", False)
+    pending = not ready_to_post
+
     submission_data = {
         "submission_id": submission_id,
-        "student_id": session.get("student_id"),
+        "student_id": session["student_id"],
         "assignment_title": assignment_title,
-        "submission_time": datetime.utcnow().isoformat(),
+        "submission_time": submission_time.isoformat(),
         "score": score,
         "feedback": feedback,
         "submission_type": "inline" if inline_text else "file",
         "student_text": full_text,
-        "ai_check_result": None
-    }
-    
-    print("🧪 INSERTING with student_id =", submission_data["student_id"])
-
-
-    print("🧪 RLS set_client_uid:", session.get("student_id"))
-
-    # ✅ Common release time logic
-    submission_time = datetime.utcnow()
-    release_time = submission_time + timedelta(hours=delay_hours)
-
-    # ✅ Determine posting flags
-    ready_to_post = delay_hours == 0 and not assignment_config.get("instructor_approval", False)
-    pending = not ready_to_post
-
-    # ✅ Always insert submission
-    supabase.table("submissions").insert({
-        "submission_id": submission_id,
-        "student_id": submission_data["student_id"],
-        "assignment_title": assignment_title,
-        "submission_time": submission_time.isoformat(),
-        "submission_type": submission_data["submission_type"],
-        "delay_hours": delay_hours,
-        "ready_to_post": ready_to_post,
-        "score": score,
-        "feedback": feedback,
-        "student_text": full_text,
         "ai_check_result": None,
         "instructor_notes": "",
+        "delay_hours": delay_hours,
+        "ready_to_post": ready_to_post,
         "pending": pending,
         "reviewed": False,
         "release_time": release_time.isoformat()
-    }).execute()
+    }
 
-    print("📄 Submission type:", submission_data["submission_type"])
+    print("🧪 INSERTING with student_id =", submission_data["student_id"])
+
+    supabase.table("submissions").insert(submission_data).execute()
     log_gpt_interaction(assignment_title, prompt, feedback, score)
 
-    # ✅ Return correct message
     if assignment_config.get("instructor_approval"):
-        return render_template(
-            "feedback.html",
-            pending_message="✅ This submission requires instructor review. Your feedback will be posted after approval."
-        )
+        return render_template("feedback.html", pending_message="✅ This submission requires instructor review. Your feedback will be posted after approval.")
     elif delay_hours > 0:
-        return render_template(
-            "feedback.html",
-            pending_message=f"⏳ This submission will be released after {delay_hours} hour(s)."
-        )
+        return render_template("feedback.html", pending_message=f"⏳ This submission will be released after {delay_hours} hour(s).")
     else:
         post_grade_to_lms(session, score, feedback)
-        return render_template(
-            "feedback.html",
-            score=score,
-            feedback=feedback,
-            rubric_total_points=rubric_total_points,
-            user_roles=session.get("launch_data", {}).get("https://purl.imsglobal.org/spec/lti/claim/roles", [])
-        )
+        return render_template("feedback.html", score=score, feedback=feedback, rubric_total_points=rubric_total_points, user_roles=session.get("launch_data", {}).get("https://purl.imsglobal.org/spec/lti/claim/roles", []))
+
 
 
 
