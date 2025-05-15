@@ -1613,3 +1613,31 @@ def download_activity_log():
 # 🧪 Triggering redeploy
 
 
+@lti.route("/test-insert")
+def test_insert():
+    session["student_id"] = "2"  # Replace with your real student ID
+    supabase.rpc("set_client_uid", {"uid": session["student_id"]}).execute()
+
+    import uuid
+    submission_id = str(uuid.uuid4())
+
+    test_submission = {
+        "submission_id": submission_id,
+        "student_id": session["student_id"],
+        "assignment_title": "Test Assignment",
+        "submission_time": datetime.utcnow().isoformat(),
+        "submission_type": "inline",
+        "delay_hours": 0,
+        "ready_to_post": True,
+        "score": 100,
+        "feedback": "Great job!",
+        "student_text": "Test submission",
+        "ai_check_result": None,
+        "instructor_notes": "",
+        "pending": False,
+        "reviewed": True,
+        "release_time": datetime.utcnow().isoformat()
+    }
+
+    supabase.table("submissions").insert(test_submission).execute()
+    return "✅ Insert succeeded"
