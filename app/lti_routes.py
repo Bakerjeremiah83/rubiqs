@@ -304,37 +304,33 @@ def grade_docx():
     print("🧪 Rubric URL to download:", rubric_url)
 
     file = request.files.get("file")
-    persona_file = request.files.get("persona")
+    inline_text = request.form.get("inline_text", "").strip()
 
-    if not file:
-        return "❌ Assignment file is required.", 400
+    # 🧠 Require at least one form of submission
+    if not file and not inline_text:
+        return "❌ Please submit either a file or inline response.", 400
 
     try:
-        filename = file.filename.lower()
-        if filename.endswith(".docx"):
-            doc = Document(file)
-            full_text = "\n".join([para.text for para in doc.paragraphs])
-        elif filename.endswith(".pdf"):
-            full_text = extract_pdf_text(BytesIO(file.read()))
-        else:
-            return "❌ Unsupported file type.", 400
+        if file:
+            filename = file.filename.lower()
+            if filename.endswith(".docx"):
+                doc = Document(file)
+                full_text = "\n".join([para.text for para in doc.paragraphs])
+            elif filename.endswith(".pdf"):
+                full_text = extract_pdf_text(BytesIO(file.read()))
+            else:
+                return "❌ Unsupported file type. Please upload .docx or .pdf", 400
 
+        elif inline_text:
+            full_text = inline_text  # submitted directly via TinyMCE
+
+        # ✅ Run AI detection or feedback
         ai_check_result = check_ai_with_gpt(full_text)
         print("🤖 AI Detection Result:", ai_check_result)
-    except Exception as e:
-        return f"❌ Failed to extract text: {str(e)}", 500
 
-    reference_data = ""
-    if persona_file:
-        try:
-            persona_filename = persona_file.filename.lower()
-            if persona_filename.endswith(".docx"):
-                doc = Document(persona_file)
-                reference_data = "\n".join([para.text for para in doc.paragraphs])
-            elif persona_filename.endswith(".pdf"):
-                reference_data = extract_pdf_text(BytesIO(persona_file.read()))
-        except Exception as e:
-            return f"❌ Failed to extract persona file: {str(e)}", 500
+    except Exception as e:
+        return f"❌ Failed to extract or process submission: {str(e)}", 500
+
 
     # ✅ Download rubric from Supabase
     import tempfile, requests
@@ -461,9 +457,11 @@ def grade_docx():
         "submission_time": datetime.utcnow().isoformat(),
         "score": score,
         "feedback": feedback,
+        "submission_type": "inline" if inline_text else "file",
         "student_text": full_text,
         "ai_check_result": None
     }
+    
     print("🧪 INSERTING submission for student_id:", session.get("student_id"))
 
     print("🧪 Instructor Approval in Config:", assignment_config.get("instructor_approval"))
@@ -481,88 +479,63 @@ def grade_docx():
         print("⚠️ session[\"student_id\"] missing. Using fallback from launch_data:", fallback_id)
         session["student_id"] = fallback_id
 
-
         supabase.rpc("set_client_uid", {
             "uid": session.get("student_id")
         }).execute()
 
         print("🧪 RLS set_client_uid:", session.get("student_id"))
 
+    # ✅ Common release time logic
+    submission_time = datetime.utcnow()
+    release_time = submission_time + timedelta(hours=delay_hours)
 
-        supabase.table("submissions").insert({
-            "submission_id": submission_id,
-            "student_id": submission_data["student_id"],
-            "assignment_title": assignment_title,
-            "submission_time": submission_time.isoformat(),
-            "delay_hours": delay_hours,
-            "ready_to_post": False,
-            "score": score,
-            "feedback": feedback,
-            "student_text": full_text,
-            "ai_check_result": None,
-            "instructor_notes": "",
-            "pending": True,
-            "reviewed": False,
-            "release_time": release_time.isoformat()
-        }).execute()
+    # ✅ Determine posting flags
+    ready_to_post = delay_hours == 0 and not assignment_config.get("instructor_approval", False)
+    pending = not ready_to_post
 
-        log_gpt_interaction(assignment_title, prompt, feedback, score)
+    # ✅ Always insert submission
+    supabase.table("submissions").insert({
+        "submission_id": submission_id,
+        "student_id": submission_data["student_id"],
+        "assignment_title": assignment_title,
+        "submission_time": submission_time.isoformat(),
+        "submission_type": submission_data["submission_type"],
+        "delay_hours": delay_hours,
+        "ready_to_post": ready_to_post,
+        "score": score,
+        "feedback": feedback,
+        "student_text": full_text,
+        "ai_check_result": None,
+        "instructor_notes": "",
+        "pending": pending,
+        "reviewed": False,
+        "release_time": release_time.isoformat()
+    }).execute()
 
+    print("📄 Submission type:", submission_data["submission_type"])
+    log_gpt_interaction(assignment_title, prompt, feedback, score)
+
+    # ✅ Return correct message
+    if assignment_config.get("instructor_approval"):
         return render_template(
             "feedback.html",
             pending_message="✅ This submission requires instructor review. Your feedback will be posted after approval."
         )
-
     elif delay_hours > 0:
-        print(f"🧪 Delaying posting for {delay_hours} hours")
-        submission_time = datetime.utcnow()
-        release_time = datetime.utcnow() + timedelta(hours=delay_hours)
-
-        supabase.table("submissions").insert({
-            "submission_id": submission_id,
-            "student_id": submission_data["student_id"],
-            "assignment_title": assignment_title,
-            "submission_time": submission_time.isoformat(),
-            "delay_hours": delay_hours,
-            "ready_to_post": False,
-            "score": score,
-            "feedback": feedback,
-            "student_text": full_text,
-            "ai_check_result": None,
-            "instructor_notes": "",
-            "pending": True,
-            "reviewed": False,
-            "release_time": release_time.isoformat()
-        }).execute()
-
-        log_gpt_interaction(assignment_title, prompt, feedback, score)
-
         return render_template(
             "feedback.html",
             pending_message=f"⏳ This submission will be released after {delay_hours} hour(s)."
         )
-
     else:
-        print("🧪 Immediate grading and posting")
         post_grade_to_lms(session, score, feedback)
-        log_gpt_interaction(assignment_title, prompt, feedback, score)
+        return render_template(
+            "feedback.html",
+            score=score,
+            feedback=feedback,
+            rubric_total_points=rubric_total_points,
+            user_roles=session.get("launch_data", {}).get("https://purl.imsglobal.org/spec/lti/claim/roles", [])
+        )
 
-        if FERPA_SAFE_MODE:
-            return render_template(
-                "feedback.html",
-                score=score,
-                feedback=feedback,
-                rubric_total_points=rubric_total_points,
-                user_roles=session.get("launch_data", {}).get("https://purl.imsglobal.org/spec/lti/claim/roles", [])
-            )
-        else:
-            return render_template(
-                "feedback.html",
-                score=score,
-                feedback=feedback,
-                rubric_total_points=rubric_total_points,
-                user_roles=session.get("launch_data", {}).get("https://purl.imsglobal.org/spec/lti/claim/roles", [])
-            )
 
 
 
