@@ -208,6 +208,7 @@ def launch():
     assignment_config = load_assignment_config(assignment_title)
     tinymce_api_key = os.getenv("TINYMCE_API_KEY")
 
+    print("📦 Loaded config:", assignment_config)
 
     return render_template(
         "launch.html",
@@ -263,7 +264,10 @@ def grade_docx():
     print(f"🔐 FERPA_SAFE_MODE: {FERPA_SAFE_MODE}")
 
     resource_link = session.get("launch_data", {}).get("https://purl.imsglobal.org/spec/lti/claim/resource_link", {})
-    assignment_title = resource_link.get("title") or f"Assignment-{resource_link.get('id')}" or "Untitled Assignment"
+    title_from_claim = resource_link.get("title")
+    id_from_claim = resource_link.get("id")
+    assignment_title = str(title_from_claim or f"Assignment-{id_from_claim}" or "Untitled Assignment").strip()
+
     assignment_title = str(assignment_title).strip()
     print(f"🧪 Final resolved assignment_title: {assignment_title}")
 
