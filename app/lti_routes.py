@@ -481,11 +481,11 @@ def grade_docx():
         print("⚠️ session[\"student_id\"] missing. Using fallback from launch_data:", fallback_id)
         session["student_id"] = fallback_id
 
-        supabase.rpc("set_client_uid", {
-            "uid": session.get("student_id")
-        }).execute()
+    supabase.rpc("set_client_uid", {
+        "uid": session.get("student_id")
+    }).execute()
 
-        print("🧪 RLS set_client_uid:", session.get("student_id"))
+    print("🧪 RLS set_client_uid:", session.get("student_id"))
 
     # ✅ Common release time logic
     submission_time = datetime.utcnow()
