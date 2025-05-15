@@ -451,6 +451,20 @@ def grade_docx():
         return f"❌ GPT error: {str(e)}", 500
 
     import uuid
+    
+    if not session.get("student_id"):
+        launch_data = session.get("launch_data", {})
+        fallback_id = launch_data.get("sub")
+        print("⚠️ session[\"student_id\"] missing. Using fallback from launch_data:", fallback_id)
+        session["student_id"] = fallback_id
+
+    # ✅ Set Supabase RLS identity right after student_id is guaranteed
+    supabase.rpc("set_client_uid", {
+        "uid": session.get("student_id")
+    }).execute()
+    print("👤 Supabase client UID set to:", session.get("student_id"))
+
+    # ✅ Build submission after student_id is finalized
     submission_id = str(uuid.uuid4())
     submission_data = {
         "submission_id": submission_id,
@@ -463,27 +477,7 @@ def grade_docx():
         "student_text": full_text,
         "ai_check_result": None
     }
-    
-    print("🧪 INSERTING submission for student_id:", session.get("student_id"))
 
-    print("🧪 Instructor Approval in Config:", assignment_config.get("instructor_approval"))
-    print("🧪 TYPE CHECK:", type(assignment_config.get("instructor_approval")))
-    print("🧪 Storing pending submission:", submission_id)
-
-    if assignment_config.get("instructor_approval"):
-        print("🧪 Instructor review required: saving temporarily")
-        submission_time = datetime.utcnow()
-        release_time = datetime.utcnow() + timedelta(hours=delay_hours)
-
-    if not session.get("student_id"):
-        launch_data = session.get("launch_data", {})
-        fallback_id = launch_data.get("sub")
-        print("⚠️ session[\"student_id\"] missing. Using fallback from launch_data:", fallback_id)
-        session["student_id"] = fallback_id
-
-    supabase.rpc("set_client_uid", {
-        "uid": session.get("student_id")
-    }).execute()
 
     print("🧪 RLS set_client_uid:", session.get("student_id"))
 
