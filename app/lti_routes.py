@@ -305,6 +305,8 @@ def grade_docx():
 
     file = request.files.get("file")
     inline_text = request.form.get("inline_text", "").strip()
+    
+    reference_data = ""
 
     # 🧠 Require at least one form of submission
     if not file and not inline_text:
