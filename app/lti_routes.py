@@ -444,7 +444,24 @@ def grade_docx():
 
     print("🧪 INSERTING with student_id =", submission_data["student_id"])
 
-    supabase.table("submissions").insert(submission_data).execute()
+    supabase.table("submissions").insert({
+        "submission_id": submission_data["submission_id"],
+        "student_id": submission_data["student_id"],
+        "assignment_title": submission_data["assignment_title"],
+        "submission_time": submission_data["submission_time"],
+        "submission_type": submission_data["submission_type"],
+        "delay_hours": delay_hours,
+        "ready_to_post": delay_hours == 0 and not assignment_config.get("instructor_approval", False),
+        "score": submission_data["score"],
+        "feedback": submission_data["feedback"],
+        "student_text": submission_data["student_text"],
+        "ai_check_result": submission_data["ai_check_result"],
+        "instructor_notes": "",
+        "pending": True,
+        "reviewed": False,
+        "release_time": datetime.utcnow() + timedelta(hours=delay_hours)
+    }).execute()
+
     log_gpt_interaction(assignment_title, prompt, feedback, score)
 
     if assignment_config.get("instructor_approval"):
