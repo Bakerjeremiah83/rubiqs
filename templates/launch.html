@@ -168,6 +168,7 @@
     <div class="welcome">
       {% if assignment_config %}
       Submit your work and let <strong>Rubiqs</strong> handle the rest.
+      {% endif %}
     </div>
 
     <form id="grade-form" action="/grade-docx" method="POST" enctype="multipart/form-data" onsubmit="showLoading()">
