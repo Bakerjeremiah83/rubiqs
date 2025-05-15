@@ -477,6 +477,8 @@ def grade_docx():
         "student_text": full_text,
         "ai_check_result": None
     }
+    
+    print("🧪 INSERTING with student_id =", submission_data["student_id"])
 
 
     print("🧪 RLS set_client_uid:", session.get("student_id"))
