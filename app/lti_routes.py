@@ -14,6 +14,7 @@ from app.storage import (
 import os
 import json
 import jwt
+import uuid
 from jwt.algorithms import RSAAlgorithm
 from jwt.exceptions import InvalidTokenError
 from requests_oauthlib import OAuth1Session
