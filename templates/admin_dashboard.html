@@ -385,7 +385,7 @@
         </thead>        
         <tbody>
           {% for submission in pending_feedback %}
-          <tr>
+          <tr id="row-{{ submission.submission_id }}">
             <td style="border: 1px solid #ccc; padding: 0.75rem;">{{ submission.student_id }}</td>
             <td style="border: 1px solid #ccc; padding: 0.75rem;">{{ submission.assignment_title }}</td>
             <td style="border: 1px solid #ccc; padding: 0.75rem; text-align: center;">
@@ -397,10 +397,17 @@
                   <input type="hidden" name="submission_id" value="{{ submission.submission_id }}">
                   <button style="padding: 0.4rem 0.8rem; background: #1f3a54; color: white; border: none; border-radius: 20px;">Review</button>
                 </form>
-                <form action="/instructor-review/accept" method="post" style="margin: 0;">
+                <button
+                onclick="acceptSubmission('{{ submission.submission_id }}')"
+                style="padding: 0.4rem 0.8rem; background: #2e7d32; color: white; border: none; border-radius: 20px;"
+              >
+                Accept
+              </button>
+                <form action="/delete-submission" method="post" style="margin: 0;">
                   <input type="hidden" name="submission_id" value="{{ submission.submission_id }}">
-                  <button style="padding: 0.4rem 0.8rem; background: #2e7d32; color: white; border: none; border-radius: 20px;">Accept</button>
+                  <button type="submit" style="padding: 0.4rem 0.8rem; background: #c62828; color: white; border: none; border-radius: 20px;">Delete</button>
                 </form>
+
               </div>
             </td>
             <td style="border: 1px solid #ccc; padding: 0.75rem;">
@@ -455,6 +462,11 @@
       document.getElementById(id).classList.add('active');
       document.querySelector(`[onclick="showTab('${id}')"]`).classList.add('active');
     }
+
+    document.addEventListener("DOMContentLoaded", function () {
+      // Optional: auto-select the 'setup' panel
+      showTab('setup');
+    });
 
     function toggleReview(selected) {
       const options = selected.parentElement.querySelectorAll('.toggle-option');
@@ -545,5 +557,31 @@
     });
   });
   </script>
+  <script>
+    function acceptSubmission(submissionId) {
+      fetch('/instructor-review/accept', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: 'submission_id=' + encodeURIComponent(submissionId)
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          const row = document.getElementById('row-' + submissionId);
+          if (row) {
+            row.remove(); // ✅ Remove the row from the dashboard panel
+          }
+        } else {
+          alert("❌ Something went wrong.");
+        }
+      })
+      .catch(error => {
+        console.error("❌ Network error:", error);
+        alert("❌ Could not contact the server.");
+      });
+    }
+    </script>    
 </body>
 </html>
