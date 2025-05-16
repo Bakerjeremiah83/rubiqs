@@ -1061,6 +1061,9 @@ def accept_review():
         "reviewed": True
     }).eq("submission_id", submission_id).execute()
 
+    print("✅ Accepting submission:", submission_id)
+
+
     if hasattr(response, 'error') and response.error:
         print("❌ Supabase error:", response.error.message)
         return f"❌ Supabase error: {response.error.message}", 500
@@ -1766,3 +1769,32 @@ def test_insert():
 
     supabase.table("submissions").insert(test_submission).execute()
     return "✅ Insert succeeded"
+
+@lti.route('/instructor-review/accept', methods=['POST'])
+def accept_review():
+    submission_id = request.form.get("submission_id", "").strip()
+
+    if not submission_id:
+        print("❌ Missing submission_id in form data.")
+        return jsonify({"success": False}), 400
+
+    print("🧪 Accepting submission_id:", submission_id)
+
+    # Optional debug: confirm if this ID exists in the table
+    check = supabase.table("submissions").select("*").eq("submission_id", submission_id).execute()
+    print("🔍 Matching rows:", len(check.data))
+    if check.data:
+        print("📝 Sample row:", check.data[0])
+
+    # Attempt to update this record
+    response = supabase.table("submissions").update({
+        "pending": False,
+        "reviewed": True
+    }).eq("submission_id", submission_id).limit(1).execute()
+
+    if hasattr(response, "error") and response.error:
+        print("❌ Supabase update error:", response.error.message)
+        return jsonify({"success": False}), 500
+
+    print("✅ Submission updated successfully.")
+    return jsonify({"success": True})
