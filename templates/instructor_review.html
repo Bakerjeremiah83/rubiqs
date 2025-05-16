@@ -58,8 +58,8 @@
       <p><strong>Assignment:</strong> {{ current_review.assignment_title }}</p>
       <p><strong>Submitted:</strong> {{ current_review.timestamp }}</p>
       <p><strong>Submission:</strong></p>
-      <div style="white-space: pre-wrap; background: #f9f9f9; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; line-height: 1.6;">
-        {{ current_review.student_text | e }}
+      <div style="background: #f9f9f9; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; line-height: 1.6;">
+        {{ current_review.student_text | safe }}
       </div>
 
 
