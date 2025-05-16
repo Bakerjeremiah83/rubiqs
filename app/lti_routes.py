@@ -1700,6 +1700,7 @@ def delete_submission():
             print("❌ Supabase error:", response.error.message)
             return "❌ Failed to delete submission", 500
 
+        print("✅ Deleted submission_id:", submission_id)
         return redirect("/admin-dashboard?tab=instructor")
     
     except Exception as e:
