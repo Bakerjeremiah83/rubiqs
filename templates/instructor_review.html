@@ -83,14 +83,14 @@
 <body>
   <div class="review-card">
     <h2>Instructor Review</h2>
-  
+
     {% if current_review %}
     <div id="submission-{{ current_review.submission_id }}">
       <p><strong>Student ID:</strong> {{ current_review.student_id }}</p>
       <p><strong>Assignment:</strong> {{ current_review.assignment_title }}</p>
       <p><strong>Submitted:</strong> {{ current_review.timestamp }}</p>
       <p><strong>Submission:</strong></p>
-  
+
       {% if docx_pages %}
         {% for page in docx_pages %}
           <div class="docx-page-card">
@@ -104,38 +104,79 @@
           {{ current_review.student_text | safe }}
         </div>
       {% endif %}
-  
-      <form method="POST">
-        <input type="hidden" name="submission_id" value="{{ current_review.submission_id }}">
-  
-        <label for="score">Score</label>
-        <input type="number" name="score" value="{{ current_review.score }}" min="0" max="100" required>
-  
-      
-        {% if not current_review.ai_check_result %}
-          <button type="button"
-                  id="scan-ai-btn"
-                  class="btn scan"
-                  data-submission-id="{{ current_review.submission_id }}"
-                  data-student-text="{{ current_review.student_text | escape }}">
-            🧠 Check for AI Writing
+
+      <label for="score">Score</label>
+      <input type="number" name="score" value="{{ current_review.score }}" min="0" max="100" required>
+
+      {% if not current_review.ai_check_result %}
+        <button type="button"
+                id="scan-ai-btn"
+                class="btn scan"
+                data-submission-id="{{ current_review.submission_id }}"
+                data-student-text="{{ current_review.student_text | escape }}">
+          🧠 Check for AI Writing
+        </button>
+        <div id="ai-result" class="mt-2" style="font-weight: bold;"></div>
+      {% else %}
+        <div class="alert alert-info mt-3">
+          <strong>AI Verdict:</strong> {{ current_review.ai_check_result.verdict }}<br>
+          <strong>AI Probability:</strong> {{ current_review.ai_check_result.ai_probability }}%
+        </div>
+      {% endif %}
+
+      <div style="max-width: 900px; margin: 0 auto; margin-bottom: 1.5rem;">
+        <label for="feedback" style="font-weight: bold; font-size: 1rem; margin-bottom: 0.5rem; display: block;">
+          Feedback
+        </label>
+        <textarea
+          name="feedback"
+          rows="10"
+          required
+          style="
+            width: 100%;
+            font-size: 1rem;
+            padding: 1rem;
+            border-radius: 8px;
+            box-sizing: border-box;
+            line-height: 1.6;
+          "
+        >{{ current_review.feedback }}</textarea>
+
+        <!-- ✅ Replaced form with hidden input -->
+        <input type="hidden" id="submission_id" value="{{ current_review.submission_id }}">
+
+        <div class="button-group">
+          <button
+            type="button"
+            class="btn"
+            onclick="acceptSubmission('{{ current_review.submission_id }}')"
+          >
+            ✅ Accept
           </button>
-          <div id="ai-result" class="mt-2" style="font-weight: bold;"></div>
-        {% else %}
-          <div class="alert alert-info mt-3">
-            <strong>AI Verdict:</strong> {{ current_review.ai_check_result.verdict }}<br>
-            <strong>AI Probability:</strong> {{ current_review.ai_check_result.ai_probability }}%
-          </div>
+          <button type="reset" class="btn" style="background-color: #888;">Reset</button>
+          <button type="button" class="btn" onclick="window.location.href='/admin-dashboard'">Cancel</button>
+        </div>
+
+        {% if next_id %}
+          <a id="next-link" href="/instructor-review?submission_id={{ next_id }}" style="display: none;"></a>
         {% endif %}
-      
-        <div style="max-width: 900px; margin: 0 auto; margin-bottom: 1.5rem;">
-          <label for="feedback" style="font-weight: bold; font-size: 1rem; margin-bottom: 0.5rem; display: block;">
-            Feedback
+      </div> <!-- close content box -->
+
+      </div> <!-- close submission wrapper -->
+
+      <hr style="margin: 2rem auto; max-width: 900px;">
+
+      <!-- 🔽 Instructor Notes Save Form -->
+      <form method="POST" action="/instructor-review/save-notes">
+        <input type="hidden" name="submission_id" value="{{ current_review.submission_id }}">
+
+        <div style="max-width: 900px; margin: 2rem auto;">
+          <label for="notes" style="font-weight: bold; font-size: 1rem; display: block; margin-bottom: 0.5rem;">
+            Instructor Notes (Internal)
           </label>
           <textarea
-            name="feedback"
-            rows="10"
-            required
+            name="notes"
+            rows="6"
             style="
               width: 100%;
               font-size: 1rem;
@@ -144,63 +185,15 @@
               box-sizing: border-box;
               line-height: 1.6;
             "
-          >{{ current_review.feedback }}</textarea>
-          <form method="POST">
-            <input type="hidden" name="submission_id" value="{{ current_review.submission_id }}">
-          
-            <!-- Feedback input, AI detection, etc. -->
-          
-            <div class="button-group">
-              <button
-                type="button"
-                class="btn"
-                onclick="acceptSubmission('{{ current_review.submission_id }}')"
-              >
-                ✅ Accept
-              </button>
-              <button type="reset" class="btn" style="background-color: #888;">Reset</button>
-              <button type="button" class="btn" onclick="window.location.href='/admin-dashboard'">Cancel</button>
-            </div>
-          
-            {% if next_id %}
-              <a id="next-link" href="/instructor-review?submission_id={{ next_id }}" style="display: none;"></a>
-            {% endif %}
-          </form>
-          
-          <!-- ✅ Now close the submission wrapper -->
-          </div>  <!-- this closes <div id="submission-{{ current_review.submission_id }}"> -->
-          
-          <hr style="margin: 2rem auto; max-width: 900px;">          
-
-      <!-- 🔽 Instructor Notes Save Form -->
-<form method="POST" action="/instructor-review/save-notes">
-  <input type="hidden" name="submission_id" value="{{ current_review.submission_id }}">
-
-  <div style="max-width: 900px; margin: 2rem auto;">
-    <label for="notes" style="font-weight: bold; font-size: 1rem; display: block; margin-bottom: 0.5rem;">
-      Instructor Notes (Internal)
-    </label>
-    <textarea
-      name="notes"
-      rows="6"
-      style="
-        width: 100%;
-        font-size: 1rem;
-        padding: 1rem;
-        border-radius: 8px;
-        box-sizing: border-box;
-        line-height: 1.6;
-      "
-    >{{ current_review.instructor_notes }}</textarea>
-    <button type="submit" class="btn" style="margin-top: 1rem;">💾 Save Notes</button>
-  </div>
-</form>
+          >{{ current_review.instructor_notes }}</textarea>
+          <button type="submit" class="btn" style="margin-top: 1rem;">💾 Save Notes</button>
+        </div>
+      </form>
 
       <!-- ✅ Back to Dashboard Button -->
       <div class="button-group" style="margin-top: 2rem;">
         <a href="/admin-dashboard" class="btn" style="background-color: #4b887f;">⬅ Back to Admin Dashboard</a>
       </div>
-    </div>
     {% else %}
       <p>No pending submissions to review.</p>
       <div class="button-group" style="margin-top: 2rem;">
@@ -234,7 +227,6 @@
               🧠 <strong>AI Detection Result:</strong><br>
               <pre style="white-space: pre-wrap;">${result.result}</pre>
             `;
-
           }
         } catch (err) {
           resultDiv.innerText = "❌ Failed to contact ZeroGPT.";
@@ -242,6 +234,7 @@
       });
     }
   </script>
+
   <script>
     function acceptSubmission(submissionId) {
       fetch('/instructor-review/accept', {
@@ -254,13 +247,11 @@
       .then(response => response.json())
       .then(data => {
         if (data.success) {
-          // ✅ Remove the submission block
           const element = document.getElementById('submission-' + submissionId);
           if (element) {
             element.remove();
           }
-    
-          // ✅ Move to next submission if available
+
           const nextLink = document.getElementById('next-link');
           if (nextLink) {
             window.location.href = nextLink.href;
@@ -277,6 +268,6 @@
         alert("❌ Server error. Please try again.");
       });
     }
-    </script>    
+  </script>
 </body>
 </html>
