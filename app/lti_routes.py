@@ -334,7 +334,6 @@ def grade_docx():
             filename = file.filename.lower()
 
             # Upload to Supabase
-            import uuid
             from werkzeug.utils import secure_filename
             from io import BytesIO
 
