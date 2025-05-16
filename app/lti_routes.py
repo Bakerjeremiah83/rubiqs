@@ -1037,40 +1037,6 @@ def admin_dashboard():
                            activity_logs=activity_logs)
 
 
-@lti.route("/instructor-review/accept", methods=["POST"])
-def accept_review():
-    submission_id = request.form.get("submission_id")
-    
-    # ✅ Safer handling if submission_id is missing
-    if not submission_id:
-        flash("❌ Error: Missing submission ID. Cannot approve this submission.", "error")
-        return redirect(url_for('lti.instructor_review'))
-
-
-    # ✅ Check if Canvas AGS is supported
-    if session.get("platform") == "canvas" and session.get("lineitem_url") and session.get("ags_token"):
-        print("🧠 Ready for AGS push (Canvas), but skipping implementation for now.")
-        # Future: post score/feedback to Canvas here
-
-    else:
-        print("ℹ️ AGS skipped: no token or lineitem_url in session.")
-
-    # ✅ Update Supabase to mark as reviewed
-    response = supabase.table("submissions").update({
-        "pending": False,
-        "reviewed": True
-    }).eq("submission_id", submission_id).execute()
-
-    print("✅ Accepting submission:", submission_id)
-
-
-    if hasattr(response, 'error') and response.error:
-        print("❌ Supabase error:", response.error.message)
-        return f"❌ Supabase error: {response.error.message}", 500
-
-    return jsonify({"success": True})
-
-
 @lti.route("/instructor-review", methods=["GET", "POST"])
 def instructor_review():
     response = supabase.table("submissions").select("*").eq("pending", True).execute()
