@@ -480,6 +480,7 @@ def grade_docx():
         "feedback": feedback,
         "submission_type": "inline" if inline_text else "file",
         "student_text": full_text,
+        "student_file_url": student_file_url,
         "ai_check_result": None,
         "instructor_notes": "",
         "delay_hours": delay_hours,
