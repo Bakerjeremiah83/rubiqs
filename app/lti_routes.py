@@ -29,7 +29,7 @@ def convert_docx_to_html_with_styles(docx_path):
             return f.read()
     except Exception as e:
         print("❌ DOCX conversion failed:", e)
-        return "<p>Failed to preview .docx file.</p>"
+        return f"<p>Conversion error: {e}</p>"
 
 import os
 import json
