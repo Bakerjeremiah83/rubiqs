@@ -48,26 +48,51 @@
       margin-top: 1.5rem;
       justify-content: flex-start;
     }
+    .docx-page-card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+      margin-bottom: 1.5rem;
+      padding: 1.5rem;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      cursor: pointer;
+    }
+    .docx-page-card:hover {
+      transform: scale(1.01);
+      box-shadow: 0 12px 20px rgba(0, 0, 0, 0.15);
+    }
   </style>
 </head>
 <body>
   <div class="review-card">
     <h2>Instructor Review</h2>
+  
     {% if current_review %}
       <p><strong>Student ID:</strong> {{ current_review.student_id }}</p>
       <p><strong>Assignment:</strong> {{ current_review.assignment_title }}</p>
       <p><strong>Submitted:</strong> {{ current_review.timestamp }}</p>
       <p><strong>Submission:</strong></p>
-      <div style="background: #f9f9f9; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; line-height: 1.6;">
-        {{ current_review.student_text | safe }}
-      </div>
-
-
+  
+      {% if docx_pages %}
+        {% for page in docx_pages %}
+          <div class="docx-page-card">
+            {{ page|safe }}
+          </div>
+        {% endfor %}
+      {% elif pdf_url %}
+        <iframe src="{{ pdf_url }}" width="100%" height="600px" style="border: none; border-radius: 8px;"></iframe>
+      {% else %}
+        <div style="white-space: pre-wrap; background: #f9f9f9; padding: 1rem; border-radius: 8px;">
+          {{ current_review.student_text | safe }}
+        </div>
+      {% endif %}
+  
       <form method="POST">
         <input type="hidden" name="submission_id" value="{{ current_review.submission_id }}">
-        
+  
         <label for="score">Score</label>
         <input type="number" name="score" value="{{ current_review.score }}" min="0" max="100" required>
+  
       
         {% if not current_review.ai_check_result %}
           <button type="button"

@@ -11,6 +11,26 @@ from app.storage import (
     load_all_pending_feedback
 )
 
+import subprocess
+import os
+
+def convert_docx_to_html_with_styles(docx_path):
+    html_path = docx_path.replace(".docx", ".html")
+    try:
+        subprocess.run([
+            "libreoffice",
+            "--headless",
+            "--convert-to", "html",
+            "--outdir", os.path.dirname(docx_path),
+            docx_path
+        ], check=True)
+
+        with open(html_path, "r", encoding="utf-8") as f:
+            return f.read()
+    except Exception as e:
+        print("❌ DOCX conversion failed:", e)
+        return "<p>Failed to preview .docx file.</p>"
+
 import os
 import json
 import jwt
@@ -19,6 +39,7 @@ from jwt.algorithms import RSAAlgorithm
 from jwt.exceptions import InvalidTokenError
 from requests_oauthlib import OAuth1Session
 import requests
+import mammoth
 import re
 import openai
 from io import BytesIO
@@ -307,17 +328,39 @@ def grade_docx():
         return "❌ Please submit either a file or inline response.", 400
 
     try:
+        student_file_url = None  # initialize in case it's inline
+
         if file:
             filename = file.filename.lower()
-            if filename.endswith(".docx"):
-                doc = Document(file)
+
+            # Upload to Supabase
+            import os, uuid
+            from werkzeug.utils import secure_filename
+            from io import BytesIO
+
+            file_ext = os.path.splitext(filename)[-1]
+            safe_name = secure_filename(filename)
+            unique_path = f"submissions/{str(uuid.uuid4())}_{safe_name}"
+            file_bytes = file.read()
+
+            supabase.storage.from_("submissions").upload(unique_path, file_bytes)
+
+            # Construct public URL (you can use env var or hardcode the project ID)
+            SUPABASE_PROJECT_ID = os.getenv("SUPABASE_PROJECT_ID", "your-project-name.supabase.co")
+            student_file_url = f"https://{SUPABASE_PROJECT_ID}/storage/v1/object/public/submissions/{unique_path}"
+
+            # Extract text
+            if file_ext == ".docx":
+                doc = Document(BytesIO(file_bytes))
                 full_text = "\n".join([para.text for para in doc.paragraphs])
-            elif filename.endswith(".pdf"):
-                full_text = extract_pdf_text(BytesIO(file.read()))
+            elif file_ext == ".pdf":
+                full_text = extract_pdf_text(BytesIO(file_bytes))
             else:
                 return "❌ Unsupported file type. Please upload .docx or .pdf", 400
+
         elif inline_text:
             full_text = inline_text
+
 
         ai_check_result = check_ai_with_gpt(full_text)
         print("🤖 AI Detection Result:", ai_check_result)
@@ -459,6 +502,7 @@ def grade_docx():
         "score": submission_data["score"],
         "feedback": submission_data["feedback"],
         "student_text": submission_data["student_text"],
+        "student_file_url": student_file_url,
         "ai_check_result": submission_data["ai_check_result"],
         "instructor_notes": "",
         "pending": True,
@@ -1062,8 +1106,44 @@ def instructor_review():
     
     print("🧪 current_review =", current_review)
 
+    docx_html = None
+    pdf_url = None
+    docx_pages = []
 
-    return render_template("instructor_review.html", current_review=current_review, reviews=reviews)
+    if current_review:
+        file_url = current_review.get("student_file_url", "")
+        if file_url.endswith(".pdf"):
+            pdf_url = file_url
+        elif file_url.endswith(".docx"):
+            try:
+                response = requests.get(file_url)
+                docx_path = "/tmp/temp.docx"
+                with open(docx_path, "wb") as f:
+                    f.write(response.content)
+
+                full_html = convert_docx_to_html_with_styles(docx_path)
+
+                # Split pages if LibreOffice used <div style="page-break-before: always">
+                docx_pages = full_html.split('<div style="page-break-before: always"')
+
+                # Re-add the opening div to each split page (except the first)
+                for i in range(1, len(docx_pages)):
+                    docx_pages[i] = '<div style="page-break-before: always"' + docx_pages[i]
+
+            except Exception as e:
+                print("❌ DOCX rendering error:", e)
+
+
+    return render_template(
+    "instructor_review.html",
+    current_review=current_review,
+    reviews=reviews,
+    docx_pages=docx_pages,
+    pdf_url=pdf_url
+)
+
+
+
 
 @lti.route("/instructor-review/save-notes", methods=["POST"])
 def instructor_save_notes():
