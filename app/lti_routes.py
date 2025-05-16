@@ -1111,7 +1111,7 @@ def instructor_review():
     docx_pages = []
 
     if current_review:
-        file_url = current_review.get("student_file_url", "")
+        file_url = str(current_review.get("student_file_url") or "")
         if file_url.endswith(".pdf"):
             pdf_url = file_url
         elif file_url.endswith(".docx"):
