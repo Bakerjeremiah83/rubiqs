@@ -15,4 +15,3 @@ python-dotenv
 psycopg2-binary
 supabase
 mammoth
-python-docx-html
