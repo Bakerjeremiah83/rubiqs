@@ -1717,6 +1717,26 @@ def download_activity_log():
 
 # 🧪 Triggering redeploy
 
+@lti.route('/delete-submission', methods=['POST'])
+def delete_submission():
+    submission_id = request.form.get("submission_id")
+
+    if not submission_id:
+        return "❌ Missing submission ID", 400
+
+    try:
+        response = supabase.table("submissions").delete().eq("submission_id", submission_id).execute()
+
+        if hasattr(response, "error") and response.error:
+            print("❌ Supabase error:", response.error.message)
+            return "❌ Failed to delete submission", 500
+
+        return redirect("/admin-dashboard?tab=instructor")
+    
+    except Exception as e:
+        print("❌ Exception deleting submission:", e)
+        return "❌ Internal server error", 500
+
 
 @lti.route("/test-insert")
 def test_insert():
