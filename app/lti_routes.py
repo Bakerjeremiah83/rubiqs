@@ -1130,6 +1130,9 @@ def instructor_review():
                 for i in range(1, len(docx_pages)):
                     docx_pages[i] = '<div style="page-break-before: always"' + docx_pages[i]
 
+                    print("📄 Total DOCX pages found:", len(docx_pages))
+                # Remove the last page if it's empty
+            
             except Exception as e:
                 print("❌ DOCX rendering error:", e)
 
