@@ -1065,13 +1065,34 @@ def accept_review():
         print("❌ Supabase error:", response.error.message)
         return f"❌ Supabase error: {response.error.message}", 500
 
-    return redirect("/admin-dashboard")
+    return jsonify({"success": True})
 
 
 @lti.route("/instructor-review", methods=["GET", "POST"])
 def instructor_review():
     response = supabase.table("submissions").select("*").eq("pending", True).execute()
     reviews = response.data or []
+
+    submission_id = request.args.get("submission_id")
+    current_review = None
+    next_id = None
+
+    if reviews:
+        # Find the current review based on query parameter
+        for i, review in enumerate(reviews):
+            if review["submission_id"] == submission_id:
+                current_review = review
+                # If there's a next one in the list, get its ID
+                if i + 1 < len(reviews):
+                    next_id = reviews[i + 1]["submission_id"]
+                break
+
+        # If no ID was passed or not matched, default to first
+        if not current_review:
+            current_review = reviews[0]
+            if len(reviews) > 1:
+                next_id = reviews[1]["submission_id"]
+
 
     print(f"🧪 Number of pending reviews found: {len(reviews)}")
 
@@ -1142,7 +1163,8 @@ def instructor_review():
     current_review=current_review,
     reviews=reviews,
     docx_pages=docx_pages,
-    pdf_url=pdf_url
+    pdf_url=pdf_url,
+    next_id=next_id
 )
 
 

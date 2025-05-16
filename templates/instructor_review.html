@@ -85,6 +85,7 @@
     <h2>Instructor Review</h2>
   
     {% if current_review %}
+    <div id="submission-{{ current_review.submission_id }}">
       <p><strong>Student ID:</strong> {{ current_review.student_id }}</p>
       <p><strong>Assignment:</strong> {{ current_review.assignment_title }}</p>
       <p><strong>Submitted:</strong> {{ current_review.timestamp }}</p>
@@ -144,15 +145,32 @@
               line-height: 1.6;
             "
           >{{ current_review.feedback }}</textarea>
-        </div>
-      
-        <div class="button-group">
-          <input class="btn" type="submit" name="action" value="Approve and Post">
-          <button type="reset" class="btn" style="background-color: #888;">Reset</button>
-          <button type="button" class="btn" onclick="window.location.href='/admin-dashboard'">Cancel</button>
-        </div>
-      </form>
-      <hr style="margin: 2rem auto; max-width: 900px;">
+          <form method="POST">
+            <input type="hidden" name="submission_id" value="{{ current_review.submission_id }}">
+          
+            <!-- Feedback input, AI detection, etc. -->
+          
+            <div class="button-group">
+              <button
+                type="button"
+                class="btn"
+                onclick="acceptSubmission('{{ current_review.submission_id }}')"
+              >
+                ✅ Accept
+              </button>
+              <button type="reset" class="btn" style="background-color: #888;">Reset</button>
+              <button type="button" class="btn" onclick="window.location.href='/admin-dashboard'">Cancel</button>
+            </div>
+          
+            {% if next_id %}
+              <a id="next-link" href="/instructor-review?submission_id={{ next_id }}" style="display: none;"></a>
+            {% endif %}
+          </form>
+          
+          <!-- ✅ Now close the submission wrapper -->
+          </div>  <!-- this closes <div id="submission-{{ current_review.submission_id }}"> -->
+          
+          <hr style="margin: 2rem auto; max-width: 900px;">          
 
       <!-- 🔽 Instructor Notes Save Form -->
 <form method="POST" action="/instructor-review/save-notes">
@@ -182,6 +200,7 @@
       <div class="button-group" style="margin-top: 2rem;">
         <a href="/admin-dashboard" class="btn" style="background-color: #4b887f;">⬅ Back to Admin Dashboard</a>
       </div>
+    </div>
     {% else %}
       <p>No pending submissions to review.</p>
       <div class="button-group" style="margin-top: 2rem;">
@@ -223,5 +242,41 @@
       });
     }
   </script>
+  <script>
+    function acceptSubmission(submissionId) {
+      fetch('/instructor-review/accept', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: 'submission_id=' + encodeURIComponent(submissionId)
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          // ✅ Remove the submission block
+          const element = document.getElementById('submission-' + submissionId);
+          if (element) {
+            element.remove();
+          }
+    
+          // ✅ Move to next submission if available
+          const nextLink = document.getElementById('next-link');
+          if (nextLink) {
+            window.location.href = nextLink.href;
+          } else {
+            alert("✅ Submission accepted. You're all caught up!");
+            window.location.href = "/admin-dashboard";
+          }
+        } else {
+          alert("❌ Something went wrong while saving.");
+        }
+      })
+      .catch(err => {
+        console.error("❌ Network error:", err);
+        alert("❌ Server error. Please try again.");
+      });
+    }
+    </script>    
 </body>
 </html>
