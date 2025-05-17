@@ -570,13 +570,27 @@
       }
     
       document.addEventListener("DOMContentLoaded", function () {
-        const urlParams = new URLSearchParams(window.location.search);
-        const tab = urlParams.get("tab");
+      const urlParams = new URLSearchParams(window.location.search);
+      const tab = urlParams.get("tab");
+      const forceReload = urlParams.get("reload");
 
-        const forceReload = new URLSearchParams(window.location.search).get("reload");
-        if (forceReload === "true") {
-          location.reload();
-        }
+      if (forceReload === "true") {
+        // Remove "reload" from the URL before reloading
+        urlParams.delete("reload");
+        const cleanUrl = window.location.pathname + '?' + urlParams.toString();
+        window.history.replaceState(null, '', cleanUrl);
+        location.reload();
+      }
+
+      // Load a specific tab from URL or default to 'setup'
+      if (tab && ['setup', 'gospel', 'instructor', 'logs'].includes(tab)) {
+        showTab(tab);
+      } else {
+        showTab('setup');
+      }
+    });
+
+
 
         // Load a specific tab from URL or default to 'setup'
         if (tab && ['setup', 'gospel', 'instructor', 'logs'].includes(tab)) {
