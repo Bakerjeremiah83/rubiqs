@@ -86,7 +86,7 @@ def load_assignment_config(assignment_title):
         print("❌ Error loading assignment config:", e)
     return None
 
-
+ALLOWED_CLIENT_IDS = os.getenv("CLIENT_ID", "").split(",")
 
 @lti.route("/login", methods=["POST"])
 def login():
@@ -95,6 +95,9 @@ def login():
     login_hint = request.form.get("login_hint")
     target_link_uri = request.form.get("target_link_uri")
     client_id = request.form.get("client_id")
+    if client_id not in ALLOWED_CLIENT_IDS:
+        return f"❌ Invalid client ID: {client_id}", 403
+    
     lti_message_hint = request.form.get("lti_message_hint")
 
     if not all([issuer, login_hint, target_link_uri, client_id]):
