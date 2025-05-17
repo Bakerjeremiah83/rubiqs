@@ -113,6 +113,7 @@ def login():
     if not all([issuer, login_hint, target_link_uri, client_id]):
         return "❌ Missing required LTI launch parameters", 400
 
+
     redirect_url = (
         f"{issuer}/mod/lti/auth.php?"
         f"scope=openid&response_type=id_token&client_id={client_id}&"
@@ -153,6 +154,9 @@ def openid_configuration():
 @lti.route("/launch", methods=["POST"])
 def launch():
     print("🚀 /launch hit")
+
+    print(f"🧪 /launch form keys: {list(request.form.keys())}")
+    print(f"🧪 /launch full form: {dict(request.form)}")
 
     jwt_token = request.form.get("id_token")
     if not jwt_token:
