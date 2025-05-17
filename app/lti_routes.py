@@ -1747,28 +1747,24 @@ def test_insert():
 @lti.route('/instructor-review/accept', methods=['POST'])
 def accept_review():
     submission_id = request.form.get("submission_id", "").strip()
-
-    if not submission_id:
-        print("❌ Missing submission_id in form data.")
-        return jsonify({"success": False}), 400
-
     print("🧪 Accepting submission_id:", submission_id)
 
-    # Optional debug: confirm if this ID exists in the table
-    check = supabase.table("submissions").select("*").eq("submission_id", submission_id).execute()
-    print("🔍 Matching rows:", len(check.data))
-    if check.data:
-        print("📝 Sample row:", check.data[0])
+    if not submission_id:
+        return jsonify({"success": False, "error": "Missing submission ID"}), 400
 
-    # Attempt to update this record
-    response = supabase.table("submissions").update({
-        "pending": False,
-        "reviewed": True
-    }).eq("submission_id", submission_id).limit(1).execute()
+    try:
+        response = supabase.table("submissions")\
+            .update({
+                "pending": False,
+                "reviewed": True
+            })\
+            .eq("submission_id", submission_id)\
+            .execute()
 
-    if hasattr(response, "error") and response.error:
-        print("❌ Supabase update error:", response.error.message)
-        return jsonify({"success": False}), 500
+        print("✅ Submission accepted and updated.")
+        return jsonify({"success": True})
 
-    print("✅ Submission updated successfully.")
-    return jsonify({"success": True})
+    except Exception as e:
+        print("❌ Accept error:", str(e))
+        return jsonify({"success": False, "error": "Server error"}), 500
+
