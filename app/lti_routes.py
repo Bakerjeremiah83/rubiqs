@@ -1041,26 +1041,28 @@ def admin_dashboard():
 def instructor_review():
     response = supabase.table("submissions").select("*").eq("pending", True).execute()
     reviews = response.data or []
-
     submission_id = request.args.get("submission_id")
     current_review = None
     next_id = None
 
-    if reviews:
-        # Find the current review based on query parameter
+    # 🔁 Recalculate reviews fresh from Supabase after any Accept
+    if submission_id:
+        # Find the index of the current submission
         for i, review in enumerate(reviews):
             if review["submission_id"] == submission_id:
                 current_review = review
-                # If there's a next one in the list, get its ID
                 if i + 1 < len(reviews):
                     next_id = reviews[i + 1]["submission_id"]
                 break
 
-        # If no ID was passed or not matched, default to first
-        if not current_review:
-            current_review = reviews[0]
-            if len(reviews) > 1:
-                next_id = reviews[1]["submission_id"]
+    # Default to first if no match
+    if not current_review and reviews:
+        current_review = reviews[0]
+        if len(reviews) > 1:
+            next_id = reviews[1]["submission_id"]
+
+    print("🧪 FINAL current_review =", current_review)
+    print("🧪 Remaining reviews:", len(reviews))
 
 
     print(f"🧪 Number of pending reviews found: {len(reviews)}")
