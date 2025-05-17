@@ -235,40 +235,41 @@
     }
   </script>
 
-  <script>
-    function acceptSubmission(submissionId) {
-      fetch('/instructor-review/accept', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: 'submission_id=' + encodeURIComponent(submissionId)
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          const element = document.getElementById('submission-' + submissionId);
-          if (element) {
-            element.remove();
-          }
-
-          const nextLink = document.getElementById('next-link');
-          if (nextLink) {
-            window.location.href = nextLink.href;
-          } else {
-            alert("✅ Submission accepted. You're all caught up!");
-            window.location.href = "/admin-dashboard";
-          }
+<script>
+  function acceptSubmission(submissionId) {
+    fetch('/instructor-review/accept', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: 'submission_id=' + encodeURIComponent(submissionId)
+    })
+    .then(response => {
+      if (!response.ok) {
+        console.error("❌ Server error:", response.status);
+        throw new Error("Server error");
+      }
+      return response.json();
+    })
+    .then(data => {
+      if (data.success) {
+        const nextLink = document.getElementById('next-link');
+        if (nextLink) {
+          window.location.href = nextLink.href;
         } else {
-          alert("❌ Something went wrong while saving.");
+          alert("✅ Submission accepted. You're all caught up!");
+          window.location.href = "/admin-dashboard?tab=instructor";
         }
-      })
-      .catch(err => {
-        console.error("❌ Network error:", err);
-        alert("❌ Server error. Please try again.");
-      });
-    }
+      } else {
+        alert("❌ Failed to accept submission.");
+      }
+    })
+    .catch(error => {
+      console.error("❌ Could not contact server:", error);
+      alert("❌ Could not contact the server.");
+    });
+  }
+</script>
 
-  </script>
 </body>
 </html>
