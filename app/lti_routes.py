@@ -95,9 +95,12 @@ def login():
     issuer = request.form.get("iss")
     login_hint = request.form.get("login_hint")
     target_link_uri = request.form.get("target_link_uri")
-    client_id = request.form.get("client_id", "").strip()
 
-    allowed_ids = [cid.strip() for cid in ALLOWED_CLIENT_IDS]
+    print(f"🧪 FULL FORM PAYLOAD: {dict(request.form)}")
+
+    client_id = request.form.get("client_id", "").strip().lower()
+    allowed_ids = [cid.strip().lower() for cid in ALLOWED_CLIENT_IDS]
+
 
     print(f"✅ Allowed IDs: {allowed_ids}")
     print(f"🔐 Received ID: {client_id}")
