@@ -95,8 +95,13 @@ def login():
     login_hint = request.form.get("login_hint")
     target_link_uri = request.form.get("target_link_uri")
     client_id = request.form.get("client_id")
+
+    print(f"✅ Allowed IDs: {ALLOWED_CLIENT_IDS}")
+    print(f"🔐 Received ID: {client_id}")
+
     if client_id not in ALLOWED_CLIENT_IDS:
         return f"❌ Invalid client ID: {client_id}", 403
+    
     
     lti_message_hint = request.form.get("lti_message_hint")
 
