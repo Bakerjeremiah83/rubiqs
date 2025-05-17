@@ -1699,7 +1699,6 @@ def delete_submission():
         response = supabase.table("submissions")\
             .delete()\
             .eq("submission_id", submission_id)\
-            .limit(1)\
             .execute()
 
         print("🧪 Supabase delete response:", response)
