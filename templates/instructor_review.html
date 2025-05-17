@@ -257,9 +257,10 @@
         if (nextLink) {
           window.location.href = nextLink.href;
         } else {
-          alert("✅ Submission accepted. You're all caught up!");
-          window.location.href = "/admin-dashboard?tab=instructor";
+          // Avoid showing the alert, just go back
+          window.location.href = "/admin-dashboard?tab=instructor&reload=true";
         }
+
       } else {
         alert("❌ Failed to accept submission.");
       }

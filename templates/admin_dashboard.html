@@ -572,7 +572,12 @@
       document.addEventListener("DOMContentLoaded", function () {
         const urlParams = new URLSearchParams(window.location.search);
         const tab = urlParams.get("tab");
-    
+
+        const forceReload = new URLSearchParams(window.location.search).get("reload");
+        if (forceReload === "true") {
+          location.reload();
+        }
+
         // Load a specific tab from URL or default to 'setup'
         if (tab && ['setup', 'gospel', 'instructor', 'logs'].includes(tab)) {
           showTab(tab);
