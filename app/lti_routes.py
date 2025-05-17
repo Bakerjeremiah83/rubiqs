@@ -91,18 +91,20 @@ ALLOWED_CLIENT_IDS = os.getenv("CLIENT_ID", "").split(",")
 @lti.route("/login", methods=["POST"])
 def login():
     print("🔐 /login route hit")
+    
     issuer = request.form.get("iss")
     login_hint = request.form.get("login_hint")
     target_link_uri = request.form.get("target_link_uri")
-    client_id = request.form.get("client_id")
+    client_id = request.form.get("client_id", "").strip()
 
-    print(f"✅ Allowed IDs: {ALLOWED_CLIENT_IDS}")
+    allowed_ids = [cid.strip() for cid in ALLOWED_CLIENT_IDS]
+
+    print(f"✅ Allowed IDs: {allowed_ids}")
     print(f"🔐 Received ID: {client_id}")
 
-    if client_id not in ALLOWED_CLIENT_IDS:
+    if client_id not in allowed_ids:
         return f"❌ Invalid client ID: {client_id}", 403
-    
-    
+
     lti_message_hint = request.form.get("lti_message_hint")
 
     if not all([issuer, login_hint, target_link_uri, client_id]):
@@ -118,6 +120,7 @@ def login():
 
     print(f"➡️ Redirecting to: {redirect_url}")
     return redirect(redirect_url)
+
 
 @lti.before_app_request
 def debug_session_state():
