@@ -1691,21 +1691,25 @@ def delete_submission():
     submission_id = request.form.get("submission_id")
 
     if not submission_id:
-        return "❌ Missing submission ID", 400
+        print("❌ Missing submission ID")
+        return jsonify({"success": False, "error": "Missing submission ID"}), 400
+
+    print("🧪 Deleting submission_id:", submission_id)
 
     try:
-        response = supabase.table("submissions").delete().eq("submission_id", submission_id).execute()
+        response = supabase.table("submissions")\
+            .delete().eq("submission_id", submission_id).limit(1).execute()
 
         if hasattr(response, "error") and response.error:
-            print("❌ Supabase error:", response.error.message)
-            return "❌ Failed to delete submission", 500
+            print("❌ Supabase delete error:", response.error.message)
+            return jsonify({"success": False, "error": response.error.message}), 500
 
-        print("✅ Deleted submission_id:", submission_id)
-        return redirect("/admin-dashboard?tab=instructor")
-    
+        print("✅ Deleted submission:", submission_id)
+        return jsonify({"success": True}), 200
+
     except Exception as e:
         print("❌ Exception deleting submission:", e)
-        return "❌ Internal server error", 500
+        return jsonify({"success": False, "error": "Internal server error"}), 500
 
 
 @lti.route("/test-insert")
