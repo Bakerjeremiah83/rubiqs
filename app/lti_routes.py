@@ -1711,6 +1711,7 @@ def download_activity_log():
 
 # 🧪 Triggering redeploy
 
+
 @lti.route('/delete-submission', methods=['POST'])
 def delete_submission():
     submission_id = request.form.get("submission_id")
@@ -1718,6 +1719,8 @@ def delete_submission():
 
     try:
         parsed_id = UUID(submission_id)
+        print("🔍 Parsed UUID:", parsed_id, "| Type:", type(parsed_id))
+
         before = supabase.table("submissions").select("*").eq("submission_id", parsed_id).execute()
         print("📄 BEFORE DELETE:", before)
 
@@ -1731,6 +1734,7 @@ def delete_submission():
     except Exception as e:
         print("❌ DELETE ERROR:", str(e))
         return jsonify({"success": False, "error": "Internal error"}), 500
+
 
 
 
