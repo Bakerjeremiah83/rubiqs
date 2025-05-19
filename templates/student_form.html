@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>N-400 Practice Form</title>
+    <style>
+        label { font-weight: bold; display: block; margin-top: 10px; }
+        input, select, textarea { width: 100%; margin-bottom: 10px; }
+        .form-section { margin-bottom: 30px; padding: 15px; border: 1px solid #ccc; border-radius: 8px; }
+        button { padding: 10px 20px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Application for Naturalization – Simulated Training</h1>
+    <form method="POST" action="/form/submit/{{ assignment_id }}">
+        {% for section in schema.sections %}
+            <div class="form-section">
+                <h3>{{ section.title }}</h3>
+                {% for field in section.fields %}
+                    <label for="{{ field.id }}">{{ field.label }}</label>
+                    {% if field.type == 'text' %}
+                        <input type="text" name="{{ field.id }}" id="{{ field.id }}">
+                    {% elif field.type == 'textarea' %}
+                        <textarea name="{{ field.id }}" id="{{ field.id }}"></textarea>
+                    {% elif field.type == 'select' %}
+                        <select name="{{ field.id }}" id="{{ field.id }}">
+                            {% for opt in field.options %}
+                                <option value="{{ opt }}">{{ opt }}</option>
+                            {% endfor %}
+                        </select>
+                    {% elif field.type == 'radio' %}
+                        {% for opt in field.options %}
+                            <label><input type="radio" name="{{ field.id }}" value="{{ opt }}"> {{ opt }}</label>
+                        {% endfor %}
+                    {% endif %}
+                {% endfor %}
+            </div>
+        {% endfor %}
+        <button type="submit">Save and Submit</button>
+    </form>
+</body>
+</html>

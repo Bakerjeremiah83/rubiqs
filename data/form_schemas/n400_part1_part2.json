@@ -1,0 +1,42 @@
+{
+    "sections": [
+      {
+        "title": "Part 1: Eligibility",
+        "fields": [
+          {
+            "id": "eligibility_reason",
+            "label": "Select your eligibility category",
+            "type": "select",
+            "options": [
+              "Lawful permanent resident for 5 years",
+              "LPR for 3 years and married to U.S. citizen",
+              "Other"
+            ]
+          },
+          {
+            "id": "other_eligibility_explanation",
+            "label": "If 'Other', explain:",
+            "type": "textarea"
+          }
+        ]
+      },
+      {
+        "title": "Part 2: Information About You",
+        "fields": [
+          { "id": "last_name", "label": "Family Name (Last)", "type": "text" },
+          { "id": "first_name", "label": "Given Name (First)", "type": "text" },
+          { "id": "middle_name", "label": "Middle Name", "type": "text" },
+          { "id": "dob", "label": "Date of Birth", "type": "text" },
+          {
+            "id": "gender",
+            "label": "Gender",
+            "type": "radio",
+            "options": ["Male", "Female"]
+          },
+          { "id": "country_of_birth", "label": "Country of Birth", "type": "text" },
+          { "id": "country_of_citizenship", "label": "Country of Citizenship", "type": "text" }
+        ]
+      }
+    ]
+  }
+  

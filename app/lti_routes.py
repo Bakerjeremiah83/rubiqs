@@ -91,6 +91,9 @@ ALLOWED_CLIENT_IDS = os.getenv("CLIENT_ID", "").split(",")
 @lti.route("/login", methods=["POST"])
 def login():
     print("🔐 /login route hit")
+
+    print(f"🌍 ENV: CLIENT_ID from os.getenv = {os.getenv('CLIENT_ID')}")
+
     
     issuer = request.form.get("iss")
     login_hint = request.form.get("login_hint")

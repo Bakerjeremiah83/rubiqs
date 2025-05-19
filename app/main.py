@@ -57,8 +57,10 @@ Session(app)
 from app.lti_routes import register_lti_routes
 from app.models import Base
 from app.storage import engine
+from app.form_routes import form_bp
 
 register_lti_routes(app)
+app.register_blueprint(form_bp) 
 print("✅ LTI routes registered")
 
 # ✅ Quick test routes
