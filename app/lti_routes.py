@@ -1712,30 +1712,26 @@ def download_activity_log():
 @lti.route('/delete-submission', methods=['POST'])
 def delete_submission():
     submission_id = request.form.get("submission_id")
-    print("🧪 Received delete request for:", submission_id)
-
-    if not submission_id:
-        print("❌ Missing submission ID")
-        return jsonify({"success": False, "error": "Missing submission ID"}), 400
+    print("🧪 DELETE REQUEST RECEIVED:", submission_id)
 
     try:
+        before = supabase.table("submissions").select("*").eq("submission_id", submission_id).execute()
+        print("📄 BEFORE DELETE:", before)
+
         response = supabase.table("submissions")\
             .delete()\
             .eq("submission_id", submission_id)\
             .execute()
 
-        print("🧪 Supabase delete response:", response)
+        print("🧪 DELETE RESPONSE:", response)
 
-        if hasattr(response, "error") and response.error:
-            print("❌ Supabase delete error:", response.error.message)
-            return jsonify({"success": False, "error": response.error.message}), 500
+        after = supabase.table("submissions").select("*").eq("submission_id", submission_id).execute()
+        print("📄 AFTER DELETE:", after)
 
-        print("✅ Deleted submission_id:", submission_id)
         return jsonify({"success": True}), 200
-
     except Exception as e:
-        print("❌ Exception caught during deletion:", str(e))
-        return jsonify({"success": False, "error": "Internal server error"}), 500
+        print("❌ DELETE ERROR:", str(e))
+        return jsonify({"success": False, "error": "Internal error"}), 500
 
 
 @lti.route("/test-insert")
@@ -1768,26 +1764,27 @@ def test_insert():
     return "✅ Insert succeeded"
 
 @lti.route('/instructor-review/accept', methods=['POST'])
-def accept_review():
-    submission_id = request.form.get("submission_id", "").strip()
-    print("🧪 Accepting submission_id:", submission_id)
-
-    if not submission_id:
-        return jsonify({"success": False, "error": "Missing submission ID"}), 400
+def accept_submission():
+    submission_id = request.form.get("submission_id")
+    print("🧪 ACCEPT REQUEST RECEIVED:", submission_id)
 
     try:
+        before = supabase.table("submissions").select("*").eq("submission_id", submission_id).execute()
+        print("📄 BEFORE ACCEPT:", before)
+
         response = supabase.table("submissions")\
-            .update({
-                "pending": False,
-                "reviewed": True
-            })\
+            .update({"pending": False, "reviewed": True})\
             .eq("submission_id", submission_id)\
             .execute()
 
-        print("✅ Submission accepted and updated.")
-        return jsonify({"success": True})
+        print("🧪 ACCEPT RESPONSE:", response)
 
+        after = supabase.table("submissions").select("*").eq("submission_id", submission_id).execute()
+        print("📄 AFTER ACCEPT:", after)
+
+        return jsonify({"success": True}), 200
     except Exception as e:
-        print("❌ Accept error:", str(e))
-        return jsonify({"success": False, "error": "Server error"}), 500
+        print("❌ ACCEPT ERROR:", str(e))
+        return jsonify({"success": False, "error": "Internal error"}), 500
+
 
