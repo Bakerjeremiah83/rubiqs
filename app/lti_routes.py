@@ -1731,7 +1731,8 @@ def delete_submission():
         return jsonify({"success": True}), 200
     except Exception as e:
         print("❌ DELETE ERROR:", str(e))
-        return jsonify({"success": False, "error": "Internal error"}), 500
+        return jsonify({"success": False}), 500
+
 
 
 @lti.route("/test-insert")
@@ -1785,6 +1786,7 @@ def accept_submission():
         return jsonify({"success": True}), 200
     except Exception as e:
         print("❌ ACCEPT ERROR:", str(e))
-        return jsonify({"success": False, "error": "Internal error"}), 500
+        return jsonify({"success": False}), 500
+
 
 
