@@ -1721,6 +1721,7 @@ def delete_submission():
         parsed_id = UUID(submission_id)
         print("🔍 Parsed UUID:", parsed_id, "| Type:", type(parsed_id))
 
+        # 🔍 Query BEFORE to see if the record exists
         before = supabase.table("submissions").select("*").eq("submission_id", parsed_id).execute()
         print("📄 BEFORE DELETE:", before)
 
