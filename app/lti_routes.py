@@ -49,6 +49,8 @@ from datetime import datetime, timedelta
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
 from supabase import create_client
+from uuid import UUID
+
 
 from app.utils.prompt_builder import build_grading_prompt 
 from app.supabase_client import upload_to_supabase
@@ -1715,23 +1717,21 @@ def delete_submission():
     print("🧪 DELETE REQUEST RECEIVED:", submission_id)
 
     try:
-        before = supabase.table("submissions").select("*").eq("submission_id", submission_id).execute()
+        parsed_id = UUID(submission_id)
+        before = supabase.table("submissions").select("*").eq("submission_id", parsed_id).execute()
         print("📄 BEFORE DELETE:", before)
 
-        response = supabase.table("submissions")\
-            .delete()\
-            .eq("submission_id", submission_id)\
-            .execute()
-
+        response = supabase.table("submissions").delete().eq("submission_id", parsed_id).execute()
         print("🧪 DELETE RESPONSE:", response)
 
-        after = supabase.table("submissions").select("*").eq("submission_id", submission_id).execute()
+        after = supabase.table("submissions").select("*").eq("submission_id", parsed_id).execute()
         print("📄 AFTER DELETE:", after)
 
         return jsonify({"success": True}), 200
     except Exception as e:
         print("❌ DELETE ERROR:", str(e))
-        return jsonify({"success": False}), 500
+        return jsonify({"success": False, "error": "Internal error"}), 500
+
 
 
 
@@ -1770,23 +1770,24 @@ def accept_submission():
     print("🧪 ACCEPT REQUEST RECEIVED:", submission_id)
 
     try:
-        before = supabase.table("submissions").select("*").eq("submission_id", submission_id).execute()
+        parsed_id = UUID(submission_id)
+        before = supabase.table("submissions").select("*").eq("submission_id", parsed_id).execute()
         print("📄 BEFORE ACCEPT:", before)
 
-        response = supabase.table("submissions")\
-            .update({"pending": False, "reviewed": True})\
-            .eq("submission_id", submission_id)\
-            .execute()
-
+        response = supabase.table("submissions").update({
+            "pending": False,
+            "reviewed": True
+        }).eq("submission_id", parsed_id).execute()
         print("🧪 ACCEPT RESPONSE:", response)
 
-        after = supabase.table("submissions").select("*").eq("submission_id", submission_id).execute()
+        after = supabase.table("submissions").select("*").eq("submission_id", parsed_id).execute()
         print("📄 AFTER ACCEPT:", after)
 
         return jsonify({"success": True}), 200
     except Exception as e:
         print("❌ ACCEPT ERROR:", str(e))
-        return jsonify({"success": False}), 500
+        return jsonify({"success": False, "error": "Internal error"}), 500
+
 
 
 
