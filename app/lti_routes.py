@@ -1743,7 +1743,11 @@ def delete_submission():
 
         # ✅ STEP 2: Set the RLS UID to match the student who owns it
         uid = submission_record.data["student_id"]
+        if isinstance(uid, int):  # Convert integers to string for Supabase RLS match
+            uid = str(uid)
         supabase.rpc("set_client_uid", {"uid": uid}).execute()
+        print("🔐 Using set_client_uid with:", uid)
+
         print("🔐 Using set_client_uid with:", uid)
 
         # ✅ STEP 3: Delete the record (RLS will allow it)
