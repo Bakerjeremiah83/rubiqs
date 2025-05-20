@@ -31,7 +31,7 @@ def convert_docx_to_html_with_styles(docx_path):
         print("❌ DOCX conversion failed:", e)
         return f"<p>Conversion error: {e}</p>"
 
-import os
+
 import json
 import jwt
 import uuid
@@ -66,7 +66,11 @@ def normalize_title(title):
     return title
 
 # ✅ Load environment and initialize Supabase client
-load_dotenv()
+
+
+if os.getenv("RENDER") is None:  # Only load local .env if not in Render
+    load_dotenv()
+
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
@@ -88,10 +92,11 @@ def load_assignment_config(assignment_title):
         print("❌ Error loading assignment config:", e)
     return None
 
-ALLOWED_CLIENT_IDS = os.getenv("CLIENT_ID", "").split(",")
+ALLOWED_CLIENT_IDS = os.getenv("CLIENT_IDS", "").split(",")
 
 @lti.route("/login", methods=["POST"])
 def login():
+    print("🔍 ALL ENVIRONMENT VARS:", dict(os.environ))
     print("🔐 /login route hit")
 
     print(f"🌍 ENV: CLIENT_ID from os.getenv = {os.getenv('CLIENT_ID')}")
@@ -1323,7 +1328,7 @@ def scan_ai():
 
     try:
         import openai
-        import os
+        
         openai.api_key = os.getenv("OPENAI_API_KEY")
 
         prompt = f"""
@@ -1505,7 +1510,6 @@ def view_assignments():
 
 @lti.route('/delete-file', methods=['POST'])
 def delete_file():
-    import os
     from flask import request, jsonify
     from supabase import create_client
     from app.database import SessionLocal
