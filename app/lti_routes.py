@@ -164,6 +164,10 @@ def openid_configuration():
 
 @lti.route("/launch", methods=["POST"])
 def launch():
+    print("🔍 ALL ENVIRONMENT VARS:")
+    for k, v in os.environ.items():
+        print(f"   {k} = {v}")
+
     print("🚀 /launch hit")
 
     print(f"🧪 /launch form keys: {list(request.form.keys())}")
