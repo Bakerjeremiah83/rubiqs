@@ -1754,6 +1754,10 @@ def delete_submission():
         else:
             # Try delete with .eq()
             response = supabase.table("submissions").delete().eq("submission_id", parsed_id).execute()
+            # After performing delete
+            after = supabase.table("submissions").select("*").eq("submission_id", parsed_id).execute()
+            print("📄 AFTER DELETE CHECK:", after)
+
             print("🧪 DELETE RESPONSE via .eq():", response)
 
         return jsonify({"success": True}), 200
