@@ -1733,47 +1733,36 @@ def delete_submission():
     print("🧪 DELETE REQUEST RECEIVED:", submission_id)
 
     try:
-        # ✅ Parse the UUID safely
         parsed_id = UUID(submission_id)
-        print("🔍 Parsed UUID:", parsed_id, "| Type:", type(parsed_id))
+        print("🔍 Parsed UUID:", parsed_id)
 
-        # 🛡️ Set RLS UID to match the actual student_id of the submission
-        # So instructor can delete their student's work
+        # ✅ STEP 1: Look up the student_id for this submission first
         submission_record = supabase.table("submissions").select("student_id").eq("submission_id", str(parsed_id)).single().execute()
-
         if not submission_record.data:
             return jsonify({"success": False, "error": "Submission not found"}), 404
 
+        # ✅ STEP 2: Set the RLS UID to match the student who owns it
         uid = submission_record.data["student_id"]
         supabase.rpc("set_client_uid", {"uid": uid}).execute()
         print("🔐 Using set_client_uid with:", uid)
 
-        # ✅ Step 1: Check if it exists before deleting
-        before = supabase.table("submissions").select("*").filter("submission_id", "eq", str(parsed_id)).execute()
-        print("📄 BEFORE DELETE (via filter):", before)
+        # ✅ STEP 3: Delete the record (RLS will allow it)
+        response = supabase.table("submissions").delete().eq("submission_id", str(parsed_id)).execute()
+        print("🧪 DELETE RESPONSE:", response)
 
-        if not before.data:
-            print("❌ No matching record to delete.")
-            return jsonify({"success": False, "error": "No matching record found"}), 404
-
-        # ✅ Step 2: Attempt deletion
-        response = supabase.table("submissions").delete().filter("submission_id", "eq", str(parsed_id)).execute()
-        print("🧪 DELETE RESPONSE via .filter():", response)
-
-        # ✅ Step 3: Confirm deletion
-        after = supabase.table("submissions").select("*").filter("submission_id", "eq", str(parsed_id)).execute()
-        print("📄 AFTER DELETE CHECK:", after)
-
-        if after.data:
+        # ✅ STEP 4: Confirm it's gone
+        confirm = supabase.table("submissions").select("*").eq("submission_id", str(parsed_id)).execute()
+        if confirm.data:
             print("❌ Record still exists after delete.")
             return jsonify({"success": False, "error": "Delete failed"}), 500
 
-        print("✅ Submission deleted successfully")
+        print("✅ Submission deleted.")
         return jsonify({"success": True}), 200
 
     except Exception as e:
         print("❌ DELETE ERROR:", str(e))
         return jsonify({"success": False, "error": "Internal error"}), 500
+
 
 
 
