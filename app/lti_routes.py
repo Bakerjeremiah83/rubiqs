@@ -103,8 +103,9 @@ def login():
 
     print(f"🧪 FULL FORM PAYLOAD: {dict(request.form)}")
 
-    client_id = request.form.get("client_id", "").strip().lower()
-    allowed_ids = [cid.strip().lower() for cid in ALLOWED_CLIENT_IDS]
+    client_id = request.form.get("client_id", "").strip()
+    allowed_ids = [cid.strip() for cid in ALLOWED_CLIENT_IDS]
+
 
 
     print(f"✅ Allowed IDs: {allowed_ids}")
