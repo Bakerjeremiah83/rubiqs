@@ -1736,6 +1736,10 @@ def delete_submission():
         parsed_id = UUID(submission_id)
         print("🔍 Parsed UUID:", parsed_id, "| Type:", type(parsed_id))
 
+        # ✅ Set Supabase role
+        role = session.get("tool_role", "instructor")
+        supabase.rpc("set_client_uid", { "uid": role }).execute()
+
         # Step 1: Check if it exists
         before = supabase.table("submissions").select("*").filter("submission_id", "eq", str(parsed_id)).execute()
         print("📄 BEFORE DELETE (via filter):", before)
@@ -1745,10 +1749,10 @@ def delete_submission():
             return jsonify({"success": False, "error": "No matching record found"}), 404
 
         # 👇 Tell Supabase the request is from an instructor
-        supabase.rpc("set_config", {
-            "key": "request.jwt.claims.role",
-            "value": "instructor"
+        supabase.rpc("set_client_uid", {
+            "uid": "instructor"
         }).execute()
+
 
         # Step 2: Delete with .filter() and string UUID
         response = supabase.table("submissions").delete().filter("submission_id", "eq", str(parsed_id)).execute()
