@@ -198,6 +198,12 @@ def launch():
     try:
         aud = jwt.decode(jwt_token, public_key, algorithms=["RS256"], options={"verify_aud": False}).get("aud")
         valid_client_ids = [cid.strip() for cid in os.getenv("CLIENT_IDS", "").split(",")]
+
+        print("🧪 Raw CLIENT_IDS from os.getenv:", os.getenv("CLIENT_IDS"))
+        print("🧪 Parsed valid_client_ids list:", valid_client_ids)
+        print("🧪 aud (received client_id from JWT):", aud)
+
+
         if aud not in valid_client_ids:
             return f"❌ Invalid client ID: {aud}", 403
 
