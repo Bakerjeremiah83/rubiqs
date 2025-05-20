@@ -1744,6 +1744,12 @@ def delete_submission():
             print("❌ No matching record to delete.")
             return jsonify({"success": False, "error": "No matching record found"}), 404
 
+        # 👇 Tell Supabase the request is from an instructor
+        supabase.rpc("set_config", {
+            "key": "request.jwt.claims.role",
+            "value": "instructor"
+        }).execute()
+
         # Step 2: Delete with .filter() and string UUID
         response = supabase.table("submissions").delete().filter("submission_id", "eq", str(parsed_id)).execute()
         print("🧪 DELETE RESPONSE via .filter():", response)
