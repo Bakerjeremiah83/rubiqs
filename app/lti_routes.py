@@ -1736,35 +1736,33 @@ def delete_submission():
         parsed_id = UUID(submission_id)
         print("🔍 Parsed UUID:", parsed_id, "| Type:", type(parsed_id))
 
-        # Check BEFORE delete
-        before = supabase.table("submissions").select("*").eq("submission_id", parsed_id).execute()
-        print("📄 BEFORE DELETE:", before)
+        # Step 1: Check if it exists
+        before = supabase.table("submissions").select("*").filter("submission_id", "eq", str(parsed_id)).execute()
+        print("📄 BEFORE DELETE (via filter):", before)
 
         if not before.data:
-            print("❌ No match found using .eq(). Trying .filter()...")
-            before_alt = supabase.table("submissions").select("*").filter("submission_id", "eq", str(parsed_id)).execute()
-            print("📄 ALT FILTER RESULT:", before_alt)
+            print("❌ No matching record to delete.")
+            return jsonify({"success": False, "error": "No matching record found"}), 404
 
-            if not before_alt.data:
-                return jsonify({"success": False, "error": "No matching record found"}), 404
+        # Step 2: Delete with .filter() and string UUID
+        response = supabase.table("submissions").delete().filter("submission_id", "eq", str(parsed_id)).execute()
+        print("🧪 DELETE RESPONSE via .filter():", response)
 
-            # Try delete with .filter()
-            response = supabase.table("submissions").delete().filter("submission_id", "eq", str(parsed_id)).execute()
-            print("🧪 DELETE RESPONSE via .filter():", response)
-        else:
-            # Try delete with .eq()
-            response = supabase.table("submissions").delete().eq("submission_id", parsed_id).execute()
-            # After performing delete
-            after = supabase.table("submissions").select("*").eq("submission_id", parsed_id).execute()
-            print("📄 AFTER DELETE CHECK:", after)
+        # Step 3: Confirm delete
+        after = supabase.table("submissions").select("*").filter("submission_id", "eq", str(parsed_id)).execute()
+        print("📄 AFTER DELETE CHECK:", after)
 
-            print("🧪 DELETE RESPONSE via .eq():", response)
+        if after.data:
+            print("❌ Record still exists after delete.")
+            return jsonify({"success": False, "error": "Delete failed"}), 500
 
+        print("✅ Submission deleted successfully")
         return jsonify({"success": True}), 200
 
     except Exception as e:
         print("❌ DELETE ERROR:", str(e))
         return jsonify({"success": False, "error": "Internal error"}), 500
+
 
 
 
