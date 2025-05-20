@@ -1739,8 +1739,8 @@ def delete_submission():
 
         # ✅ Set RLS identity FIRST
         uid = session.get("student_id") or session.get("tool_role") or "instructor"
-        supabase.rpc("set_client_uid", {"uid": uid}).execute()
         print("🔐 Using set_client_uid with:", uid)
+        supabase.rpc("set_client_uid", {"uid": uid}).execute()
 
         # ✅ Step 1: Check if record exists
         before = supabase.table("submissions").select("*").filter("submission_id", "eq", str(parsed_id)).execute()
