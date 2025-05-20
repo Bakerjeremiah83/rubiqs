@@ -1736,9 +1736,9 @@ def delete_submission():
         parsed_id = UUID(submission_id)
         print("🔍 Parsed UUID:", parsed_id, "| Type:", type(parsed_id))
 
-        # ✅ Set Supabase role
-        role = session.get("tool_role", "instructor")
-        supabase.rpc("set_client_uid", { "uid": role }).execute()
+        # ✅ Use the student's ID to satisfy Supabase RLS
+        supabase.rpc("set_client_uid", {"uid": session.get("student_id")}).execute()
+        print("🔐 Using set_client_uid with:", session.get("student_id"))
 
         # Step 1: Check if it exists
         before = supabase.table("submissions").select("*").filter("submission_id", "eq", str(parsed_id)).execute()
@@ -1748,13 +1748,7 @@ def delete_submission():
             print("❌ No matching record to delete.")
             return jsonify({"success": False, "error": "No matching record found"}), 404
 
-        # 👇 Tell Supabase the request is from an instructor
-        supabase.rpc("set_client_uid", {
-            "uid": "instructor"
-        }).execute()
-
-
-        # Step 2: Delete with .filter() and string UUID
+        # Step 2: Delete with .filter()
         response = supabase.table("submissions").delete().filter("submission_id", "eq", str(parsed_id)).execute()
         print("🧪 DELETE RESPONSE via .filter():", response)
 
@@ -1772,11 +1766,6 @@ def delete_submission():
     except Exception as e:
         print("❌ DELETE ERROR:", str(e))
         return jsonify({"success": False, "error": "Internal error"}), 500
-
-
-
-
-
 
 
 @lti.route("/test-insert")
