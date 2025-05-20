@@ -1721,17 +1721,29 @@ def delete_submission():
         parsed_id = UUID(submission_id)
         print("🔍 Parsed UUID:", parsed_id, "| Type:", type(parsed_id))
 
-        # 🔍 Query BEFORE to see if the record exists
+        # Step 1: Try selecting the row before deleting
         before = supabase.table("submissions").select("*").eq("submission_id", parsed_id).execute()
         print("📄 BEFORE DELETE:", before)
 
-        response = supabase.table("submissions").delete().eq("submission_id", parsed_id).execute()
-        print("🧪 DELETE RESPONSE:", response)
+        if not before.data:
+            print("❌ No match found using .eq(). Trying filter().")
 
-        after = supabase.table("submissions").select("*").eq("submission_id", parsed_id).execute()
-        print("📄 AFTER DELETE:", after)
+            before_alt = supabase.table("submissions").select("*").filter("submission_id", "eq", str(parsed_id)).execute()
+            print("📄 ALT FILTER RESULT:", before_alt)
+
+            if not before_alt.data:
+                return jsonify({"success": False, "error": "No matching record found"}), 404
+
+            # Try delete with .filter() fallback
+            response = supabase.table("submissions").delete().filter("submission_id", "eq", str(parsed_id)).execute()
+            print("🧪 DELETE RESPONSE via .filter():", response)
+        else:
+            # Delete using the .eq() path
+            response = supabase.table("submissions").delete().eq("submission_id", parsed_id).execute()
+            print("🧪 DELETE RESPONSE via .eq():", response)
 
         return jsonify({"success": True}), 200
+
     except Exception as e:
         print("❌ DELETE ERROR:", str(e))
         return jsonify({"success": False, "error": "Internal error"}), 500
