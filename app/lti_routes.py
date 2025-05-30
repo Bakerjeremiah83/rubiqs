@@ -365,6 +365,8 @@ def grade_docx():
 
     if not file and not inline_text:
         return "❌ Please submit either a file or inline response.", 400
+    extracted_fields = []
+
 
     try:
         student_file_url = None  # initialize in case it's inline
@@ -391,6 +393,7 @@ def grade_docx():
             if file_ext == ".docx":
                 doc = Document(BytesIO(file_bytes))
                 full_text = "\n".join([para.text for para in doc.paragraphs])
+            
             elif file_ext == ".pdf":
                 full_text = extract_pdf_text(BytesIO(file_bytes))
                 print("📄 Extracted full_text from PDF:")
@@ -398,6 +401,19 @@ def grade_docx():
 
             else:
                 return "❌ Unsupported file type. Please upload .docx or .pdf", 400
+
+            # ✅ Optional: Extract key fields from full_text for GPT reference
+            import re
+            extracted_fields = []
+
+            a_number_match = re.search(r"\bA[-\s]?\d{9}\b", full_text)
+            if a_number_match:
+                extracted_fields.append(f"A-Number: {a_number_match.group(0)}")
+
+            dob_match = re.search(r"\b(\d{2}/\d{2}/\d{4})\b", full_text)
+            if dob_match:
+                extracted_fields.append(f"Date of Birth: {dob_match.group(1)}")
+
 
         elif inline_text:
             full_text = inline_text
@@ -483,11 +499,26 @@ def grade_docx():
     Rubric:
     {rubric_text}
     """
+    if extracted_fields:
+        prompt += "\nExtracted Fields:\n" + "\n".join(extracted_fields) + "\n"
+
     if ai_notes:
         prompt += f"\nInstructor Notes:\n{ai_notes}\n"
     if reference_data:
         prompt += f"\nReference Scenario:\n{reference_data}\n"
-    prompt += f"\nStudent Submission:\n---\n{full_text}\n---\n\nReturn your response in this format:\n\nScore: <number from 0 to {rubric_total_points}>\nFeedback: <detailed, encouraging, and helpful feedback>"
+    trimmed_text = full_text[:4000]
+    prompt += f"""
+    Student Submission (trimmed):
+    ---
+    {trimmed_text}
+    ---
+
+    Return your response in this format:
+
+    Score: <number from 0 to {rubric_total_points}>
+    Feedback: <detailed, encouraging, and helpful feedback>
+    """.strip()
+
     
     # Optional Bonus: Trim prompt if it's too long to stay under GPT-4 limits
     approx_token_count = len(prompt.split())  # rough estimate: ~1 word ≈ 1 token
