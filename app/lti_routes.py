@@ -947,7 +947,7 @@ def save_assignment():
     grading_difficulty = request.form.get("grading_difficulty")
     grade_level = request.form.get("grade_level")
     total_points = int(request.form.get("total_points", "0"))
-    instructor_approval = request.form.get("instructor_approval") == "true"
+    requires_review = request.form.get("requires_review", "false") == "true"
     gospel_enabled = request.form.get("gospel_enabled") == "true"
     custom_ai = request.form.get("custom_ai", "")
 
@@ -1002,7 +1002,7 @@ def save_assignment():
         "rubric_file": rubric_url,
         "additional_file": additional_url,
         "total_points": total_points,
-        "instructor_approval": instructor_approval,
+            "instructor_approval": requires_review,
         "requires_persona": False,
         "faith_integration": gospel_enabled,
         "grading_difficulty": grading_difficulty,
