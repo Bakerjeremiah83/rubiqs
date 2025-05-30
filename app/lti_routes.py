@@ -1748,8 +1748,6 @@ def delete_submission():
         supabase.rpc("set_client_uid", {"uid": uid}).execute()
         print("🔐 Using set_client_uid with:", uid)
 
-        print("🔐 Using set_client_uid with:", uid)
-
         # ✅ STEP 3: Delete the record (RLS will allow it)
         response = supabase.table("submissions").delete().eq("submission_id", str(parsed_id)).execute()
         print("🧪 DELETE RESPONSE:", response)

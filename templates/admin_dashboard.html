@@ -248,8 +248,9 @@
       <div class="form-group wide require-toggle" style="flex-direction: row; align-items: center;">
         <label style="margin-right: 1rem; white-space: nowrap;">Requires Instructor Review</label>
         <div style="display: flex; gap: 1rem; margin-right: 1rem;">
-          <div class="toggle-option" onclick="toggleReview(this)">YES</div>
-          <div class="toggle-option" onclick="toggleReview(this)">NO</div>
+          <div class="toggle-option" data-value="true" onclick="toggleReview(this)">YES</div>
+          <div class="toggle-option" data-value="false" onclick="toggleReview(this)">NO</div>
+
         </div>
         <div class="instruction-note" style="flex: 1;">
           Note: If instructor review is selected, the assignment goes to Pending Reviews for approval before posting. If not, the grade and feedback will be auto-posted to the gradebook.
@@ -528,6 +529,20 @@
 });
 
 </script>
+<script>
+  function toggleReview(button) {
+    const buttons = document.querySelectorAll('.require-toggle .toggle-option');
+    buttons.forEach(b => b.classList.remove('active'));
+    button.classList.add('active');
+
+    const value = button.getAttribute('data-value');
+    document.getElementById('requiresReviewValue').value = value;
+
+    // Optional: Enable save button if needed
+    document.getElementById('saveButton').disabled = false;
+  }
+</script>
+
     
 </body>
 </html>

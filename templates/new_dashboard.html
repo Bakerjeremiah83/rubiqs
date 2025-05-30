@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Rubiqs | Admin Dashboard</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      display: flex;
+      background: #f4f6f8;
+      color: #1f3a54;
+      height: 100vh;
+    }
+    .sidebar {
+      width: 240px;
+      background: #1f3a54;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      padding: 1.5rem;
+    }
+    .sidebar h1 {
+      font-size: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .sidebar nav a {
+      color: white;
+      text-decoration: none;
+      padding: 0.75rem 0;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+    }
+    .sidebar nav a:hover {
+      background-color: #2d4b68;
+      border-radius: 6px;
+      padding-left: 0.5rem;
+    }
+    .main {
+      flex-grow: 1;
+      padding: 2rem;
+      background: white;
+      overflow-y: auto;
+    }
+    .card {
+      background: #ffffff;
+      padding: 2rem;
+      width: 100%;
+      max-width: 1100px;
+      border-radius: 12px;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+      margin-bottom: 2rem;
+    }
+    .tab-button {
+      padding: 0.6rem 1.2rem;
+      background: #eee;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      color: #1f3a54;
+      font-size: 0.95rem;
+      margin-right: 0.5rem;
+    }
+    .tab-button.active {
+      background: #1f3a54;
+      color: white;
+    }
+    .tab-panel {
+      display: none;
+    }
+    .tab-panel.active {
+      display: block;
+    }
+    h2.title {
+      font-size: 1.75rem;
+      font-weight: bold;
+      margin-bottom: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <h1>Rubiqs Grader</h1>
+    <nav>
+      <a href="#" class="tab-button" data-target="setup">Assignment Setup</a>
+      <a href="/view-assignments">Edit Assignments</a>
+      <a href="#" class="tab-button" data-target="gospel">Gospel-Centered</a>
+      <a href="#" class="tab-button" data-target="instructor">Instructor Review</a>
+    </nav>
+  </div>
+  <div class="main">
+    <div class="card">
+      <h2 class="title">Rubiqs Mastery Dashboard</h2>
+      <!-- Tabs and panels are preserved from original file below this point -->
+      {% if request.args.get('success') %}
+        <div id="flash-message" style="position: relative; background: #e6f4ea; color: #256029; padding: 1rem 1.2rem; border-radius: 8px; margin-bottom: 1.5rem; border-left: 6px solid #2e7d32; font-size: 0.95rem; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);">
+          ✅ Assignment "<strong>{{ request.args.get('success') }}</strong>" was successfully saved.
+          <span style="position: absolute; top: 8px; right: 12px; cursor: pointer;" onclick="document.getElementById('flash-message').style.display='none'">✖</span>
+        </div>
+        <script>
+          setTimeout(() => {
+            const flash = document.getElementById('flash-message');
+            if (flash) flash.style.opacity = '0';
+          }, 4000);
+          setTimeout(() => {
+            const flash = document.getElementById('flash-message');
+            if (flash) flash.style.display = 'none';
+          }, 5000);
+        </script>
+      {% endif %}
+      {{ remaining_content | safe }}
+    </div>
+  </div>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const tabs = document.querySelectorAll(".tab-button[data-target]");
+      const panels = document.querySelectorAll(".tab-panel");
+      tabs.forEach(tab => {
+        tab.addEventListener("click", function () {
+          const targetId = this.dataset.target;
+          tabs.forEach(t => t.classList.remove("active"));
+          panels.forEach(p => p.classList.remove("active"));
+          this.classList.add("active");
+          document.getElementById(targetId).classList.add("active");
+        });
+      });
+      const urlParams = new URLSearchParams(window.location.search);
+      const tab = urlParams.get("tab");
+      const validTab = document.querySelector(`[data-target="${tab}"]`);
+      if (validTab) {
+        validTab.click();
+      } else {
+        const firstTab = document.querySelector(".tab-button[data-target]");
+        if (firstTab) firstTab.click();
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,527 @@
+<style>
+  :root {
+    --primary: #1f3a54;
+    --accent: #5ca198;
+    --bg: #f4f6f8;
+    --card-bg: #ffffff;
+    --text: #1f3a54;
+    --muted: #7f8c8d;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    min-height: 100vh;
+  }
+
+  .sidebar {
+    width: 240px;
+    background: var(--primary);
+    color: white;
+    padding: 2rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .sidebar .logo {
+    max-height: 60px;
+    margin-bottom: 2rem;
+  }
+
+  .sidebar h1 {
+    font-size: 1.25rem;
+    margin: 0;
+    margin-bottom: 2rem;
+  }
+
+  .nav-link {
+    color: white;
+    text-decoration: none;
+    padding: 0.75rem 0;
+    width: 100%;
+    font-weight: bold;
+    display: block;
+    border-radius: 6px;
+    transition: background 0.2s ease;
+  }
+
+  .nav-link:hover,
+  .nav-link.active {
+    background-color: #2d4b68;
+    padding-left: 0.5rem;
+  }
+
+  .main {
+    flex: 1;
+    padding: 2rem;
+    overflow-y: auto;
+  }
+
+  .card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+    margin-bottom: 2rem;
+    max-width: 1200px;
+    width: 100%;
+  }
+
+  h2.title {
+    font-size: 1.75rem;
+    font-weight: bold;
+    margin-bottom: 1.5rem;
+  }
+
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .form-group {
+    flex: 1 1 48%;
+  }
+
+  .form-group.third {
+    flex: 1 1 32%;
+  }
+
+  .form-group.wide {
+    flex: 1 1 100%;
+  }
+
+  label {
+    font-weight: bold;
+    margin-bottom: 0.3rem;
+    display: block;
+  }
+
+  input[type="text"],
+  input[type="file"],
+  input[type="number"],
+  select,
+  textarea {
+    width: 100%;
+    padding: 0.6rem;
+    font-size: 1rem;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+  }
+
+  textarea {
+    resize: vertical;
+  }
+
+  .require-toggle {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-direction: column;
+  }
+
+  .toggle-option {
+    padding: 0.5rem 1rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .toggle-option.active {
+    background-color: var(--primary);
+    color: white;
+    border-color: var(--primary);
+  }
+
+  .instruction-note {
+    font-size: 0.85rem;
+    color: #555;
+    margin-top: 0.3rem;
+  }
+
+  button.submit {
+    display: inline-block;
+    background: var(--primary);
+    color: white;
+    padding: 0.85rem 2rem;
+    font-size: 1rem;
+    font-weight: bold;
+    border: none;
+    border-radius: 40px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  button.submit:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+  }
+
+  button.submit:hover:not(:disabled) {
+    background: #142835;
+  }
+</style>
+
+  
+  <div class="card">
+    <div class="brand-header">
+      <div style="display: flex; align-items: center; margin-bottom: 2rem;">
+        <img src="/static/rubiqs-logo.png" alt="Rubiqs Logo" class="logo" />
+        <div>
+          <h1 style="margin: 0; font-size: 1.5rem; color: #1f3a54;">Rubiqs</h1>
+          <div style="font-size: 1rem; color: #7f8c8d;">AI-Powered Mastery</div>
+          <div style="font-size: 0.85rem; color: #aaa;">by J. Baker Design</div>
+        </div>
+      </div>
+
+      {% if request.args.get('success') %}
+        <div id="flash-message" style="position: relative; background: #e6f4ea; color: #256029; padding: 1rem 1.2rem; border-radius: 8px; margin-bottom: 1.5rem; border-left: 6px solid #2e7d32; font-size: 0.95rem; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);">
+          ✅ Assignment "<strong>{{ request.args.get('success') }}</strong>" was successfully saved.
+          <span style="position: absolute; top: 8px; right: 12px; cursor: pointer;" onclick="document.getElementById('flash-message').style.display='none'">✖</span>
+        </div>
+        <script>
+          setTimeout(() => {
+            const flash = document.getElementById('flash-message');
+            if (flash) flash.style.opacity = '0';
+          }, 4000);
+          setTimeout(() => {
+            const flash = document.getElementById('flash-message');
+            if (flash) flash.style.display = 'none';
+          }, 5000);
+        </script>
+      {% endif %}
+
+      <h2 class="title">Rubiqs Mastery Dashboard</h2>
+
+      <div class="tabs">
+        <button class="tab-button" data-target="setup">Assignment Setup</button>
+        <button class="tab-button" onclick="window.location.href='/view-assignments'">Edit Assignments</button>
+        <button class="tab-button" data-target="gospel">Gospel-Centered</button>
+        <button class="tab-button" data-target="instructor">Instructor Review</button>
+
+
+        <!-- <button class="tab-button" onclick="showTab('logs')">Activity Logs</button> -->
+      </div>
+
+      <div class="tab-panel active" id="setup">
+  <form method="POST" action="/save-assignment" enctype="multipart/form-data">
+    <div class="row" style="align-items: center;">
+      <div class="form-group" style="flex: 1 1 48%;">
+        <label>Assignment Name</label>
+        <input type="text" name="assignment_title" required />
+      </div>
+      <div class="form-group" style="flex: 1 1 48%; display: flex; align-items: center; height: 100%;">
+        <div class="instruction-note" style="margin: 0; transform: translateY(9px);">
+          Note: The assignment title entered here must match the title used in the course exactly, including spelling, capitalization, and punctuation.
+        </div>
+      </div>
+    </div>      
+    <div class="row">
+      <div class="form-group">
+        <label>Rubric Upload</label>
+        <input type="file" name="rubric_upload" />
+      </div>
+      <div class="form-group">
+        <label>Additional Files</label>
+        <input type="file" name="additional_files" />
+      </div>
+    </div>    
+    <div class="row">
+      <div class="form-group wide require-toggle" style="flex-direction: row; align-items: center;">
+        <label style="margin-right: 1rem; white-space: nowrap;">Requires Instructor Review</label>
+        <div style="display: flex; gap: 1rem; margin-right: 1rem;">
+          <div class="toggle-option" onclick="toggleReview(this)">YES</div>
+          <div class="toggle-option" onclick="toggleReview(this)">NO</div>
+        </div>
+        <div class="instruction-note" style="flex: 1;">
+          Note: If instructor review is selected, the assignment goes to Pending Reviews for approval before posting. If not, the grade and feedback will be auto-posted to the gradebook.
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="form-group third">
+        <label for="total_points">Total Points</label>
+        <input type="number" name="total_points" id="total_points" placeholder="e.g. 60" class="form-control" />
+      </div>
+    
+      <div class="form-group third">
+        <label for="grade_level">Grade Level</label>
+        <select name="grade_level" id="grade_level" class="form-control">
+          <option value="">Select Level</option>
+          <option value="middle_school">Middle School</option>
+          <option value="high_school">High School</option>
+          <option value="college">College</option>
+        </select>
+      </div>
+    
+      <div class="form-group third">
+        <label for="grading_difficulty">Grading Difficulty</label>
+        <select name="grading_difficulty" id="grading_difficulty" class="form-control">
+          <option value="">Select Difficulty</option>
+          <option value="easy">Easy</option>
+          <option value="medium">Medium</option>
+          <option value="hard">Hard</option>
+        </select>
+      </div>
+      <div class="form-group third">
+        <label for="allow_inline_submission">Allow Inline Submission</label>
+        <select name="allow_inline_submission" id="allow_inline_submission" class="form-control">
+          <option value="no">No – file upload only</option>
+          <option value="yes">Yes – students type directly</option>
+        </select>
+      </div>
+      
+    </div>          
+    <div class="row">
+      <div class="form-group wide">
+        <label>Custom AI Grading Instructions</label>
+        <textarea rows="4" name="custom_ai"></textarea>
+      </div>
+    </div>
+
+    
+    <div class="row">
+      <!-- Gospel-Centered Toggle -->
+      <div class="form-group half">
+        <label for="faith_integration">Enable Gospel-Centered Feedback?</label>
+        <div class="require-toggle" style="flex-direction: row; justify-content: flex-start;">
+          <label class="toggle-option">
+            <input type="radio" name="faith_integration" value="true" onclick="document.querySelector('[data-target=gospel]').click()"> YES
+          </label>
+          <label class="toggle-option">
+            <input type="radio" name="faith_integration" value="false"> NO
+          </label>
+        </div>
+        <small style="font-size: 0.85rem; color: #555; display: block; margin-top: 0.5rem;">
+          If enabled, gospel-centered themes and scriptures will be incorporated into AI feedback. You’ll be taken to the Gospel-Centered tab to review or edit those settings.
+        </small>
+      </div>     
+    
+    
+      <!-- Delay Posting Selector -->
+      <div class="form-group quarter">
+        <label for="delay_posting">Delay Posting</label>
+        <select name="delay_posting" id="delay_posting" class="form-control">
+          <option value="immediate" {% if rubric_index and rubric_index[0].delay_posting == 'immediate' %}selected{% endif %}>Immediately</option>
+          <option value="1m" {% if rubric_index and rubric_index[0].delay_posting == '1m' %}selected{% endif %}>1 Minute (Testing)</option>
+          <option value="12h" {% if rubric_index and rubric_index[0].delay_posting == '12h' %}selected{% endif %}>12 hours</option>
+          <option value="24h" {% if rubric_index and rubric_index[0].delay_posting == '24h' %}selected{% endif %}>24 hours</option>
+          <option value="36h" {% if rubric_index and rubric_index[0].delay_posting == '36h' %}selected{% endif %}>36 hours</option>
+          <option value="48h" {% if rubric_index and rubric_index[0].delay_posting == '48h' %}selected{% endif %}>48 hours</option>
+
+        </select>
+        <small style="font-size: 0.85rem; color: #555; display: block; margin-top: 0.5rem;">
+          Choose how long to delay the grade and feedback after submission. Helps reduce perceived bias from instant grading.
+        </small>
+      </div>
+    </div>
+    
+
+   <!-- Hidden inputs to capture toggle state -->
+    <input type="hidden" name="requires_review" id="requiresReviewValue" />
+    <input type="hidden" name="gospel_enabled" id="gospelEnabledValue" />
+    <input type="hidden" name="instructor_approval" id="instructorApprovalValue" value="false" />
+
+    <div id="saveButtonWrapper">
+      <button type="submit" class="submit" id="saveButton" disabled>Save Assignment</button>
+    </div>
+  </form>
+</div>
+
+<!-- Gospel-Centered Tab Panel -->
+<div class="tab-panel" id="gospel">
+  <div class="row">
+    <div class="form-group wide">
+      <label>Gospel-Centered Themes or Principles to Emphasize</label>
+      <textarea rows="5" placeholder="e.g., Charity, Faith in Christ, Repentance, Eternal Identity"></textarea>
+    </div>
+  </div>
+  <div class="row">
+    <div class="form-group wide">
+      <label>Scriptural References or Quotes to Include</label>
+      <textarea rows="5" placeholder="e.g., Mosiah 2:17, John 13:34–35, 'The worth of souls is great' (D&C 18:10)"></textarea>
+    </div>
+  </div>
+</div>
+
+<!-- Instructor Review Tab Panel -->
+<div class="tab-panel" id="instructor">
+  <div class="row">
+    <div class="form-group wide">
+      <label>Instructor Review</label>
+      <p>This section will display student submissions that require manual review and approval.</p>
+      <p>Click a submission below to view and edit feedback before posting.</p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="form-group wide">
+      <table style="width:100%; border-collapse: collapse; font-size: 0.95rem; table-layout: fixed;">
+        <thead style="background-color: #f1f1f1;">
+          <tr>
+            <th style="border: 1px solid #ccc; padding: 0.75rem; width: 12%;">Student</th>
+            <th style="border: 1px solid #ccc; padding: 0.75rem; width: 36%;">Assignment</th>
+            <th style="border: 1px solid #ccc; padding: 0.75rem; width: 12%; text-align: center;">Submitted</th>
+            <th style="border: 1px solid #ccc; padding: 0.75rem; width: 20%; text-align: center;">Actions</th>
+            <th style="border: 1px solid #ccc; padding: 0.75rem; width: 20%;">Notes</th>
+          </tr>
+        </thead>        
+        <tbody>
+          {% for submission in pending_feedback %}
+          <tr id="row-{{ submission.submission_id }}">
+            <td style="border: 1px solid #ccc; padding: 0.75rem;">{{ submission.student_id }}</td>
+            <td style="border: 1px solid #ccc; padding: 0.75rem;">{{ submission.assignment_title }}</td>
+            <td style="border: 1px solid #ccc; padding: 0.75rem; text-align: center; white-space: nowrap;">
+              {{ submission.timestamp.split('T')[0] if submission.timestamp else '—' }}
+            </td>            
+            <td style="border: 1px solid #ccc; padding: 0.75rem; text-align: center; white-space: nowrap;">
+              <div style="display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 0.5rem; padding: 0.5rem;">
+                <form action="/instructor-review" method="get" style="margin: 0;">
+                  <input type="hidden" name="submission_id" value="{{ submission.submission_id }}">
+                  <button style="padding: 0.4rem 0.8rem; background: #1f3a54; color: white; border: none; border-radius: 20px;">Review</button>
+                </form>
+                <button
+                onclick="acceptSubmission('{{ submission.submission_id }}')"
+                style="padding: 0.4rem 0.8rem; background: #2e7d32; color: white; border: none; border-radius: 20px;"
+              >
+                Accept
+              </button>
+              <button 
+                type="button"
+                onclick="deleteSubmission('{{ submission.submission_id }}')" 
+                style="padding: 0.4rem 0.8rem; background: #c62828; color: white; border: none; border-radius: 20px;"
+              >
+                Delete
+              </button>
+
+              </div>
+            </td>
+            <td style="border: 1px solid #ccc; padding: 0.75rem;">
+              <form action="/instructor-review/save-notes" method="post">
+                <input type="hidden" name="submission_id" value="{{ submission.submission_id }}">
+                <textarea name="notes" rows="2" style="width: 100%; font-size: 0.9rem; border-radius: 6px; border: 1px solid #ccc;">{{ submission.notes or '' }}</textarea>
+                <button type="submit" style="margin-top: 0.5rem; font-size: 0.8rem; background: #888; color: white; border: none; padding: 0.3rem 0.6rem; border-radius: 12px;">Save</button>
+                <div class="row" style="margin-top: 2rem;">
+                  <div class="form-group wide">
+                    <a href="/release-pending" class="submit-button" style="background-color: #4b887f;">
+                      🚀 Release All Due Feedback
+                    </a>
+                    <p class="instruction-note" style="margin-top: 0.5rem;">
+                      This will release any feedback and grades that have passed their delay window.
+                    </p>
+                  </div>
+                </div>
+                
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+          <tr>
+            <td colspan="5" style="text-align: center; padding: 1rem; background: #f8f8f8; font-style: italic;">
+              More submissions coming soon...
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>  
+
+<!-- Activity Logs Tab Panel -->
+<div class="tab-panel" id="logs">
+  <div class="row">
+    <div class="form-group wide">
+      <label>Activity Logs</label>
+      <p>
+        Download a full report of all student submissions and instructor actions. This report can be used for FERPA compliance or internal auditing purposes.
+      </p>
+      <a href="/download-activity-log" style="display: inline-block; padding: 0.75rem 1.5rem; background: #1f3a54; color: white; border-radius: 8px; font-weight: bold; text-decoration: none;">
+        📥 Download Activity Report
+      </a>
+    </div>
+  </div>
+</div>
+{% if request.args.get('success') %}
+  <div id="flash-message" style="background: #dff0d8; color: #3c763d; padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem; border-left: 5px solid #3c763d;">
+    ✅ Saved assignment: {{ request.args.get('success') }}
+  </div>
+  <script>
+    setTimeout(() => {
+      const flash = document.getElementById('flash-message');
+      if (flash) flash.style.display = 'none';
+    }, 4000);
+  </script>
+{% endif %}
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+  const tabs = document.querySelectorAll(".tab-button[data-target]");
+  const panels = document.querySelectorAll(".tab-panel");
+
+  tabs.forEach(tab => {
+    tab.addEventListener("click", function () {
+      const targetId = this.dataset.target;
+      tabs.forEach(t => t.classList.remove("active"));
+      panels.forEach(p => p.classList.remove("active"));
+      this.classList.add("active");
+      document.getElementById(targetId).classList.add("active");
+    });
+  });
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const tab = urlParams.get("tab");
+  const validTab = document.querySelector(`[data-target="${tab}"]`);
+  if (validTab) {
+    validTab.click();
+  } else {
+    const firstTab = document.querySelector(".tab-button[data-target]");
+    if (firstTab) firstTab.click();
+  }
+
+  document.querySelectorAll(".delete-btn").forEach(button => {
+    button.addEventListener("click", function (e) {
+      e.preventDefault();
+      const assignmentTitle = button.getAttribute("data-assignment-title");
+      if (!assignmentTitle) {
+        alert("❌ Assignment title not found.");
+        return;
+      }
+
+      if (confirm(`Are you sure you want to delete "${assignmentTitle}"?`)) {
+        fetch("/delete-assignment", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ assignment_title: assignmentTitle })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            alert("✅ Assignment deleted successfully!");
+            location.reload();
+          } else {
+            alert("❌ Failed to delete assignment: " + (data.error || "Unknown error."));
+          }
+        })
+        .catch(error => {
+          console.error("❌ Error deleting assignment:", error);
+          alert("❌ Error deleting assignment.");
+        });
+      }
+    });
+  });
+});
+
+</script>
+    
+</body>
+</html>
