@@ -437,10 +437,17 @@ def grade_docx():
 
     try:
         if rubric_path.endswith(".json"):
-            with open(rubric_path, "r") as f:
+            with open(rubric_path, "r", encoding="utf-8") as f:
                 rubric_json = json.load(f)
-            rubric_text = "\n".join([f"- {c['description']}" for c in rubric_json.get("criteria", [])])
-            rubric_total_points = get_total_points_from_rubric(rubric_json)
+
+            if "sections" in rubric_json:
+                rubric_text = "\n".join([f"- {section['title']}" for section in rubric_json["sections"]])
+                rubric_total_points = rubric_json.get("total_points")
+            elif "criteria" in rubric_json:
+                rubric_text = "\n".join([f"- {c['description']}" for c in rubric_json["criteria"]])
+                rubric_total_points = get_total_points_from_rubric(rubric_json)
+            else:
+                return "❌ Unrecognized rubric format. Please upload a valid .json rubric with 'sections' or 'criteria'.", 400
         elif rubric_path.endswith(".docx"):
             doc = Document(rubric_path)
             rubric_text = "\n".join([para.text for para in doc.paragraphs])
@@ -857,9 +864,18 @@ def test_grader():
         rubric_path = os.path.join("rubrics", selected_config.get("rubric_file", ""))
         try:
             if rubric_path.endswith(".json"):
-                with open(rubric_path, "r") as f:
+                with open(rubric_path, "r", encoding="utf-8") as f:
                     rubric_json = json.load(f)
-                rubric_text = "\n".join([f"- {c['description']}" for c in rubric_json.get("criteria", [])])
+
+                if "sections" in rubric_json:
+                    rubric_text = "\n".join([f"- {section['title']}" for section in rubric_json["sections"]])
+                    rubric_total_points = rubric_json.get("total_points")
+                elif "criteria" in rubric_json:
+                    rubric_text = "\n".join([f"- {c['description']}" for c in rubric_json["criteria"]])
+                    rubric_total_points = get_total_points_from_rubric(rubric_json)
+                else:
+                    return "❌ Unrecognized rubric format. Please upload a valid .json rubric with 'sections' or 'criteria'.", 400
+
             elif rubric_path.endswith(".docx"):
                 doc = Document(rubric_path)
                 rubric_text = "\n".join([para.text for para in doc.paragraphs])
