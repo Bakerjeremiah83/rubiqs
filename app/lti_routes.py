@@ -393,6 +393,9 @@ def grade_docx():
                 full_text = "\n".join([para.text for para in doc.paragraphs])
             elif file_ext == ".pdf":
                 full_text = extract_pdf_text(BytesIO(file_bytes))
+                print("📄 Extracted full_text from PDF:")
+                print(full_text)
+
             else:
                 return "❌ Unsupported file type. Please upload .docx or .pdf", 400
 
@@ -496,6 +499,9 @@ def grade_docx():
         model_to_use = assignment_config.get("gpt_model", "gpt-4")
         openai.api_key = os.getenv("OPENAI_API_KEY")
         print(f"🧠 Using model: {model_to_use}")
+        print("🧠 Final GPT prompt:")
+        print(prompt)
+
         response = openai.ChatCompletion.create(
             model=model_to_use,
             messages=[{"role": "user", "content": prompt.strip()}],
@@ -503,6 +509,8 @@ def grade_docx():
             max_tokens=1000
         )
         output = response["choices"][0]["message"]["content"]
+        print("📤 GPT Output:")
+        print(output)
         score_match = re.search(r"Score:\s*(\d{1,3})", output)
         score = int(score_match.group(1)) if score_match else 0
         feedback_match = re.search(r"Feedback:\s*(.+)", output, re.DOTALL)
