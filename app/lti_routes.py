@@ -495,6 +495,7 @@ def grade_docx():
     try:
         model_to_use = assignment_config.get("gpt_model", "gpt-4")
         openai.api_key = os.getenv("OPENAI_API_KEY")
+        print(f"🧠 Using model: {model_to_use}")
         response = openai.ChatCompletion.create(
             model=model_to_use,
             messages=[{"role": "user", "content": prompt.strip()}],
@@ -1493,11 +1494,19 @@ def edit_assignment(assignment_id):
             allow_inline = request.form.get("allow_inline_submission", "no") == "yes"
 
             faith_raw = request.form.get("faith_integration", "false")
-            faith_integration = True if faith_raw.lower() == "true" else False
+            faith_integration = faith_raw.lower() == "true"
 
-            delay_raw = request.form.get("delay_posting", "immediate")
+            print("🧠 Final values to save:", {
+                "total_points": total_points,
+                "ai_notes": ai_notes,
+                "student_level": student_level,
+                "grading_difficulty": grading_difficulty,
+                "gpt_model": gpt_model,
+                "faith_integration": faith_integration,
+                "delay_posting": delay_posting,
+                "allow_inline_submission": allow_inline
+            })
 
-            # ✅ Update Supabase assignment record by ID
             response = supabase.table("assignments").update({
                 "total_points": total_points,
                 "ai_notes": ai_notes,
@@ -1505,7 +1514,7 @@ def edit_assignment(assignment_id):
                 "grading_difficulty": grading_difficulty,
                 "gpt_model": gpt_model,
                 "faith_integration": faith_integration,
-                "delay_posting": delay_raw,
+                "delay_posting": delay_posting,
                 "allow_inline_submission": allow_inline
             }).eq("id", assignment_id).execute()
 
@@ -1519,6 +1528,7 @@ def edit_assignment(assignment_id):
         except Exception as e:
             print("❌ Exception in edit_assignment:", e)
             return "Internal Server Error", 500
+
 
     # GET request: fetch assignment by ID
     response = supabase.table("assignments").select("*").eq("id", assignment_id).single().execute()
