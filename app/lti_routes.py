@@ -485,6 +485,11 @@ def grade_docx():
     if reference_data:
         prompt += f"\nReference Scenario:\n{reference_data}\n"
     prompt += f"\nStudent Submission:\n---\n{full_text}\n---\n\nReturn your response in this format:\n\nScore: <number from 0 to {rubric_total_points}>\nFeedback: <detailed, encouraging, and helpful feedback>"
+    # Optional Bonus: Trim prompt if it's too long to stay under GPT-4 limits
+    approx_token_count = len(prompt.split())  # rough estimate: ~1 word ≈ 1 token
+    if approx_token_count > 3500:
+        print(f"⚠️ Trimming prompt: estimated {approx_token_count} tokens")
+        prompt = prompt[:15000]  # trim to first 15,000 characters
 
     try:
         openai.api_key = os.getenv("OPENAI_API_KEY")
@@ -930,7 +935,7 @@ Feedback: <detailed, helpful feedback in paragraph form>
                 model="gpt-4",
                 messages=[{"role": "user", "content": gpt_prompt}],
                 temperature=0.5,
-                max_tokens=1000
+                max_tokens=500
             )
             output = response["choices"][0]["message"]["content"]
 
