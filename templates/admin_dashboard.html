@@ -282,13 +282,25 @@
           <option value="hard">Hard</option>
         </select>
       </div>
-      <div class="form-group third">
+    </div>
+    
+    <!-- ✅ Clean 50/50 row: inline submission + model -->
+    <div class="row">
+      <div class="form-group" style="flex: 1 1 48%;">
         <label for="allow_inline_submission">Allow Inline Submission</label>
         <select name="allow_inline_submission" id="allow_inline_submission" class="form-control">
           <option value="no">No – file upload only</option>
           <option value="yes">Yes – students type directly</option>
         </select>
       </div>
+      <div class="form-group" style="flex: 1 1 48%;">
+        <label for="gpt_model">AI Model</label>
+        <select name="gpt_model" id="gpt_model" class="form-control">
+          <option value="gpt-4">GPT-4 (Best for thoughtful, detailed feedback)</option>
+          <option value="gpt-3.5-turbo">GPT-3.5 (Best for fast, structured form grading)</option>
+        </select>
+      </div>
+    </div>    
       
     </div>          
     <div class="row">

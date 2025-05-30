@@ -485,6 +485,7 @@ def grade_docx():
     if reference_data:
         prompt += f"\nReference Scenario:\n{reference_data}\n"
     prompt += f"\nStudent Submission:\n---\n{full_text}\n---\n\nReturn your response in this format:\n\nScore: <number from 0 to {rubric_total_points}>\nFeedback: <detailed, encouraging, and helpful feedback>"
+    
     # Optional Bonus: Trim prompt if it's too long to stay under GPT-4 limits
     approx_token_count = len(prompt.split())  # rough estimate: ~1 word ≈ 1 token
     if approx_token_count > 3500:
@@ -492,9 +493,10 @@ def grade_docx():
         prompt = prompt[:15000]  # trim to first 15,000 characters
 
     try:
+        model_to_use = assignment_config.get("gpt_model", "gpt-4")
         openai.api_key = os.getenv("OPENAI_API_KEY")
         response = openai.ChatCompletion.create(
-            model="gpt-4",
+            model=model_to_use,
             messages=[{"role": "user", "content": prompt.strip()}],
             temperature=0.5,
             max_tokens=1000
@@ -739,6 +741,7 @@ def assignment_config():
         if not total_points_raw.isdigit():
             return "❌ Please enter a numeric total point value in the dashboard.", 400
         total_points = int(total_points_raw)
+        gpt_model = request.form.get("gpt_model", "gpt-4")
         instructor_approval = request.form.get("instructor_approval") == "on"
         requires_persona = request.form.get("requires_persona") == "on"
         faith_integration = request.form.get("faith_integration") == "on"
@@ -765,6 +768,7 @@ def assignment_config():
                 entry.update({
                     "rubric_file": saved_rubric_filename,
                     "total_points": total_points,
+                    "gpt_model": gpt_model,
                     "instructor_approval": instructor_approval,
                     "requires_persona": requires_persona,
                     "faith_integration": faith_integration,
@@ -788,6 +792,7 @@ def assignment_config():
                 "requires_persona": requires_persona,
                 "faith_integration": faith_integration,
                 "grading_difficulty": grading_difficulty,
+                "gpt_model": gpt_model,
                 "student_level": student_level,
                 "feedback_tone": feedback_tone,
                 "ai_notes": ai_notes,
@@ -930,9 +935,10 @@ Feedback: <detailed, helpful feedback in paragraph form>
         gpt_prompt = prompt.strip()
 
         try:
+            model_to_use = selected_config.get("gpt_model", "gpt-4")
             openai.api_key = os.getenv("OPENAI_API_KEY")
             response = openai.ChatCompletion.create(
-                model="gpt-4",
+                model=model_to_use,
                 messages=[{"role": "user", "content": gpt_prompt}],
                 temperature=0.5,
                 max_tokens=500
@@ -968,6 +974,7 @@ def save_assignment():
     grading_difficulty = request.form.get("grading_difficulty")
     grade_level = request.form.get("grade_level")
     total_points = int(request.form.get("total_points", "0"))
+    gpt_model = request.form.get("gpt_model", "gpt-4")
     requires_review = request.form.get("requires_review", "false") == "true"
     gospel_enabled = request.form.get("gospel_enabled") == "true"
     custom_ai = request.form.get("custom_ai", "")
@@ -1023,10 +1030,11 @@ def save_assignment():
         "rubric_file": rubric_url,
         "additional_file": additional_url,
         "total_points": total_points,
-            "instructor_approval": requires_review,
+        "instructor_approval": requires_review,
         "requires_persona": False,
         "faith_integration": gospel_enabled,
         "grading_difficulty": grading_difficulty,
+        "gpt_model": gpt_model,
         "student_level": grade_level,
         "feedback_tone": "supportive",
         "ai_notes": custom_ai,
@@ -1477,6 +1485,7 @@ def edit_assignment(assignment_id):
             print("📥 POST data:", request.form)
 
             total_points = request.form.get("total_points", type=int)
+            gpt_model = request.form.get("gpt_model", "gpt-4")
             ai_notes = request.form.get("ai_notes", "")
             student_level = request.form.get("student_level")
             grading_difficulty = request.form.get("grading_difficulty")
@@ -1494,6 +1503,7 @@ def edit_assignment(assignment_id):
                 "ai_notes": ai_notes,
                 "student_level": student_level,
                 "grading_difficulty": grading_difficulty,
+                "gpt_model": gpt_model,
                 "faith_integration": faith_integration,
                 "delay_posting": delay_raw,
                 "allow_inline_submission": allow_inline
