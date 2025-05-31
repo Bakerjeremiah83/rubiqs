@@ -97,8 +97,21 @@
             {{ page|safe }}
           </div>
         {% endfor %}
-      {% elif pdf_url %}
-        <iframe src="{{ pdf_url }}" width="100%" height="600px" style="border: none; border-radius: 8px;"></iframe>
+        {% elif pdf_url %}
+        {% elif pdf_url %}
+      <iframe
+        src="https://docs.google.com/gview?embedded=true&url={{ pdf_url }}"
+        style="width:100%; height:800px; border: none; border-radius: 8px;"
+        allowfullscreen
+      ></iframe>
+        
+      {% elif current_review.student_file_url.endswith(".docx") %}
+        <iframe
+          src="https://docs.google.com/gview?embedded=true&url={{ current_review.student_file_url }}"
+          style="width:100%; height:800px; border: none; border-radius: 8px;"
+          allowfullscreen
+        ></iframe>
+      
       {% else %}
         <div style="white-space: pre-wrap; background: #f9f9f9; padding: 1rem; border-radius: 8px;">
           {{ current_review.student_text | safe }}

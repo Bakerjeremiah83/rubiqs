@@ -31,6 +31,16 @@ def convert_docx_to_html_with_styles(docx_path):
         print("❌ DOCX conversion failed:", e)
         return f"<p>Conversion error: {e}</p>"
 
+def extract_pdf_text(file_obj):
+    text = ""
+    try:
+        with fitz.open(stream=file_obj, filetype="pdf") as doc:
+            for page in doc:
+                text += page.get_text()
+    except Exception as e:
+        print("❌ PyMuPDF extraction failed:", str(e))
+    return text
+
 
 import json
 import jwt
@@ -44,7 +54,7 @@ import re
 import openai
 from io import BytesIO
 from docx import Document
-from pdfminer.high_level import extract_text as extract_pdf_text
+import fitz  # PyMuPDF
 from datetime import datetime, timedelta  
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
@@ -395,7 +405,14 @@ def grade_docx():
                 full_text = "\n".join([para.text for para in doc.paragraphs])
             
             elif file_ext == ".pdf":
-                full_text = extract_pdf_text(BytesIO(file_bytes))
+                import fitz  # Ensure it's already imported at the top
+
+                pdf_doc = fitz.open(stream=file_bytes, filetype="pdf")
+                full_text = ""
+                for page in pdf_doc:
+                    full_text += page.get_text()
+                pdf_doc.close()
+
                 print("📄 Extracted full_text from PDF:")
                 print(full_text)
 
