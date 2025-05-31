@@ -411,7 +411,17 @@ def grade_docx():
                 full_text = ""
                 for page in pdf_doc:
                     full_text += page.get_text()
+                    try:
+                        widgets = page.widgets()
+                        if widgets:
+                            for widget in widgets:
+                                if widget.field_value:
+                                    full_text += f"\n{widget.field_name or 'Unnamed Field'}: {widget.field_value}"
+                    except Exception as e:
+                        print("⚠️ Widget extraction skipped due to error:", e)
                 pdf_doc.close()
+
+
 
                 print("📄 Extracted full_text from PDF:")
                 print(full_text)
@@ -516,13 +526,30 @@ def grade_docx():
     Rubric:
     {rubric_text}
     """
+
+    # ✅ Inject JSON answer key if present
+    rubric_url = assignment_config.get("rubric_file")
+    if rubric_url and rubric_url.endswith(".json"):
+        try:
+            response = requests.get(rubric_url)
+            if response.status_code == 200:
+                answer_key = response.text.strip()
+                prompt += f"\n\nAnswer Key (JSON format):\n{answer_key}\n"
+            else:
+                print(f"⚠️ Failed to load answer key: {response.status_code}")
+        except Exception as e:
+            print(f"❌ Error loading answer key: {e}")
+
+    # Continue building the prompt
     if extracted_fields:
         prompt += "\nExtracted Fields:\n" + "\n".join(extracted_fields) + "\n"
 
     if ai_notes:
         prompt += f"\nInstructor Notes:\n{ai_notes}\n"
+
     if reference_data:
         prompt += f"\nReference Scenario:\n{reference_data}\n"
+
     trimmed_text = full_text[:4000]
     prompt += f"""
     Student Submission (trimmed):
@@ -547,7 +574,7 @@ def grade_docx():
         model_to_use = assignment_config.get("gpt_model", "gpt-4")
         openai.api_key = os.getenv("OPENAI_API_KEY")
         print(f"🧠 Using model: {model_to_use}")
-        print("🧠 Final GPT prompt:")
+        print("🧠 FINAL GPT prompt being sent:\n")
         print(prompt)
 
         response = openai.ChatCompletion.create(
