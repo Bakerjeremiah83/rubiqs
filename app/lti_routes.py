@@ -1236,7 +1236,9 @@ def instructor_review():
                 pdf_doc = fitz.open(stream=response.content, filetype="pdf")
                 for page in pdf_doc:
                     page_text = page.get_text()
-                    html_output += f"<div class='pdf-page'>{page_text.replace('\n', '<br>')}</div>"
+                    converted_text = page_text.replace("\n", "<br>")
+                    html_output += f"<div class='pdf-page'>{converted_text}</div>"
+
                     for widget in page.widgets():
                         if widget.field_value:
                             value_text = f"{widget.field_name or 'Unnamed'}: {widget.field_value}"
