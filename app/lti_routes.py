@@ -371,10 +371,13 @@ def grade_docx():
 
     file = request.files.get("file")
     inline_text = request.form.get("inline_text", "").strip()
-    reference_data = ""
+    # ✅ Guard: prevent grading if no valid input was received
+    if (not file or file.filename.strip() == "") and not inline_text:
+        print("⚠️ grade-docx triggered without a valid file or inline text.")
+        return "❌ No submission detected. Please upload a file or enter text.", 400
 
-    if not file and not inline_text:
-        return "❌ Please submit either a file or inline response.", 400
+
+    reference_data = ""
     extracted_fields = []
 
 
