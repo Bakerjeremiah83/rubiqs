@@ -421,6 +421,11 @@ def grade_docx():
                         print("⚠️ Widget extraction skipped due to error:", e)
                 pdf_doc.close()
 
+                # 🧹 Normalize PDF text spacing for better field matching
+                import re
+                full_text = re.sub(r'\n+', '\n', full_text)               # collapse multiple newlines
+                full_text = re.sub(r'[ \t]+', ' ', full_text)             # normalize spaces
+                full_text = full_text.replace('\x0c', '').strip()         # remove page breaks
 
 
                 print("📄 Extracted full_text from PDF:")
@@ -514,6 +519,11 @@ def grade_docx():
     except Exception as e:
         return f"❌ Failed to load rubric file: {str(e)}", 500
 
+    max_total_chars = 12000  # cap the total prompt to fit model limits
+
+    # Truncate rubric if needed
+    trimmed_rubric = rubric_text[:2000]
+
     prompt = f"""
     You are a helpful AI grader.
 
@@ -524,21 +534,27 @@ def grade_docx():
     Total Points: {rubric_total_points}
 
     Rubric:
-    {rubric_text}
+    {trimmed_rubric}
     """
 
-    # ✅ Inject JSON answer key if present
+
+    # ✅ Inject parsed JSON answer key summary
     rubric_url = assignment_config.get("rubric_file")
     if rubric_url and rubric_url.endswith(".json"):
         try:
             response = requests.get(rubric_url)
             if response.status_code == 200:
-                answer_key = response.text.strip()
-                prompt += f"\n\nAnswer Key (JSON format):\n{answer_key}\n"
+                full_key = response.json()
+                trimmed_sections = json.dumps(full_key.get("sections", []))[:3000]
+                prompt += f"\nAnswer Key (fields only, JSON):\n{trimmed_sections}\n"
             else:
                 print(f"⚠️ Failed to load answer key: {response.status_code}")
         except Exception as e:
             print(f"❌ Error loading answer key: {e}")
+
+            print(f"❌ Error parsing answer key: {e}")
+            prompt += "\n[⚠️ Could not parse answer key JSON]\n"
+
 
     # Continue building the prompt
     if extracted_fields:
@@ -550,9 +566,15 @@ def grade_docx():
     if reference_data:
         prompt += f"\nReference Scenario:\n{reference_data}\n"
 
-    trimmed_text = full_text[:4000]
+    trimmed_text = full_text[:3000]
+
+    # ✅ Add extracted fields at the top of the student submission
+    if extracted_fields:
+        extracted_info = "\n".join(extracted_fields)
+        prompt += f"\n\nExtracted Fields (from PDF form):\n{extracted_info}\n"
+
     prompt += f"""
-    Student Submission (trimmed):
+    \nStudent Submission (trimmed):
     ---
     {trimmed_text}
     ---
@@ -562,6 +584,7 @@ def grade_docx():
     Score: <number from 0 to {rubric_total_points}>
     Feedback: <detailed, encouraging, and helpful feedback>
     """.strip()
+
 
     
     # Optional Bonus: Trim prompt if it's too long to stay under GPT-4 limits
