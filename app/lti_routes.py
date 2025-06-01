@@ -408,21 +408,80 @@ def grade_docx():
                 full_text = "\n".join([para.text for para in doc.paragraphs])
             
             elif file_ext == ".pdf":
-                import fitz  # Ensure it's already imported at the top
+                import fitz  # Ensure it's already imported
 
                 pdf_doc = fitz.open(stream=file_bytes, filetype="pdf")
                 full_text = ""
+                field_map = {}
+
                 for page in pdf_doc:
                     full_text += page.get_text()
                     try:
                         widgets = page.widgets()
                         if widgets:
                             for widget in widgets:
-                                if widget.field_value:
-                                    full_text += f"\n{widget.field_name or 'Unnamed Field'}: {widget.field_value}"
+                                field_name = widget.field_name or "Unnamed"
+                                field_value = widget.field_value or ""
+                                if field_value.strip():
+                                    field_map[field_name] = field_value.strip()
                     except Exception as e:
                         print("⚠️ Widget extraction skipped due to error:", e)
+
                 pdf_doc.close()
+
+                # 🧹 Normalize text
+                import re
+                full_text = re.sub(r'\n+', '\n', full_text)
+                full_text = re.sub(r'[ \t]+', ' ', full_text)
+                full_text = full_text.replace('\x0c', '').strip()
+
+                print("📄 Extracted full_text from PDF:")
+                print(full_text)
+
+                # ✅ Load rubric and build field-specific grading prompt
+                rubric_response = requests.get(rubric_url)
+                answer_key_json = rubric_response.json()
+
+                rubric_fields = []
+                for section in answer_key_json.get("sections", []):
+                    for field in section.get("fields", []):
+                        rubric_fields.append({
+                            "field": field["field"],
+                            "expected": field["expected"],
+                            "points": field.get("points", 1)
+                        })
+
+                student_fields = field_map  # Extracted filled fields only
+
+                prompt = f"""
+            You are a strict USCIS form validator. A student filled out fields from the N-400 form.
+
+            Here is the answer key:
+            {json.dumps(rubric_fields, indent=2)}
+
+            Here are the student's filled fields:
+            {json.dumps(student_fields, indent=2)}
+
+            Compare the student's filled fields to the answer key.
+
+            ✅ Return feedback ONLY for:
+            - Incorrect fields (value doesn't match expected)
+            - Missing fields (expected field not found)
+            - Extra fields (filled by student but not expected)
+
+            Skip all blank or irrelevant fields. Do not grade empty sections.
+
+            Respond like this:
+
+            Field: <field>
+            Status: Correct | Incorrect | Missing | Extra
+            Comment: <brief explanation>
+
+            If all fields are accurate, return: ✅ All fields are accurate. Great job!
+            """.strip()
+
+
+                
 
                 # 🧹 Normalize PDF text spacing for better field matching
                 import re
