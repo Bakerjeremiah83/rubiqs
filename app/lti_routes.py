@@ -1199,7 +1199,6 @@ def instructor_review():
 
     # 🔁 Recalculate reviews fresh from Supabase after any Accept
     if submission_id:
-        # Find the index of the current submission
         for i, review in enumerate(reviews):
             if review["submission_id"] == submission_id:
                 current_review = review
@@ -1207,19 +1206,10 @@ def instructor_review():
                     next_id = reviews[i + 1]["submission_id"]
                 break
 
-    # Default to first if no match
     if not current_review and reviews:
         current_review = reviews[0]
         if len(reviews) > 1:
             next_id = reviews[1]["submission_id"]
-
-    print("🧪 FINAL current_review =", current_review)
-    print("🧪 Remaining reviews:", len(reviews))
-
-
-    print(f"🧪 Number of pending reviews found: {len(reviews)}")
-
-    submission_id = request.args.get("submission_id")
 
     if request.method == "POST":
         submission_id = request.form.get("submission_id")
@@ -1234,61 +1224,45 @@ def instructor_review():
             "pending": False
         }).eq("submission_id", submission_id).execute()
 
-        supabase.table("submissions").update({
-            "score": updated_score,
-            "feedback": updated_feedback,
-            "timestamp": datetime.utcnow().isoformat()
-        }).eq("submission_id", submission_id).execute()
-
         return redirect(url_for("lti.instructor_review"))
 
-    current_review = None
-    if submission_id:
-        current_review = next((r for r in reviews if r["submission_id"] == submission_id), None)
-    elif reviews:
-        current_review = reviews[0]
-    
-    print("🧪 current_review =", current_review)
-
-    docx_html = None
-    pdf_url = None
-    docx_pages = []
-
+    html_output = ""
     if current_review:
         file_url = str(current_review.get("student_file_url") or "")
+
         if file_url.endswith(".pdf"):
-            pdf_url = file_url
+            try:
+                response = requests.get(file_url)
+                pdf_doc = fitz.open(stream=response.content, filetype="pdf")
+                for page in pdf_doc:
+                    page_text = page.get_text()
+                    html_output += f"<div class='pdf-page'>{page_text.replace('\n', '<br>')}</div>"
+                    for widget in page.widgets():
+                        if widget.field_value:
+                            value_text = f"{widget.field_name or 'Unnamed'}: {widget.field_value}"
+                            html_output += f"<div class='pdf-field'><strong>{value_text}</strong></div>"
+                pdf_doc.close()
+            except Exception as e:
+                html_output = f"<div style='color:red;'>❌ Error reading PDF: {e}</div>"
+
         elif file_url.endswith(".docx"):
             try:
                 response = requests.get(file_url)
                 docx_path = "/tmp/temp.docx"
                 with open(docx_path, "wb") as f:
                     f.write(response.content)
-
-                full_html = convert_docx_to_html_with_styles(docx_path)
-
-                # Split pages if LibreOffice used <div style="page-break-before: always">
-                docx_pages = full_html.split('<div style="page-break-before: always"')
-
-                # Re-add the opening div to each split page (except the first)
-                for i in range(1, len(docx_pages)):
-                    docx_pages[i] = '<div style="page-break-before: always"' + docx_pages[i]
-
-                    print("📄 Total DOCX pages found:", len(docx_pages))
-                # Remove the last page if it's empty
-            
+                html_output = convert_docx_to_html_with_styles(docx_path)
             except Exception as e:
-                print("❌ DOCX rendering error:", e)
-
+                html_output = f"<div style='color:red;'>❌ Error reading DOCX: {e}</div>"
 
     return render_template(
-    "instructor_review.html",
-    current_review=current_review,
-    reviews=reviews,
-    docx_pages=docx_pages,
-    pdf_url=pdf_url,
-    next_id=next_id
-)
+        "instructor_review.html",
+        current_review=current_review,
+        reviews=reviews,
+        html_output=html_output,
+        next_id=next_id
+    )
+
 
 
 
