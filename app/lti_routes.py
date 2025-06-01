@@ -382,6 +382,7 @@ def grade_docx():
 
 
     try:
+        import requests
         student_file_url = None  # initialize in case it's inline
 
         if file:
