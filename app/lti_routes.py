@@ -1771,32 +1771,29 @@ def download_activity_log():
 
 
 @lti.route('/delete-submission', methods=['POST'])
+@lti.route('/delete-submission', methods=['POST'])
 def delete_submission():
     submission_id = request.form.get("submission_id")
     print("🧪 DELETE REQUEST RECEIVED:", submission_id)
 
     try:
-        parsed_id = UUID(submission_id)
-        print("🔍 Parsed UUID:", parsed_id)
+        parsed_id = str(submission_id)
 
-        # ✅ STEP 1: Look up the student_id for this submission first
-        submission_record = supabase.table("submissions").select("student_id").eq("submission_id", str(parsed_id)).single().execute()
-        if not submission_record.data:
+        # ✅ Set correct RLS context
+        record = supabase.table("submissions").select("student_id").eq("submission_id", parsed_id).single().execute()
+        if not record.data:
             return jsonify({"success": False, "error": "Submission not found"}), 404
 
-        # ✅ STEP 2: Set the RLS UID to match the student who owns it
-        uid = submission_record.data["student_id"]
-        if isinstance(uid, int):  # Convert integers to string for Supabase RLS match
-            uid = str(uid)
+        uid = str(record.data["student_id"])
         supabase.rpc("set_client_uid", {"uid": uid}).execute()
         print("🔐 Using set_client_uid with:", uid)
 
-        # ✅ STEP 3: Delete the record (RLS will allow it)
-        response = supabase.table("submissions").delete().eq("submission_id", str(parsed_id)).execute()
+        # ✅ Delete the record
+        response = supabase.table("submissions").delete().eq("submission_id", parsed_id).execute()
         print("🧪 DELETE RESPONSE:", response)
 
-        # ✅ STEP 4: Confirm it's gone
-        confirm = supabase.table("submissions").select("*").eq("submission_id", str(parsed_id)).execute()
+        # ✅ Confirm it's gone
+        confirm = supabase.table("submissions").select("*").eq("submission_id", parsed_id).execute()
         if confirm.data:
             print("❌ Record still exists after delete.")
             return jsonify({"success": False, "error": "Delete failed"}), 500
@@ -1807,6 +1804,7 @@ def delete_submission():
     except Exception as e:
         print("❌ DELETE ERROR:", str(e))
         return jsonify({"success": False, "error": "Internal error"}), 500
+
 
 
 
@@ -1846,32 +1844,32 @@ def accept_submission():
     print("🧪 ACCEPT REQUEST RECEIVED:", submission_id)
 
     try:
-        parsed_id = UUID(submission_id)
-        before = supabase.table("submissions").select("*").eq("submission_id", parsed_id).execute()
-        print("📄 BEFORE ACCEPT:", before)
-
-        record = supabase.table("submissions").select("student_id").eq("submission_id", str(parsed_id)).single().execute()
+        # ✅ Set correct RLS context
+        record = supabase.table("submissions").select("student_id").eq("submission_id", submission_id).single().execute()
         if record.data:
             uid = str(record.data["student_id"])
             supabase.rpc("set_client_uid", {"uid": uid}).execute()
             print("🔐 Using set_client_uid with:", uid)
+        else:
+            return jsonify({"success": False, "error": "Submission not found"}), 404
 
+        # ✅ Update submission status
         response = supabase.table("submissions").update({
             "pending": False,
             "reviewed": True
-        }).eq("submission_id", parsed_id).execute()
-
-
+        }).eq("submission_id", submission_id).execute()
 
         print("🧪 ACCEPT RESPONSE:", response)
 
-        after = supabase.table("submissions").select("*").eq("submission_id", parsed_id).execute()
+        # ✅ Optionally confirm update (optional)
+        after = supabase.table("submissions").select("*").eq("submission_id", submission_id).execute()
         print("📄 AFTER ACCEPT:", after)
 
         return jsonify({"success": True}), 200
     except Exception as e:
         print("❌ ACCEPT ERROR:", str(e))
         return jsonify({"success": False, "error": "Internal error"}), 500
+
 
 
 
