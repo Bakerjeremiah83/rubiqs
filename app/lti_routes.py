@@ -723,13 +723,13 @@ def grade_docx():
         print("🧠 FINAL GPT prompt being sent:\n")
         print(prompt)
 
-        model = assignment_config.get("model") or "gpt-4"  # fallback to gpt-4 if not defined
         response = openai.ChatCompletion.create(
             model=model_to_use,
             messages=[{"role": "user", "content": prompt.strip()}],
             temperature=0.5,
             max_tokens=1000
         )
+
         output = response["choices"][0]["message"]["content"]
         print("📤 GPT Output:")
         print(output)
