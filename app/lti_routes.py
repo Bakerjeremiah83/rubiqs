@@ -397,11 +397,6 @@ def grade_docx():
     title_from_claim = resource_link.get("title")
     id_from_claim = resource_link.get("id")
     assignment_title = str(title_from_claim or f"Assignment-{id_from_claim}" or "Untitled Assignment").strip()
-
-    assignment_title = str(assignment_title).strip()
-    print(f"🧪 Final resolved assignment_title: {assignment_title}")
-
-    print(f"🌐 RAW assignment_title FROM LAUNCH: {repr(assignment_title)}")
     assignment_title = normalize_title(assignment_title)
     assignment_config = load_assignment_config(assignment_title)
 
@@ -409,345 +404,164 @@ def grade_docx():
         return "❌ Assignment not found. Please contact your instructor.", 400
 
     delay_setting = assignment_config.get("delay_posting", "immediate")
-    delay_map = {
-        "immediate": 0,
-        "1m": 0.0166,
-        "12h": 12,
-        "24h": 24,
-        "36h": 36,
-        "48h": 48
-    }
-    delay_hours = delay_map.get(delay_setting, 0)
-
-    print("🧪 Grading assignment:", assignment_title)
-    print("🧪 Assignment config loaded:", assignment_config)
+    delay_hours = {
+        "immediate": 0, "1m": 0.0166, "12h": 12, "24h": 24, "36h": 36, "48h": 48
+    }.get(delay_setting, 0)
 
     if not assignment_config.get("rubric_file", "").strip():
         return f"❌ Assignment setup incomplete. Missing configuration or rubric for: {assignment_title}", 400
 
-    print("📅 /grade-docx hit")
     rubric_url = assignment_config.get("rubric_file", "")
-    print("🧪 Rubric URL to download:", rubric_url)
-
     file = request.files.get("file")
     inline_text = request.form.get("inline_text", "").strip()
-    # ✅ Guard: prevent grading if no valid input was received
     if (not file or file.filename.strip() == "") and not inline_text:
-        print("⚠️ grade-docx triggered without a valid file or inline text.")
         return "❌ No submission detected. Please upload a file or enter text.", 400
 
-
-    reference_data = ""
     extracted_fields = []
-
+    reference_data = ""
+    student_file_url = None
 
     try:
         import requests
-        student_file_url = None  # initialize in case it's inline
-
+        from io import BytesIO
         if file:
             filename = file.filename.lower()
-
-            # Upload to Supabase
-            from werkzeug.utils import secure_filename
-            from io import BytesIO
-
             file_ext = os.path.splitext(filename)[-1]
             safe_name = secure_filename(filename)
-            unique_path = f"submissions/{str(uuid.uuid4())}_{safe_name}"
+            unique_path = f"submissions/{uuid.uuid4()}_{safe_name}"
             file_bytes = file.read()
 
             supabase.storage.from_("submissions").upload(unique_path, file_bytes)
-
-            # Construct public URL (you can use env var or hardcode the project ID)
             SUPABASE_PROJECT_ID = os.getenv("SUPABASE_PROJECT_ID", "your-project-name.supabase.co")
             student_file_url = f"https://{SUPABASE_PROJECT_ID}/storage/v1/object/public/submissions/{unique_path}"
 
-            # Extract text
-            if file_ext == ".docx":
-                doc = Document(BytesIO(file_bytes))
-                full_text = "\n".join([para.text for para in doc.paragraphs])
-            
-            elif file_ext == ".pdf":
-                import fitz  # Ensure it's already imported
-
-                pdf_doc = fitz.open(stream=file_bytes, filetype="pdf")
-                full_text = ""
-                field_map = {}
-
-                for page in pdf_doc:
-                    full_text += page.get_text()
-                    try:
-                        widgets = page.widgets()
-                        if widgets:
-                            for widget in widgets:
-                                field_name = widget.field_name or "Unnamed"
-                                field_value = widget.field_value or ""
-                                if field_value.strip():
-                                    field_map[field_name] = field_value.strip()
-                    except Exception as e:
-                        print("⚠️ Widget extraction skipped due to error:", e)
-
-                pdf_doc.close()
-
-                
-
-                print("📄 Extracted full_text from PDF:")
-                print(full_text)
-
-                # ✅ Load rubric and build field-specific grading prompt
+            if file_ext == ".pdf":
+                student_fields = extract_filled_fields_from_pdf(file_bytes)
                 rubric_response = requests.get(rubric_url)
-                answer_key_json = rubric_response.json()
-
-                rubric_fields = []
-                for section in answer_key_json.get("sections", []):
-                    for field in section.get("fields", []):
-                        rubric_fields.append({
-                            "field": field["field"],
-                            "expected": field["expected"],
-                            "points": field.get("points", 1)
-                        })
-
-                student_fields = field_map  # Extracted filled fields only
-
-                prompt = f"""
-            You are a strict USCIS form validator. A student filled out fields from the N-400 form.
-
-            Here is the answer key:
-            {json.dumps(rubric_fields, indent=2)}
-
-            Here are the student's filled fields:
-            {json.dumps(student_fields, indent=2)}
-
-            Compare the student's filled fields to the answer key.
-
-            ✅ Return feedback ONLY for:
-            - Incorrect fields (value doesn't match expected)
-            - Missing fields (expected field not found)
-            - Extra fields (filled by student but not expected)
-
-            Skip all blank or irrelevant fields. Do not grade empty sections.
-
-            Respond like this:
-
-            Field: <field>
-            Status: Correct | Incorrect | Missing | Extra
-            Comment: <brief explanation>
-
-            If all fields are accurate, return: ✅ All fields are accurate. Great job!
-            """.strip()
-
-
-                
-
-                
-
-
-                print("📄 Extracted full_text from PDF:")
-                print(full_text)
-
+                answer_key = rubric_response.json()
+                result = compare_form_to_answer_key(student_fields, answer_key)
+                score = result["score"]
+                feedback = result["feedback"]
+                full_text = json.dumps(student_fields, indent=2)
+            elif file_ext == ".docx":
+                doc = Document(BytesIO(file_bytes))
+                full_text = "\n".join([p.text for p in doc.paragraphs])
             else:
                 return "❌ Unsupported file type. Please upload .docx or .pdf", 400
-
-
-            a_number_match = re.search(r"\bA[-\s]?\d{9}\b", full_text)
-            if a_number_match:
-                extracted_fields.append(f"A-Number: {a_number_match.group(0)}")
-
-            dob_match = re.search(r"\b(\d{2}/\d{2}/\d{4})\b", full_text)
-            if dob_match:
-                extracted_fields.append(f"Date of Birth: {dob_match.group(1)}")
-
-
         elif inline_text:
             full_text = inline_text
 
-
         ai_check_result = check_ai_with_gpt(full_text)
-        print("🤖 AI Detection Result:", ai_check_result)
 
     except Exception as e:
         return f"❌ Failed to extract or process submission: {str(e)}", 500
 
-    import tempfile, requests
     rubric_path = None
-    if rubric_url:
-        try:
-            file_ext = rubric_url.split("?")[0].split(".")[-1]
-            clean_filename = rubric_url.split("/")[-1].split("?")[0]
-            temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=f"_{clean_filename}")
-            response = requests.get(rubric_url)
-
-            print("🧪 Rubric download HTTP status:", response.status_code)
-            print("🧪 Rubric content size:", len(response.content))
-
-            if response.status_code != 200 or len(response.content) == 0:
-                return f"❌ Failed to download rubric from Supabase. Status {response.status_code}", 500
-
-            temp_file.write(response.content)
-            temp_file.close()
-            rubric_path = temp_file.name
-
-        except Exception as e:
-            return f"❌ Exception while downloading rubric: {str(e)}", 500
-    else:
-        return "❌ No rubric file found for this assignment.", 400
-
-    grading_difficulty = assignment_config.get("grading_difficulty", "balanced")
-    student_level = assignment_config.get("student_level", "college")
-    feedback_tone = assignment_config.get("feedback_tone", "supportive")
-    ai_notes = assignment_config.get("ai_notes", "")
-
     try:
-        if rubric_path.endswith(".json"):
-            with open(rubric_path, "r", encoding="utf-8") as f:
-                rubric_json = json.load(f)
-
-            if "sections" in rubric_json:
-                rubric_text = "\n".join([f"- {section['title']}" for section in rubric_json["sections"]])
-                rubric_total_points = rubric_json.get("total_points")
-            elif "criteria" in rubric_json:
-                rubric_text = "\n".join([f"- {c['description']}" for c in rubric_json["criteria"]])
-                rubric_total_points = get_total_points_from_rubric(rubric_json)
-            else:
-                return "❌ Unrecognized rubric format. Please upload a valid .json rubric with 'sections' or 'criteria'.", 400
-        elif rubric_path.endswith(".docx"):
-            doc = Document(rubric_path)
-            rubric_text = "\n".join([para.text for para in doc.paragraphs])
-            rubric_total_points = assignment_config.get("total_points")
-        elif rubric_path.endswith(".pdf"):
-            rubric_text = extract_pdf_text(rubric_path)
-            rubric_total_points = assignment_config.get("total_points")
-        else:
-            return "❌ No total points found. Please upload a .json rubric or specify a total in the dashboard.", 400
-
-        if rubric_total_points is None:
-            return "❌ This assignment does not have a total point value set. Please edit it in the dashboard.", 400
-        rubric_total_points = int(str(rubric_total_points).strip())
-        if rubric_total_points <= 0:
-            raise ValueError
-        print("✅ rubric_total_points confirmed as:", rubric_total_points)
-
+        import tempfile
+        clean_filename = rubric_url.split("/")[-1].split("?")[0]
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=f"_{clean_filename}")
+        response = requests.get(rubric_url)
+        if response.status_code != 200 or not response.content:
+            return f"❌ Failed to download rubric. Status {response.status_code}", 500
+        temp_file.write(response.content)
+        temp_file.close()
+        rubric_path = temp_file.name
     except Exception as e:
-        return f"❌ Failed to load rubric file: {str(e)}", 500
+        return f"❌ Error downloading rubric: {str(e)}", 500
 
-    max_total_chars = 12000  # cap the total prompt to fit model limits
+    if rubric_url.endswith(".json") and file_ext != ".pdf":
+        with open(rubric_path, "r", encoding="utf-8") as f:
+            rubric_json = json.load(f)
+        if "sections" in rubric_json:
+            rubric_text = "\n".join([f"- {s['title']}" for s in rubric_json["sections"]])
+            rubric_total_points = rubric_json.get("total_points")
+        elif "criteria" in rubric_json:
+            rubric_text = "\n".join([f"- {c['description']}" for c in rubric_json["criteria"]])
+            rubric_total_points = get_total_points_from_rubric(rubric_json)
+        else:
+            return "❌ Invalid rubric format.", 400
+    elif rubric_path.endswith(".docx"):
+        doc = Document(rubric_path)
+        rubric_text = "\n".join([p.text for p in doc.paragraphs])
+        rubric_total_points = assignment_config.get("total_points")
+    elif rubric_path.endswith(".pdf"):
+        rubric_text = extract_pdf_text(rubric_path)
+        rubric_total_points = assignment_config.get("total_points")
+    else:
+        return "❌ No rubric points found.", 400
 
-    # Truncate rubric if needed
-    trimmed_rubric = rubric_text[:2000]
+    if rubric_total_points is None or int(rubric_total_points) <= 0:
+        return "❌ Missing or invalid total points.", 400
 
-    prompt = f"""
-    You are a helpful AI grader.
+    rubric_total_points = int(rubric_total_points)
 
-    Assignment Title: {assignment_title}
-    Grading Difficulty: {grading_difficulty}
-    Student Level: {student_level}
-    Feedback Tone: {feedback_tone}
-    Total Points: {rubric_total_points}
+    if file_ext != ".pdf":  # Essay-style grading path
+        grading_difficulty = assignment_config.get("grading_difficulty", "balanced")
+        student_level = assignment_config.get("student_level", "college")
+        feedback_tone = assignment_config.get("feedback_tone", "supportive")
+        ai_notes = assignment_config.get("ai_notes", "")
+        prompt = f"""
+        You are a helpful AI grader.
 
-    Rubric:
-    {trimmed_rubric}
-    """
+        Assignment Title: {assignment_title}
+        Grading Difficulty: {grading_difficulty}
+        Student Level: {student_level}
+        Feedback Tone: {feedback_tone}
+        Total Points: {rubric_total_points}
 
+        Rubric:
+        {rubric_text[:2000]}
+        """
+        if ai_notes:
+            prompt += f"\nInstructor Notes:\n{ai_notes}"
+        if reference_data:
+            prompt += f"\nReference Scenario:\n{reference_data}"
+        prompt += f"""
 
-    # ✅ Inject parsed JSON answer key summary
-    rubric_url = assignment_config.get("rubric_file")
-    if rubric_url and rubric_url.endswith(".json"):
+        Student Submission:
+        ---
+        {full_text[:3000]}
+        ---
+
+        Return your response in this format:
+
+        Score: <number from 0 to {rubric_total_points}>
+        Feedback: <detailed, encouraging, and helpful feedback>
+        """.strip()
+
         try:
-            response = requests.get(rubric_url)
-            if response.status_code == 200:
-                full_key = response.json()
-                trimmed_sections = json.dumps(full_key.get("sections", []))[:3000]
-                prompt += f"\nAnswer Key (fields only, JSON):\n{trimmed_sections}\n"
-            else:
-                print(f"⚠️ Failed to load answer key: {response.status_code}")
-        except Exception as e:
-            print(f"❌ Error loading answer key: {e}")
-
-            print(f"❌ Error parsing answer key: {e}")
-            prompt += "\n[⚠️ Could not parse answer key JSON]\n"
-
-
-    # Continue building the prompt
-    if extracted_fields:
-        prompt += "\nExtracted Fields:\n" + "\n".join(extracted_fields) + "\n"
-
-    if ai_notes:
-        prompt += f"\nInstructor Notes:\n{ai_notes}\n"
-
-    if reference_data:
-        prompt += f"\nReference Scenario:\n{reference_data}\n"
-
-    trimmed_text = full_text[:3000]
-
-    # ✅ Add extracted fields at the top of the student submission
-    if extracted_fields:
-        extracted_info = "\n".join(extracted_fields)
-        prompt += f"\n\nExtracted Fields (from PDF form):\n{extracted_info}\n"
-
-    prompt += f"""
-    \nStudent Submission (trimmed):
-    ---
-    {trimmed_text}
-    ---
-
-    Return your response in this format:
-
-    Score: <number from 0 to {rubric_total_points}>
-    Feedback: <detailed, encouraging, and helpful feedback>
-    """.strip()
-
-
-    
-    # Optional Bonus: Trim prompt if it's too long to stay under GPT-4 limits
-    approx_token_count = len(prompt.split())  # rough estimate: ~1 word ≈ 1 token
-    if approx_token_count > 3500:
-        print(f"⚠️ Trimming prompt: estimated {approx_token_count} tokens")
-        prompt = prompt[:15000]  # trim to first 15,000 characters
-
-    try:
-        model_to_use = assignment_config.get("gpt_model", "gpt-4")
-        openai.api_key = os.getenv("OPENAI_API_KEY")
-        print(f"🧠 Using model: {model_to_use}")
-        print("🧠 FINAL GPT prompt being sent:\n")
-        print(prompt)
-
-        response = openai.ChatCompletion.create(
-            model=model_to_use,
-            messages=[{"role": "user", "content": prompt.strip()}],
-            temperature=0.5,
-            max_tokens=1000
-        )
-
-        output = response["choices"][0]["message"]["content"]
-        print("📤 GPT Output:")
-        print(output)
-        score_match = re.search(r"Score:\s*(\d{1,3})", output)
-        score = int(score_match.group(1)) if score_match else 0
-        feedback_match = re.search(r"Feedback:\s*(.+)", output, re.DOTALL)
-        feedback = feedback_match.group(1).strip() if feedback_match else output.strip()
-    except openai.error.OpenAIError as e:
-        return f"❌ GPT error: {str(e)}", 500
+            openai.api_key = os.getenv("OPENAI_API_KEY")
+            model_to_use = assignment_config.get("gpt_model", "gpt-4")
+            response = openai.ChatCompletion.create(
+                model=model_to_use,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.5,
+                max_tokens=1000
+            )
+            output = response["choices"][0]["message"]["content"]
+            score_match = re.search(r"Score:\s*(\\d{1,3})", output)
+            score = int(score_match.group(1)) if score_match else 0
+            feedback_match = re.search(r"Feedback:\s*(.+)", output, re.DOTALL)
+            feedback = feedback_match.group(1).strip() if feedback_match else output.strip()
+        except openai.error.OpenAIError as e:
+            return f"❌ GPT error: {str(e)}", 500
 
     if not session.get("student_id"):
-        fallback_id = session.get("launch_data", {}).get("sub")
-        print("⚠️ session[\"student_id\"] missing. Using fallback:", fallback_id)
-        session["student_id"] = fallback_id
+        session["student_id"] = session.get("launch_data", {}).get("sub")
 
     supabase.rpc("set_client_uid", {"uid": session["student_id"]}).execute()
-    print("👤 Supabase client UID set to:", session["student_id"])
 
     submission_id = str(uuid.uuid4())
-    submission_time = datetime.utcnow()
-    release_time = submission_time + timedelta(hours=delay_hours)
+    now = datetime.utcnow()
+    release_time = now + timedelta(hours=delay_hours)
     ready_to_post = delay_hours == 0 and not assignment_config.get("instructor_approval", False)
-    pending = not ready_to_post
 
     submission_data = {
         "submission_id": submission_id,
         "student_id": session["student_id"],
         "assignment_title": assignment_title,
-        "submission_time": submission_time.isoformat(),
+        "submission_time": now.isoformat(),
         "score": score,
         "feedback": feedback,
         "submission_type": "inline" if inline_text else "file",
@@ -757,33 +571,13 @@ def grade_docx():
         "instructor_notes": "",
         "delay_hours": delay_hours,
         "ready_to_post": ready_to_post,
-        "pending": pending,
+        "pending": not ready_to_post,
         "reviewed": False,
         "release_time": release_time.isoformat()
     }
 
-    print("🧪 INSERTING with student_id =", submission_data["student_id"])
-
-    supabase.table("submissions").insert({
-        "submission_id": submission_data["submission_id"],
-        "student_id": submission_data["student_id"],
-        "assignment_title": submission_data["assignment_title"],
-        "submission_time": submission_data["submission_time"],
-        "submission_type": submission_data["submission_type"],
-        "delay_hours": delay_hours,
-        "ready_to_post": delay_hours == 0 and not assignment_config.get("instructor_approval", False),
-        "score": submission_data["score"],
-        "feedback": submission_data["feedback"],
-        "student_text": submission_data["student_text"],
-        "student_file_url": student_file_url,
-        "ai_check_result": submission_data["ai_check_result"],
-        "instructor_notes": "",
-        "pending": True,
-        "reviewed": False,
-        "release_time": (datetime.utcnow() + timedelta(hours=delay_hours)).isoformat()
-    }).execute()
-
-    log_gpt_interaction(assignment_title, prompt, feedback, score)
+    supabase.table("submissions").insert(submission_data).execute()
+    log_gpt_interaction(assignment_title, prompt if file_ext != ".pdf" else full_text, feedback, score)
 
     if assignment_config.get("instructor_approval"):
         return render_template("feedback.html", pending_message="✅ This submission requires instructor review. Your feedback will be posted after approval.")
@@ -792,8 +586,6 @@ def grade_docx():
     else:
         post_grade_to_lms(session, score, feedback)
         return render_template("feedback.html", score=score, feedback=feedback, rubric_total_points=rubric_total_points, user_roles=session.get("launch_data", {}).get("https://purl.imsglobal.org/spec/lti/claim/roles", []))
-
-
 
 
 
