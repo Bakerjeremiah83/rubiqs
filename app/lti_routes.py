@@ -990,57 +990,50 @@ def save_assignment():
     requires_review = request.form.get("requires_review", "false") == "true"
     gospel_enabled = request.form.get("gospel_enabled") == "true"
     custom_ai = request.form.get("custom_ai", "")
+    allow_inline = request.form.get("allow_inline_submission", "no") == "yes"
 
     rubric_file = request.files.get("rubric_upload")
     additional_file = request.files.get("additional_files")
 
-    allow_inline = request.form.get("allow_inline_submission", "no") == "yes"
-
-
     from werkzeug.utils import secure_filename
+    from app.database import SessionLocal
+    from app.models import Assignment
+
     upload_dir = os.path.join("uploads", secure_filename(assignment_title))
     os.makedirs(upload_dir, exist_ok=True)
 
     rubric_url = ""
     additional_url = ""
 
-    # Handle rubric upload
+    # ✅ Handle rubric upload
     if rubric_file and rubric_file.filename:
-        rubric_filename = secure_filename(rubric_file.filename)
-        rubric_filename = rubric_filename.replace(" ", "_")
+        rubric_filename = secure_filename(rubric_file.filename).replace(" ", "_")
         rubric_path = os.path.join(upload_dir, rubric_filename)
         rubric_file.save(rubric_path)
         rubric_url = upload_to_supabase(rubric_path, rubric_filename)
         if rubric_url:
             rubric_url = rubric_url.rstrip("?")
-            if "rubrics/rubrics/" in rubric_url:
-                rubric_url = rubric_url.replace("rubrics/rubrics/", "rubrics/")
+            rubric_url = rubric_url.replace("rubrics/rubrics/", "rubrics/")
 
     if not rubric_url:
         flash("❌ Rubric upload failed. Please try uploading the rubric again.", "error")
         return redirect(url_for('lti.view_assignments'))
 
-    # Handle additional file upload
+    # ✅ Handle additional file upload
     if additional_file and additional_file.filename:
-        additional_filename = secure_filename(additional_file.filename)
-        additional_filename = additional_filename.replace(" ", "_")
+        additional_filename = secure_filename(additional_file.filename).replace(" ", "_")
         additional_path = os.path.join(upload_dir, additional_filename)
         additional_file.save(additional_path)
         additional_url = upload_to_supabase(additional_path, additional_filename)
         if additional_url:
             additional_url = additional_url.rstrip("?")
-            if "attachments/attachments/" in additional_url:
-                additional_url = additional_url.replace("attachments/attachments/", "attachments/")
+            additional_url = additional_url.replace("attachments/attachments/", "attachments/")
 
-    rubric_url = rubric_url or ""
-    additional_url = additional_url or ""
-
-    # ✅ Save directly to Supabase and capture response
+    # ✅ Save to Supabase table first
     response = supabase.table("assignments").insert({
-        
         "assignment_title": assignment_title,
-        "rubric_file": rubric_url,
-        "additional_file": additional_url,
+        "rubric_file": rubric_url or "",
+        "additional_file": additional_url or "",
         "total_points": total_points,
         "instructor_approval": requires_review,
         "requires_persona": False,
@@ -1050,23 +1043,33 @@ def save_assignment():
         "student_level": grade_level,
         "feedback_tone": "supportive",
         "ai_notes": custom_ai,
-        "allow_inline_submission": allow_inline 
+        "allow_inline_submission": allow_inline
     }).execute()
-    
 
-    # ✅ Debug print statements BEFORE redirect
+    # ✅ Update SQLAlchemy version of assignment too
+    session = SessionLocal()
+    assignment = session.query(Assignment).filter_by(title=assignment_title).first()
+    if assignment:
+        if rubric_url:
+            assignment.rubric_file = rubric_url
+            print("✅ Updated SQL rubric_file:", rubric_url)
+        if additional_url:
+            assignment.additional_file = additional_url
+            print("✅ Updated SQL additional_file:", additional_url)
+        session.commit()
+    session.close()
+
     print("🧪 Saving assignment:", assignment_title)
     print("🧪 Rubric URL:", rubric_url)
     print("🧪 Additional file URL:", additional_url)
 
-    # ✅ Check if insert succeeded
     if hasattr(response, 'error') and response.error:
         flash(f"❌ Error saving assignment: {response.error['message']}", "error")
         return redirect(url_for('lti.view_assignments'))
 
-    # ✅ No error, proceed normally
     flash("✅ Assignment saved successfully.", "success")
     return redirect(f"/admin-dashboard?success={assignment_title}")
+
 
 
 @lti.route("/admin-dashboard", methods=["GET", "POST"])
@@ -1207,8 +1210,11 @@ def instructor_save_notes():
 
     record = supabase.table("submissions").select("student_id").eq("submission_id", submission_id).single().execute()
     if record.data:
-        uid = str(record.data["student_id"])
+        uid = str(record.data.get("student_id") or session.get("user_id"))
+    if uid:
         supabase.rpc("set_client_uid", {"uid": uid}).execute()
+        print("🔐 Using set_client_uid with:", uid)
+
         print("🔐 Using set_client_uid with:", uid)
 
     response = supabase.table("submissions").update({
@@ -1842,8 +1848,11 @@ def accept_submission():
         if not record.data:
             return jsonify({"success": False, "error": "Submission not found"}), 404
 
-        uid = str(record.data["student_id"])
-        supabase.rpc("set_client_uid", {"uid": uid}).execute()
+        uid = str(record.data.get("student_id") or session.get("user_id"))
+        if uid:
+            supabase.rpc("set_client_uid", {"uid": uid}).execute()
+            print("🔐 Using set_client_uid with:", uid)
+
         print("🔐 Using set_client_uid with:", uid)
 
         response = supabase.table("submissions").update({

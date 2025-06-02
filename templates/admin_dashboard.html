@@ -478,17 +478,6 @@
     </div>
   </div>
 </div>
-{% if request.args.get('success') %}
-  <div id="flash-message" style="background: #dff0d8; color: #3c763d; padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem; border-left: 5px solid #3c763d;">
-    ✅ Saved assignment: {{ request.args.get('success') }}
-  </div>
-  <script>
-    setTimeout(() => {
-      const flash = document.getElementById('flash-message');
-      if (flash) flash.style.display = 'none';
-    }, 4000);
-  </script>
-{% endif %}
 
 <script>
   document.addEventListener("DOMContentLoaded", function () {
