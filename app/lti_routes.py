@@ -1585,7 +1585,8 @@ def delete_file():
         if deleted_filename:
             deleted_filename = deleted_filename.lstrip("/")
             print(f"🗑️ Attempting to delete file: rubrics/{deleted_filename}")
-            res = supabase.storage.from_("rubrics").remove([f"rubrics/{deleted_filename}"])
+            bucket = "rubrics" if file_type == "rubric" else "attachments"
+            res = supabase.storage.from_(bucket).remove([deleted_filename])
             print("✅ Supabase response:", res)
 
 
@@ -1770,7 +1771,7 @@ def download_activity_log():
 # 🧪 Triggering redeploy
 
 
-@lti.route('/delete-submission', methods=['POST'])
+
 @lti.route('/delete-submission', methods=['POST'])
 def delete_submission():
     submission_id = request.form.get("submission_id")
@@ -1778,15 +1779,12 @@ def delete_submission():
 
     try:
         parsed_id = str(submission_id)
-
-        # ✅ Set correct RLS context
         record = supabase.table("submissions").select("student_id").eq("submission_id", parsed_id).single().execute()
-        if not record.data:
-            return jsonify({"success": False, "error": "Submission not found"}), 404
+        if record.data:
+            uid = str(record.data["student_id"])
+            supabase.rpc("set_client_uid", {"uid": uid}).execute()
+            print("🔐 Using set_client_uid with:", uid)
 
-        uid = str(record.data["student_id"])
-        supabase.rpc("set_client_uid", {"uid": uid}).execute()
-        print("🔐 Using set_client_uid with:", uid)
 
         # ✅ Delete the record
         response = supabase.table("submissions").delete().eq("submission_id", parsed_id).execute()
@@ -1844,31 +1842,33 @@ def accept_submission():
     print("🧪 ACCEPT REQUEST RECEIVED:", submission_id)
 
     try:
+        parsed_id = str(submission_id)
+
         # ✅ Set correct RLS context
-        record = supabase.table("submissions").select("student_id").eq("submission_id", submission_id).single().execute()
-        if record.data:
-            uid = str(record.data["student_id"])
-            supabase.rpc("set_client_uid", {"uid": uid}).execute()
-            print("🔐 Using set_client_uid with:", uid)
-        else:
+        record = supabase.table("submissions").select("student_id").eq("submission_id", parsed_id).single().execute()
+        if not record.data:
             return jsonify({"success": False, "error": "Submission not found"}), 404
 
-        # ✅ Update submission status
+        uid = str(record.data["student_id"])
+        supabase.rpc("set_client_uid", {"uid": uid}).execute()
+        print("🔐 Using set_client_uid with:", uid)
+
+        # ✅ Update submission
         response = supabase.table("submissions").update({
             "pending": False,
             "reviewed": True
-        }).eq("submission_id", submission_id).execute()
-
+        }).eq("submission_id", parsed_id).execute()
         print("🧪 ACCEPT RESPONSE:", response)
 
-        # ✅ Optionally confirm update (optional)
-        after = supabase.table("submissions").select("*").eq("submission_id", submission_id).execute()
+        after = supabase.table("submissions").select("*").eq("submission_id", parsed_id).execute()
         print("📄 AFTER ACCEPT:", after)
 
         return jsonify({"success": True}), 200
+
     except Exception as e:
         print("❌ ACCEPT ERROR:", str(e))
         return jsonify({"success": False, "error": "Internal error"}), 500
+
 
 
 
