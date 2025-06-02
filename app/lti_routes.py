@@ -67,6 +67,66 @@ from app.supabase_client import upload_to_supabase
 from app.utils.zerogpt_api import check_ai_with_gpt
 from app.models import Assignment
 
+from pdfrw import PdfReader
+
+def extract_filled_fields_from_pdf(file_bytes):
+    """
+    Extract filled fields from a PDF form using pdfrw.
+    Returns a dict: { field_name: field_value }
+    """
+    from io import BytesIO
+    filled_fields = {}
+    try:
+        reader = PdfReader(fdata=file_bytes)
+        if not hasattr(reader, "Root") or not reader.Root.AcroForm:
+            print("❌ No AcroForm found in PDF.")
+            return filled_fields
+
+        fields = reader.Root.AcroForm.Fields or []
+        for field in fields:
+            key = field.get("/T")
+            val = field.get("/V")
+            if key and val:
+                filled_fields[str(key).strip()] = str(val).strip()
+    except Exception as e:
+        print(f"❌ Error extracting filled fields: {e}")
+    return filled_fields
+
+def compare_form_to_answer_key(student_data: dict, answer_key: dict) -> dict:
+    feedback = []
+    total_points = 0
+    earned_points = 0
+
+    for section in answer_key.get("sections", []):
+        for field in section.get("fields", []):
+            field_name = field["field"]
+            expected_value = field["expected"]
+            points = field.get("points", 1)
+            total_points += points
+
+            student_value = student_data.get(field_name)
+
+            if student_value is None or str(student_value).strip() == "":
+                feedback.append(f"❌ Missing: {field_name}")
+            elif str(student_value).strip().lower() != str(expected_value).strip().lower():
+                feedback.append(f"⚠️ Incorrect: {field_name} (expected: '{expected_value}', got: '{student_value}')")
+            else:
+                earned_points += points
+
+    extra_fields = [k for k in student_data if k not in {
+        f["field"] for s in answer_key.get("sections", []) for f in s.get("fields", [])
+    }]
+
+    for field in extra_fields:
+        feedback.append(f"❗ Unnecessary: {field}")
+
+    score = int(round(earned_points))
+    return {
+        "score": score,
+        "feedback": "\n".join(feedback) if feedback else "✅ All fields correct! Great job."
+    }
+
+
 # 🛡️ Safe normalization function for assignment titles
 def normalize_title(title):
     title = title.replace("–", "-").replace("—", "-")
