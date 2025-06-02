@@ -475,7 +475,7 @@ def grade_docx():
             rubric_json = json.load(f)
         if "sections" in rubric_json:
             rubric_text = "\n".join([f"- {s['title']}" for s in rubric_json["sections"]])
-            rubric_total_points = rubric_json.get("total_points")
+            rubric_total_points = rubric_json.get("total_points") or assignment_config.get("total_points")
         elif "criteria" in rubric_json:
             rubric_text = "\n".join([f"- {c['description']}" for c in rubric_json["criteria"]])
             rubric_total_points = get_total_points_from_rubric(rubric_json)
@@ -1206,9 +1206,16 @@ def instructor_save_notes():
         return "❌ Submission ID missing", 400
 
     # Save notes to Supabase
+    record = supabase.table("submissions").select("student_id").eq("submission_id", str(submission_id)).single().execute()
+    if record.data:
+        uid = str(record.data["student_id"])
+        supabase.rpc("set_client_uid", {"uid": uid}).execute()
+        print("🔐 Using set_client_uid with:", uid)
+
     response = supabase.table("submissions").update({
         "instructor_notes": new_notes
     }).eq("submission_id", submission_id).execute()
+
 
     if hasattr(response, 'error') and response.error:
         return f"❌ Supabase error: {response.error.message}", 500
@@ -1569,16 +1576,19 @@ def delete_file():
 
         deleted_filename = ""
         if file_type == "rubric" and assignment.rubric_file:
-            deleted_filename = assignment.rubric_file.split("/")[-1]
+            deleted_filename = assignment.rubric_file.split("/")[-1].split("?")[0]
             assignment.rubric_file = None
         elif file_type == "additional" and assignment.additional_file:
-            deleted_filename = assignment.additional_file.split("/")[-1]
+            deleted_filename = assignment.additional_file.split("/")[-1].split("?")[0]
             assignment.additional_file = None
 
         if deleted_filename:
             deleted_filename = deleted_filename.lstrip("/")
-            print(f"🗑️ Attempting to delete file: {deleted_filename}")
-            res = supabase.storage.from_("rubrics").remove([deleted_filename])
+            print(f"🗑️ Attempting to delete file: rubrics/{deleted_filename}")
+            res = supabase.storage.from_("rubrics").remove([f"rubrics/{deleted_filename}"])
+            print("✅ Supabase response:", res)
+
+
             print("✅ Supabase response:", res)
 
         session.commit()
@@ -1662,11 +1672,16 @@ def release_pending_feedback():
                 print(f"⚠️ Skipping incomplete submission: {submission_id}")
                 continue
 
+            if student_id:
+                supabase.rpc("set_client_uid", {"uid": str(student_id)}).execute()
+                print("🔐 Using set_client_uid with:", student_id)
+
             update_response = supabase.table("submissions").update({
                 "pending": False,
                 "reviewed": True,
                 "released_at": now
             }).eq("submission_id", submission_id).execute()
+
 
             if hasattr(update_response, "error") and update_response.error:
                 print(f"❌ Error updating submission {submission_id}: {update_response.error.message}")
@@ -1835,10 +1850,19 @@ def accept_submission():
         before = supabase.table("submissions").select("*").eq("submission_id", parsed_id).execute()
         print("📄 BEFORE ACCEPT:", before)
 
+        record = supabase.table("submissions").select("student_id").eq("submission_id", str(parsed_id)).single().execute()
+        if record.data:
+            uid = str(record.data["student_id"])
+            supabase.rpc("set_client_uid", {"uid": uid}).execute()
+            print("🔐 Using set_client_uid with:", uid)
+
         response = supabase.table("submissions").update({
             "pending": False,
             "reviewed": True
         }).eq("submission_id", parsed_id).execute()
+
+
+
         print("🧪 ACCEPT RESPONSE:", response)
 
         after = supabase.table("submissions").select("*").eq("submission_id", parsed_id).execute()
