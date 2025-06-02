@@ -1586,7 +1586,8 @@ def delete_file():
             deleted_filename = deleted_filename.lstrip("/")
             print(f"🗑️ Attempting to delete file: rubrics/{deleted_filename}")
             bucket = "rubrics" if file_type == "rubric" else "attachments"
-            res = supabase.storage.from_(bucket).remove([deleted_filename])
+            res = supabase.storage.from_(bucket).remove([f"{bucket}/{deleted_filename}"])
+
             print("✅ Supabase response:", res)
 
 
@@ -1842,32 +1843,28 @@ def accept_submission():
     print("🧪 ACCEPT REQUEST RECEIVED:", submission_id)
 
     try:
-        parsed_id = str(submission_id)
-
-        # ✅ Set correct RLS context
-        record = supabase.table("submissions").select("student_id").eq("submission_id", parsed_id).single().execute()
-        if not record.data:
+        # ✅ Fetch student ID and set RLS context
+        record = supabase.table("submissions").select("student_id").eq("submission_id", submission_id).single().execute()
+        if record.data:
+            uid = str(record.data["student_id"])
+            supabase.rpc("set_client_uid", {"uid": uid}).execute()
+            print("🔐 Using set_client_uid with:", uid)
+        else:
             return jsonify({"success": False, "error": "Submission not found"}), 404
 
-        uid = str(record.data["student_id"])
-        supabase.rpc("set_client_uid", {"uid": uid}).execute()
-        print("🔐 Using set_client_uid with:", uid)
-
-        # ✅ Update submission
+        # ✅ Perform update
         response = supabase.table("submissions").update({
             "pending": False,
             "reviewed": True
-        }).eq("submission_id", parsed_id).execute()
+        }).eq("submission_id", submission_id).execute()
         print("🧪 ACCEPT RESPONSE:", response)
-
-        after = supabase.table("submissions").select("*").eq("submission_id", parsed_id).execute()
-        print("📄 AFTER ACCEPT:", after)
 
         return jsonify({"success": True}), 200
 
     except Exception as e:
         print("❌ ACCEPT ERROR:", str(e))
         return jsonify({"success": False, "error": "Internal error"}), 500
+
 
 
 
