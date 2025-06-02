@@ -723,6 +723,7 @@ def grade_docx():
         print("🧠 FINAL GPT prompt being sent:\n")
         print(prompt)
 
+        model = assignment_config.get("model") or "gpt-4"  # fallback to gpt-4 if not defined
         response = openai.ChatCompletion.create(
             model=model_to_use,
             messages=[{"role": "user", "content": prompt.strip()}],
@@ -1167,6 +1168,7 @@ Feedback: <detailed, helpful feedback in paragraph form>
         try:
             model_to_use = selected_config.get("gpt_model", "gpt-4")
             openai.api_key = os.getenv("OPENAI_API_KEY")
+            model = assignment_config.get("model") or "gpt-4"  # fallback to gpt-4 if not defined
             response = openai.ChatCompletion.create(
                 model=model_to_use,
                 messages=[{"role": "user", "content": gpt_prompt}],
@@ -1591,7 +1593,7 @@ Text to analyze:
 {text}
 \"\"\"
 """
-
+        model = assignment_config.get("model") or "gpt-4"  # fallback to gpt-4 if not defined
         response = openai.ChatCompletion.create(
             model="gpt-4",
             messages=[{"role": "user", "content": prompt}],
