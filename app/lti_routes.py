@@ -490,11 +490,7 @@ def grade_docx():
 
                 pdf_doc.close()
 
-                # 🧹 Normalize text
-                import re
-                full_text = re.sub(r'\n+', '\n', full_text)
-                full_text = re.sub(r'[ \t]+', ' ', full_text)
-                full_text = full_text.replace('\x0c', '').strip()
+                
 
                 print("📄 Extracted full_text from PDF:")
                 print(full_text)
@@ -544,11 +540,7 @@ def grade_docx():
 
                 
 
-                # 🧹 Normalize PDF text spacing for better field matching
-                import re
-                full_text = re.sub(r'\n+', '\n', full_text)               # collapse multiple newlines
-                full_text = re.sub(r'[ \t]+', ' ', full_text)             # normalize spaces
-                full_text = full_text.replace('\x0c', '').strip()         # remove page breaks
+                
 
 
                 print("📄 Extracted full_text from PDF:")
@@ -557,9 +549,6 @@ def grade_docx():
             else:
                 return "❌ Unsupported file type. Please upload .docx or .pdf", 400
 
-            # ✅ Optional: Extract key fields from full_text for GPT reference
-            import re
-            extracted_fields = []
 
             a_number_match = re.search(r"\bA[-\s]?\d{9}\b", full_text)
             if a_number_match:
@@ -1168,7 +1157,6 @@ Feedback: <detailed, helpful feedback in paragraph form>
         try:
             model_to_use = selected_config.get("gpt_model", "gpt-4")
             openai.api_key = os.getenv("OPENAI_API_KEY")
-            model = assignment_config.get("model") or "gpt-4"  # fallback to gpt-4 if not defined
             response = openai.ChatCompletion.create(
                 model=model_to_use,
                 messages=[{"role": "user", "content": gpt_prompt}],
@@ -1593,7 +1581,7 @@ Text to analyze:
 {text}
 \"\"\"
 """
-        model = assignment_config.get("model") or "gpt-4"  # fallback to gpt-4 if not defined
+        
         response = openai.ChatCompletion.create(
             model="gpt-4",
             messages=[{"role": "user", "content": prompt}],
