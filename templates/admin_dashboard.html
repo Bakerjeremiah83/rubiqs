@@ -221,7 +221,10 @@
         <!-- <button class="tab-button" onclick="showTab('logs')">Activity Logs</button> -->
       </div>
 
-      <div class="tab-panel active" id="setup">
+      {% if request.args.get('tab') != 'instructor' %}
+      <div class="tab-panel" id="setup">
+
+
   <form method="POST" action="/save-assignment" enctype="multipart/form-data">
     <div class="row" style="align-items: center;">
       <div class="form-group" style="flex: 1 1 48%;">
@@ -358,8 +361,11 @@
     </div>
   </form>
 </div>
+{% endif %}
+
 
 <!-- Gospel-Centered Tab Panel -->
+{% if request.args.get('tab') != 'instructor' %}
 <div class="tab-panel" id="gospel">
   <div class="row">
     <div class="form-group wide">
@@ -429,7 +435,8 @@
             <td style="border: 1px solid #ccc; padding: 0.75rem;">
               <form action="/instructor-review/save-notes" method="post">
                 <input type="hidden" name="submission_id" value="{{ submission.submission_id }}">
-                <textarea name="notes" rows="2" style="width: 100%; font-size: 0.9rem; border-radius: 6px; border: 1px solid #ccc;">{{ submission.notes or '' }}</textarea>
+                <textarea name="instructor_notes" rows="2" style="width: 100%; font-size: 0.9rem; border-radius: 6px; border: 1px solid #ccc;">{{ submission.instructor_notes or '' }}</textarea>
+
                 <button type="submit" style="margin-top: 0.5rem; font-size: 0.8rem; background: #888; color: white; border: none; padding: 0.3rem 0.6rem; border-radius: 12px;">Save</button>
                 <div class="row" style="margin-top: 2rem;">
                   <div class="form-group wide">
@@ -443,6 +450,7 @@
                 </div>
                 
               </form>
+              {% endif %}
             </td>
           </tr>
           {% endfor %}
@@ -555,6 +563,49 @@
   }
 </script>
 
+<script>
+  function acceptSubmission(submissionId) {
+    fetch('/instructor-review/accept', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `submission_id=${encodeURIComponent(submissionId)}`
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        const row = document.getElementById(`row-${submissionId}`);
+        if (row) row.remove();
+      } else {
+        alert("❌ Accept failed: " + (data.error || "Unknown error"));
+      }
+    })
+    .catch(error => {
+      console.error("❌ Accept error:", error);
+      alert("❌ Accept request failed.");
+    });
+  }
+
+  function deleteSubmission(submissionId) {
+    fetch('/delete-submission', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `submission_id=${encodeURIComponent(submissionId)}`
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        const row = document.getElementById(`row-${submissionId}`);
+        if (row) row.remove();
+      } else {
+        alert("❌ Delete failed: " + (data.error || "Unknown error"));
+      }
+    })
+    .catch(error => {
+      console.error("❌ Delete error:", error);
+      alert("❌ Delete request failed.");
+    });
+  }
+</script>
     
 </body>
 </html>

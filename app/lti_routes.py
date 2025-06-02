@@ -1197,16 +1197,15 @@ def instructor_review():
 
 
 
-@lti.route("/instructor-review/save-notes", methods=["POST"])
+@lti.route('/instructor-review/save-notes', methods=['POST'])
 def instructor_save_notes():
     submission_id = request.form.get("submission_id")
-    new_notes = request.form.get("notes", "")
+    new_notes = request.form.get("instructor_notes", "")
 
     if not submission_id:
         return "❌ Submission ID missing", 400
 
-    # Save notes to Supabase
-    record = supabase.table("submissions").select("student_id").eq("submission_id", str(submission_id)).single().execute()
+    record = supabase.table("submissions").select("student_id").eq("submission_id", submission_id).single().execute()
     if record.data:
         uid = str(record.data["student_id"])
         supabase.rpc("set_client_uid", {"uid": uid}).execute()
@@ -1216,13 +1215,8 @@ def instructor_save_notes():
         "instructor_notes": new_notes
     }).eq("submission_id", submission_id).execute()
 
+    return redirect("/instructor-review?submission_id=" + submission_id)
 
-    if hasattr(response, 'error') and response.error:
-        return f"❌ Supabase error: {response.error.message}", 500
-
-    # ✅ Optionally log activity
-    from app.utils.logging import log_activity
-    log_activity("Saved instructor notes", user="instructor", details=submission_id)
 
     return redirect("/admin-dashboard")
 
@@ -1843,27 +1837,27 @@ def accept_submission():
     print("🧪 ACCEPT REQUEST RECEIVED:", submission_id)
 
     try:
-        # ✅ Fetch student ID and set RLS context
-        record = supabase.table("submissions").select("student_id").eq("submission_id", submission_id).single().execute()
-        if record.data:
-            uid = str(record.data["student_id"])
-            supabase.rpc("set_client_uid", {"uid": uid}).execute()
-            print("🔐 Using set_client_uid with:", uid)
-        else:
+        parsed_id = str(submission_id)
+        record = supabase.table("submissions").select("student_id").eq("submission_id", parsed_id).single().execute()
+        if not record.data:
             return jsonify({"success": False, "error": "Submission not found"}), 404
 
-        # ✅ Perform update
+        uid = str(record.data["student_id"])
+        supabase.rpc("set_client_uid", {"uid": uid}).execute()
+        print("🔐 Using set_client_uid with:", uid)
+
         response = supabase.table("submissions").update({
             "pending": False,
             "reviewed": True
-        }).eq("submission_id", submission_id).execute()
+        }).eq("submission_id", parsed_id).execute()
+
         print("🧪 ACCEPT RESPONSE:", response)
 
         return jsonify({"success": True}), 200
-
     except Exception as e:
         print("❌ ACCEPT ERROR:", str(e))
         return jsonify({"success": False, "error": "Internal error"}), 500
+
 
 
 

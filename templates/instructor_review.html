@@ -115,47 +115,42 @@
         </div>
       {% endif %}
 
-      <div style="max-width: 900px; margin: 0 auto; margin-bottom: 1.5rem;">
-        <label for="feedback" style="font-weight: bold; font-size: 1rem; margin-bottom: 0.5rem; display: block;">
-          Feedback
-        </label>
-        <textarea
-          name="feedback"
-          rows="10"
-          required
-          style="
-            width: 100%;
-            font-size: 1rem;
-            padding: 1rem;
-            border-radius: 8px;
-            box-sizing: border-box;
-            line-height: 1.6;
-          "
-        >{{ current_review.feedback }}</textarea>
-
-        <!-- ✅ Replaced form with hidden input -->
-        <input type="hidden" id="submission_id" value="{{ current_review.submission_id }}">
-
-        <div class="button-group">
-          <button
-            type="button"
-            class="btn"
-            onclick="acceptSubmission('{{ current_review.submission_id }}')"
-          >
-            ✅ Accept
-          </button>
-          <button type="reset" class="btn" style="background-color: #888;">Reset</button>
-          <button type="button" class="btn" onclick="window.location.href='/admin-dashboard'">Cancel</button>
-          <button
-            type="button"
-            class="btn"
-            style="background-color: #c0392b;"
-            onclick="deleteSubmission('{{ current_review.submission_id }}')"
-          >
-            🗑️ Delete Submission
-          </button>
+      
+      <form method="POST" action="#" id="review-form">
+        <div style="max-width: 900px; margin: 0 auto; margin-bottom: 1.5rem;">
+          <label for="feedback" style="font-weight: bold; font-size: 1rem; margin-bottom: 0.5rem; display: block;">
+            Feedback
+          </label>
+          <textarea
+            name="feedback"
+            rows="10"
+            required
+            style="width: 100%; font-size: 1rem; padding: 1rem; border-radius: 8px; box-sizing: border-box; line-height: 1.6;"
+          >{{ current_review.feedback }}</textarea>
+      
+          <input type="hidden" name="submission_id" value="{{ current_review.submission_id }}">
+      
+          <div class="button-group">
+            <button
+              type="button"
+              class="btn"
+              onclick="acceptSubmission('{{ current_review.submission_id }}')"
+            >
+              ✅ Accept
+            </button>
+            <button type="reset" class="btn" style="background-color: #888;">Reset</button>
+            <button type="button" class="btn" onclick="window.location.href='/admin-dashboard'">Cancel</button>
+            <button
+              type="button"
+              class="btn"
+              style="background-color: #c0392b;"
+              onclick="deleteSubmission('{{ current_review.submission_id }}')"
+            >
+              🗑️ Delete Submission
+            </button>
+          </div>
         </div>
-        
+      </form>      
 
         {% if next_id %}
           <a id="next-link" href="/instructor-review?submission_id={{ next_id }}" style="display: none;"></a>
@@ -175,17 +170,12 @@
             Instructor Notes (Internal)
           </label>
           <textarea
-            name="notes"
+            id="notes"
+            name="instructor_notes"
             rows="6"
-            style="
-              width: 100%;
-              font-size: 1rem;
-              padding: 1rem;
-              border-radius: 8px;
-              box-sizing: border-box;
-              line-height: 1.6;
-            "
+            style="width: 100%; font-size: 1rem; padding: 1rem; border-radius: 8px; box-sizing: border-box; line-height: 1.6;"
           >{{ current_review.instructor_notes }}</textarea>
+
           <button type="submit" class="btn" style="margin-top: 1rem;">💾 Save Notes</button>
         </div>
       </form>
